@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /api ./api/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /api ./cmp/main.go
 
 # for production test the use from scratch
 

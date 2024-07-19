@@ -1,5 +1,5 @@
 build:
-	@go build -o bin/finance api/main.go
+	@go build -o bin/finance cmp/main.go
 
 run: build
 	@./bin/finance
