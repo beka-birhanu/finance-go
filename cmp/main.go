@@ -4,21 +4,21 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 
+	"github.com/beka-birhanu/finance-go/configs"
 	"github.com/beka-birhanu/finance-go/infrastructure"
 )
 
 func main() {
 	// Load environment variables
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
+	dbUser := configs.Envs.DBUser
+	dbPassword := configs.Envs.DBPassword
+	dbName := configs.Envs.DBName
+	dbHost := configs.Envs.DBHost
+	dbPort := configs.Envs.DBPort
 
 	// Initialize database connection
-	db, err := infrastructure.NewPostgresDB(dbUser, dbPassword, dbName, dbHost, dbPort)
+	db, err := infrastructure.NewDB(dbUser, dbPassword, dbName, dbHost, dbPort)
 	if err != nil {
 		log.Fatalf("Could not connect to the database: %v", err)
 	}
