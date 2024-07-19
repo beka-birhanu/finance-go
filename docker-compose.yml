@@ -23,9 +23,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: dev-stage # Specify the target stage for development
     restart: on-failure
     volumes:
-      - .:/go/src/api
+      # - .:/go/src/api
+      - .:/app
+      - /app/tmp # Necessary to ensure air works correctly
     ports:
       - "8080:8080"
     environment:
