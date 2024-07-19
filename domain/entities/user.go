@@ -1,3 +1,9 @@
 package entities
 
-type User struct{}
+import "github.com/google/uuid"
+
+type User struct {
+	ID       uuid.UUID
+	Username string
+	Password string
+}
