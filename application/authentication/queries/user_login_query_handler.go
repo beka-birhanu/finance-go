@@ -4,15 +4,17 @@ import (
 	"fmt"
 
 	"github.com/beka-birhanu/finance-go/application/authentication/common"
+	"github.com/beka-birhanu/finance-go/application/common/interfaces/jwt"
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
 )
 
 type UserLoginQueryHandler struct {
 	UserRepository persistance.IUserRepository
+	JwtService     jwt.IJwtService
 }
 
-func NewUserLogingQueryHandler(repository persistance.IUserRepository) *UserLoginQueryHandler {
-	return &UserLoginQueryHandler{UserRepository: repository}
+func NewUserLoginQueryHandler(repository persistance.IUserRepository, jwtService jwt.IJwtService) *UserLoginQueryHandler {
+	return &UserLoginQueryHandler{UserRepository: repository, JwtService: jwtService}
 }
 
 func (h *UserLoginQueryHandler) Handle(query *UserLoginQuery) (*common.AuthResult, error) {
@@ -25,5 +27,10 @@ func (h *UserLoginQueryHandler) Handle(query *UserLoginQuery) (*common.AuthResul
 		return nil, fmt.Errorf("invalid username or password")
 	}
 
-	return common.NewAuthResult(user.ID, query.Username, "token"), nil
+	token, err := h.JwtService.GenerateToken(user)
+	if err != nil {
+		return nil, fmt.Errorf("server error")
+	}
+
+	return common.NewAuthResult(user.ID, user.Username, token), nil
 }
