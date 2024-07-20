@@ -69,7 +69,17 @@ func (h *Handler) HandleUserRegisteration(w http.ResponseWriter, r *http.Request
 	}
 
 	registorResponse := dto.FromAuthResult(authResult)
-	utils.WriteJSON(w, http.StatusOK, registorResponse)
+	cookie := http.Cookie{
+		Name:     "accessToken",
+		Value:    authResult.Token,
+		Path:     "/",
+		MaxAge:   24 * 60,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	utils.WriteJSONWithCookie(w, http.StatusOK, registorResponse, []*http.Cookie{&cookie})
 }
 
 func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
@@ -96,5 +106,15 @@ func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 
 	loginResponse := dto.FromAuthResult(authResult)
 
-	utils.WriteJSON(w, http.StatusOK, loginResponse)
+	cookie := http.Cookie{
+		Name:     "accessToken",
+		Value:    authResult.Token,
+		Path:     "/",
+		MaxAge:   24 * 60,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	utils.WriteJSONWithCookie(w, http.StatusOK, loginResponse, []*http.Cookie{&cookie})
 }
