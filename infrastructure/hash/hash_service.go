@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-	"log"
 	"sync"
 
 	"golang.org/x/crypto/pbkdf2"
@@ -41,7 +40,6 @@ func (hs *HashService) Hash(word string) (string, error) {
 
 	result := append(salt, hash...)
 
-	log.Println(base64.StdEncoding.EncodeToString(result))
 	return base64.StdEncoding.EncodeToString(result), nil
 }
 
@@ -67,4 +65,3 @@ func (hs *HashService) Match(hashedWord, plainWord string) (bool, error) {
 
 	return true, nil
 }
-
