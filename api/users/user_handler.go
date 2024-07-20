@@ -31,6 +31,11 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 		"/users/register",
 		h.HandleUserRegisteration,
 	).Methods(http.MethodPost)
+
+	router.HandleFunc(
+		"/users/login",
+		h.HandleUserLogin,
+	).Methods(http.MethodPost)
 }
 
 func (h *Handler) HandleUserRegisteration(w http.ResponseWriter, r *http.Request) {
@@ -63,4 +68,31 @@ func (h *Handler) HandleUserRegisteration(w http.ResponseWriter, r *http.Request
 	}
 
 	utils.WriteJSON(w, http.StatusCreated, map[string]string{"token": "token"})
+}
+
+func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
+	var loginRequest dto.LoginUserRequest
+
+	if err := utils.ParseJSON(r, &loginRequest); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := utils.Validate.Struct(loginRequest); err != nil {
+		errors := err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload: %v", errors))
+		return
+	}
+
+	loginQuery := queries.NewUserLoginQuery(loginRequest.Username, loginRequest.Password)
+
+	authResult, err := h.UserQueryHandler.Handle(loginQuery)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	loginResponse := dto.FromAuthResult(authResult)
+
+	utils.WriteJSON(w, http.StatusOK, loginResponse)
 }
