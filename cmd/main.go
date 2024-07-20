@@ -10,6 +10,7 @@ import (
 	"github.com/beka-birhanu/finance-go/application/authentication/queries"
 	"github.com/beka-birhanu/finance-go/configs"
 	"github.com/beka-birhanu/finance-go/infrastructure/db"
+	"github.com/beka-birhanu/finance-go/infrastructure/hash"
 	"github.com/beka-birhanu/finance-go/infrastructure/jwt"
 	"github.com/beka-birhanu/finance-go/infrastructure/repositories"
 )
@@ -25,10 +26,11 @@ func main() {
 		configs.Envs.ServerHost,
 		time.Duration(configs.Envs.JWTExpirationInSeconds)*time.Second,
 	)
+	hashService := hash.GetHashService()
 
 	// Initialize command and query handlers
-	userRegisterCommandHandler := commands.NewRegisterCommandHandler(userRepository, jwtService)
-	userLoginQueryHandler := queries.NewUserLoginQueryHandler(userRepository, jwtService)
+	userRegisterCommandHandler := commands.NewRegisterCommandHandler(userRepository, jwtService, hashService)
+	userLoginQueryHandler := queries.NewUserLoginQueryHandler(userRepository, jwtService, hashService)
 
 	// Create and run the server
 	server := api.NewAPIServer(
