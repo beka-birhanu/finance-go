@@ -36,7 +36,7 @@ func initConfig() Config {
 		DBPassword:             getEnv("DB_PASSWORD", "PythonIsTheGOAT"),
 		DBName:                 getEnv("DB_NAME", "finance"),
 		JWTSecret:              getEnv("JWT_SECRET", "not-so-secret-now-is-it?"),
-		JWTExpirationInSeconds: getEnvAsInt("JWT_EXPIRATION_IN_SECONDS", 3600*24*7),
+		JWTExpirationInSeconds: getEnvAsInt("JWT_EXPIRATION_IN_SECONDS", 60*24),
 	}
 }
 
