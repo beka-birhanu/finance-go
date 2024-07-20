@@ -58,7 +58,8 @@ func (h *Handler) HandleUserRegisteration(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := h.UserRegisterCommandHandler.Handle(registerCommand); err != nil {
+	authResult, err := h.UserRegisterCommandHandler.Handle(registerCommand)
+	if err != nil {
 		if err == commands.ErrUsernameInUse {
 			utils.WriteError(w, http.StatusConflict, err)
 		} else {
@@ -67,7 +68,8 @@ func (h *Handler) HandleUserRegisteration(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, map[string]string{"token": "token"})
+	registorResponse := dto.FromAuthResult(authResult)
+	utils.WriteJSON(w, http.StatusOK, registorResponse)
 }
 
 func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
