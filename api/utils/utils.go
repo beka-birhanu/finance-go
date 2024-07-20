@@ -22,6 +22,13 @@ func WriteError(w http.ResponseWriter, status int, err error) {
 	WriteJSON(w, status, map[string]string{"error": err.Error()})
 }
 
+func WriteJSONWithCookie(w http.ResponseWriter, status int, v any, cookies []*http.Cookie) {
+	for _, cookie := range cookies {
+		http.SetCookie(w, cookie)
+	}
+	WriteJSON(w, http.StatusOK, v)
+}
+
 func WriteJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -30,4 +37,3 @@ func WriteJSON(w http.ResponseWriter, status int, v any) {
 		http.Error(w, "Failed to encode JSON response", http.StatusInternalServerError)
 	}
 }
-
