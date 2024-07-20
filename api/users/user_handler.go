@@ -26,7 +26,7 @@ func NewHandler(userRepository persistance.IUserRepository, commandHandler comma
 	return &Handler{UserRepository: userRepository, UserRegisterCommandHandler: commandHandler, UserQueryHandler: queryHandler}
 }
 
-func (h *Handler) RegisterRoutes(router *mux.Router) {
+func (h *Handler) RegisterPublicRoutes(router *mux.Router) {
 	router.HandleFunc(
 		"/users/register",
 		h.HandleUserRegisteration,
@@ -37,6 +37,8 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 		h.HandleUserLogin,
 	).Methods(http.MethodPost)
 }
+
+func (h *Handler) RegisterProtectedRoutes(router *mux.Router) {}
 
 func (h *Handler) HandleUserRegisteration(w http.ResponseWriter, r *http.Request) {
 	var registerRequest dto.RegisterRequest
