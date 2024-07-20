@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/beka-birhanu/finance-go/api"
+	"github.com/beka-birhanu/finance-go/api/middleware"
 	"github.com/beka-birhanu/finance-go/application/authentication/commands"
 	"github.com/beka-birhanu/finance-go/application/authentication/queries"
 	"github.com/beka-birhanu/finance-go/configs"
@@ -27,6 +28,7 @@ func main() {
 		time.Duration(configs.Envs.JWTExpirationInSeconds)*time.Second,
 	)
 	hashService := hash.GetHashService()
+	authorizationMiddleware := middleware.AuthorizationMiddleware(jwtService)
 
 	// Initialize command and query handlers
 	userRegisterCommandHandler := commands.NewRegisterCommandHandler(userRepository, jwtService, hashService)
@@ -38,6 +40,7 @@ func main() {
 		userRepository,
 		userRegisterCommandHandler,
 		userLoginQueryHandler,
+		authorizationMiddleware,
 	)
 
 	if err := server.Run(); err != nil {
