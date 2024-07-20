@@ -16,23 +16,32 @@ type APIServer struct {
 	UserRepository             persistance.IUserRepository
 	UserRegisterCommandHandler commandAuth.IUserRegisterCommandHandler
 	UserLoginQueryHandler      querieAuth.IUserLoginQueryHandler
+	AuthorizationMiddleware    func(http.Handler) http.Handler
 }
 
-func NewAPIServer(addr string, userRepository persistance.IUserRepository, userRegisterCommandHandler commandAuth.IUserRegisterCommandHandler, userQueryHandler querieAuth.IUserLoginQueryHandler) *APIServer {
+func NewAPIServer(addr string, userRepository persistance.IUserRepository, userRegisterCommandHandler commandAuth.IUserRegisterCommandHandler, userQueryHandler querieAuth.IUserLoginQueryHandler, authorizationMiddleware func(http.Handler) http.Handler) *APIServer {
 	return &APIServer{
 		Addr:                       addr,
 		UserRepository:             userRepository,
 		UserRegisterCommandHandler: userRegisterCommandHandler,
 		UserLoginQueryHandler:      userQueryHandler,
+		AuthorizationMiddleware:    authorizationMiddleware,
 	}
 }
 
 func (s *APIServer) Run() error {
 	router := mux.NewRouter()
-	subrouter := router.PathPrefix("/api/v1").Subrouter()
+
+	// Routes that do not require authentication
+	publicRouter := router.PathPrefix("/api/v1/public").Subrouter()
+
+	// Routes that require authentication
+	protectedRouter := router.PathPrefix("/api/v1").Subrouter()
+	protectedRouter.Use(s.AuthorizationMiddleware)
 
 	userHandler := users.NewHandler(s.UserRepository, s.UserRegisterCommandHandler, s.UserLoginQueryHandler)
-	userHandler.RegisterRoutes(subrouter)
+	userHandler.RegisterPublicRoutes(publicRouter)
+	userHandler.RegisterProtectedRoutes(protectedRouter)
 
 	// Serve static files
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("static")))
