@@ -7,6 +7,7 @@ import (
 	"github.com/beka-birhanu/finance-go/api/users/dto"
 	"github.com/beka-birhanu/finance-go/api/utils"
 	"github.com/beka-birhanu/finance-go/application/authentication/commands"
+	"github.com/beka-birhanu/finance-go/application/common/cqrs/i_commands/authentication"
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
@@ -14,12 +15,10 @@ import (
 
 type Handler struct {
 	UserRepository             persistance.IUserRepository
-	UserRegisterCommandHandler *commands.UserRegisterCommandHandler
+	UserRegisterCommandHandler authentication.IUserRegisterCommandHandler
 }
 
-func NewHandler(userRepository persistance.IUserRepository) *Handler {
-	commandHandler := commands.NewRegisterCommandHandler(userRepository)
-
+func NewHandler(userRepository persistance.IUserRepository, commandHandler authentication.IUserRegisterCommandHandler) *Handler {
 	return &Handler{UserRepository: userRepository, UserRegisterCommandHandler: commandHandler}
 }
 
