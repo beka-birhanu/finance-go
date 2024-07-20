@@ -7,7 +7,10 @@ import (
 	"github.com/beka-birhanu/finance-go/api/users/dto"
 	"github.com/beka-birhanu/finance-go/api/utils"
 	"github.com/beka-birhanu/finance-go/application/authentication/commands"
-	"github.com/beka-birhanu/finance-go/application/common/cqrs/i_commands/authentication"
+
+	"github.com/beka-birhanu/finance-go/application/authentication/queries"
+	commandAuth "github.com/beka-birhanu/finance-go/application/common/cqrs/i_commands/authentication"
+	querieAuth "github.com/beka-birhanu/finance-go/application/common/cqrs/i_queries/authentication"
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
@@ -15,11 +18,12 @@ import (
 
 type Handler struct {
 	UserRepository             persistance.IUserRepository
-	UserRegisterCommandHandler authentication.IUserRegisterCommandHandler
+	UserRegisterCommandHandler commandAuth.IUserRegisterCommandHandler
+	UserQueryHandler           querieAuth.IUserLoginQueryHandler
 }
 
-func NewHandler(userRepository persistance.IUserRepository, commandHandler authentication.IUserRegisterCommandHandler) *Handler {
-	return &Handler{UserRepository: userRepository, UserRegisterCommandHandler: commandHandler}
+func NewHandler(userRepository persistance.IUserRepository, commandHandler commandAuth.IUserRegisterCommandHandler, queryHandler querieAuth.IUserLoginQueryHandler) *Handler {
+	return &Handler{UserRepository: userRepository, UserRegisterCommandHandler: commandHandler, UserQueryHandler: queryHandler}
 }
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
