@@ -1,24 +1,23 @@
 package api
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 
 	"github.com/beka-birhanu/finance-go/api/users"
-	"github.com/beka-birhanu/finance-go/infrastructure/repositories"
+	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
 	"github.com/gorilla/mux"
 )
 
 type APIServer struct {
-	addr string
-	db   *sql.DB
+	Addr           string
+	UserRepository persistance.IUserRepository
 }
 
-func NewAPIServer(addr string, db *sql.DB) *APIServer {
+func NewAPIServer(addr string, userRepository persistance.IUserRepository) *APIServer {
 	return &APIServer{
-		addr: addr,
-		db:   db,
+		Addr:           addr,
+		UserRepository: userRepository,
 	}
 }
 
@@ -26,14 +25,14 @@ func (s *APIServer) Run() error {
 	router := mux.NewRouter()
 	subrouter := router.PathPrefix("/api/v1").Subrouter()
 
-	userRepository := repositories.NewUserRepository(s.db)
-	userHandler := users.NewHandler(userRepository)
+	userHandler := users.NewHandler(s.UserRepository)
 	userHandler.RegisterRoutes(subrouter)
 
 	// Serve static files
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("static")))
 
-	log.Println("Listening on", s.addr)
+	log.Println("Listening on", s.Addr)
 
-	return http.ListenAndServe(s.addr, router)
+	return http.ListenAndServe(s.Addr, router)
 }
+
