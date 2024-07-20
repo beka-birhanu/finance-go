@@ -26,11 +26,11 @@ func NewHandler(userRepository persistance.IUserRepository) *Handler {
 func (h *Handler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc(
 		"/users/register",
-		h.handleUserRegisteration,
+		h.HandleUserRegisteration,
 	).Methods(http.MethodPost)
 }
 
-func (h *Handler) handleUserRegisteration(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleUserRegisteration(w http.ResponseWriter, r *http.Request) {
 	var registerRequest dto.RegisterRequest
 
 	if err := utils.ParseJSON(r, &registerRequest); err != nil {
