@@ -2,6 +2,7 @@
 
 # List of packages to exclude (adjust as needed)
 exclude_packages=(
+  "github.com/beka-birhanu/finance-go/api"
   "github.com/beka-birhanu/finance-go/api/users/dto"
   "github.com/beka-birhanu/finance-go/application/authentication/common"
   "github.com/beka-birhanu/finance-go/application/common/cqrs/i_commands/authentication"
