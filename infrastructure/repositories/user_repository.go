@@ -2,10 +2,11 @@ package repositories
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
-	"log"
 
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
+	"github.com/beka-birhanu/finance-go/domain/domain_errors"
 	"github.com/beka-birhanu/finance-go/domain/entities"
 	"github.com/google/uuid"
 )
@@ -15,6 +16,7 @@ type UserRepository struct {
 }
 
 var users = map[uuid.UUID]entities.User{}
+var NotFound = errors.New("username already taken")
 
 // Ensure UserRepository implements interfaces.persistance.IUserRepository
 var _ persistance.IUserRepository = &UserRepository{}
@@ -26,14 +28,29 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 }
 
 func (u *UserRepository) CreateUser(user *entities.User) error {
+	for _, existingUser := range users {
+		if existingUser.Username == user.Username {
+			return domain_errors.UsernameConflict
+		}
+	}
+
 	users[user.ID] = *user
-	log.Println("userCreated")
 
 	return nil
 }
 
 func (u *UserRepository) GetUserById(id string) (*entities.User, error) {
-	panic("unimplemented")
+	userID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid UUID format: %v", err)
+	}
+
+	user, found := users[userID]
+	if !found {
+		return nil, NotFound
+	}
+
+	return &user, nil
 }
 
 func (u *UserRepository) GetUserByUsername(username string) (*entities.User, error) {
@@ -42,10 +59,14 @@ func (u *UserRepository) GetUserByUsername(username string) (*entities.User, err
 			return &user, nil
 		}
 	}
-
-	return nil, fmt.Errorf("not found")
+	return nil, NotFound
 }
 
 func (u *UserRepository) ListUser() ([]*entities.User, error) {
-	panic("unimplemented")
+	var userList []*entities.User
+	for _, user := range users {
+		userList = append(userList, &user)
+	}
+	return userList, nil
 }
+
