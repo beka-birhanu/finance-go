@@ -10,6 +10,7 @@ import (
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
 	"github.com/beka-birhanu/finance-go/domain/domain_errors"
 	"github.com/beka-birhanu/finance-go/domain/entities"
+	"github.com/nbutton23/zxcvbn-go"
 )
 
 type UserRegisterCommandHandler struct {
@@ -20,6 +21,11 @@ type UserRegisterCommandHandler struct {
 
 var (
 	ErrUsernameInUse = domain_errors.UsernameConflict
+	ErrWeakUsername  = errors.New("password is too weak!")
+)
+
+const (
+	MIN_PASSWORD_STRENGTH_SCORE = 3
 )
 
 func NewRegisterCommandHandler(repository persistance.IUserRepository, jwtService jwt.IJwtService, hashService hash.IHashService) *UserRegisterCommandHandler {
@@ -30,7 +36,7 @@ func NewRegisterCommandHandler(repository persistance.IUserRepository, jwtServic
 func (h *UserRegisterCommandHandler) Handle(command *UserRegisterCommand) (*common.AuthResult, error) {
 	user, err := fromRegisterCommand(command, h.HashService)
 	if err != nil {
-		return nil, fmt.Errorf("server error")
+		return nil, err
 	}
 
 	err = h.UserRepository.CreateUser(user)
@@ -53,6 +59,11 @@ func fromRegisterCommand(command *UserRegisterCommand, hashService hash.IHashSer
 
 	user.ID = command.ID
 	user.Username = command.Username
+
+	result := zxcvbn.PasswordStrength(command.Password, nil)
+	if result.Score < MIN_PASSWORD_STRENGTH_SCORE {
+		return nil, ErrWeakUsername
+	}
 
 	hashedPassword, err := hashService.Hash(command.Password)
 	if err != nil {
