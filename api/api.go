@@ -43,9 +43,6 @@ func (s *APIServer) Run() error {
 	userHandler.RegisterPublicRoutes(publicRouter)
 	userHandler.RegisterProtectedRoutes(protectedRouter)
 
-	// Serve static files
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir("static")))
-
 	log.Println("Listening on", s.Addr)
 
 	return http.ListenAndServe(s.Addr, router)
