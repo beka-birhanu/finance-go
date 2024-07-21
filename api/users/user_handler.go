@@ -64,6 +64,8 @@ func (h *Handler) HandleUserRegisteration(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		if err == commands.ErrUsernameInUse {
 			utils.WriteError(w, http.StatusConflict, err)
+		} else if err == commands.ErrWeakUsername {
+			utils.WriteError(w, http.StatusBadRequest, err)
 		} else {
 			utils.WriteError(w, http.StatusInternalServerError, err)
 		}
