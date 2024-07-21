@@ -21,7 +21,7 @@ type UserRegisterCommandHandler struct {
 
 var (
 	ErrUsernameInUse = domain_errors.UsernameConflict
-	ErrWeakUsername  = errors.New("password is too weak!")
+	ErrWeakPassword  = errors.New("password is too weak!")
 )
 
 const (
@@ -62,7 +62,7 @@ func fromRegisterCommand(command *UserRegisterCommand, hashService hash.IHashSer
 
 	result := zxcvbn.PasswordStrength(command.Password, nil)
 	if result.Score < MIN_PASSWORD_STRENGTH_SCORE {
-		return nil, ErrWeakUsername
+		return nil, ErrWeakPassword
 	}
 
 	hashedPassword, err := hashService.Hash(command.Password)
