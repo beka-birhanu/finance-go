@@ -8,6 +8,7 @@ import (
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/hash"
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/jwt"
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
+	"github.com/beka-birhanu/finance-go/domain/domain_errors"
 	"github.com/beka-birhanu/finance-go/domain/entities"
 )
 
@@ -18,7 +19,7 @@ type UserRegisterCommandHandler struct {
 }
 
 var (
-	ErrUsernameInUse = errors.New("username in use")
+	ErrUsernameInUse = domain_errors.UsernameConflict
 )
 
 func NewRegisterCommandHandler(repository persistance.IUserRepository, jwtService jwt.IJwtService, hashService hash.IHashService) *UserRegisterCommandHandler {
@@ -27,16 +28,15 @@ func NewRegisterCommandHandler(repository persistance.IUserRepository, jwtServic
 }
 
 func (h *UserRegisterCommandHandler) Handle(command *UserRegisterCommand) (*common.AuthResult, error) {
-	if _, err := h.UserRepository.GetUserByUsername(command.Username); err == nil {
-		return nil, ErrUsernameInUse
-	}
-
 	user, err := fromRegisterCommand(command, h.HashService)
 	if err != nil {
 		return nil, fmt.Errorf("server error")
 	}
 
-	if err := h.UserRepository.CreateUser(user); err != nil {
+	err = h.UserRepository.CreateUser(user)
+	if errors.Is(err, domain_errors.UsernameConflict) {
+		return nil, err
+	} else if err != nil {
 		return nil, fmt.Errorf("server error")
 	}
 
