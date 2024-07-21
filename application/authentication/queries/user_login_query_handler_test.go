@@ -33,7 +33,6 @@ func (m *MockUserRepository) ListUser() ([]*entities.User, error) {
 
 type MockJwtService struct {
 	GenerateTokenFunc func(user *entities.User) (string, error)
-	DecodeTokenFunc   func(token string) (jwt.MapClaims, error)
 }
 
 func (m *MockJwtService) GenerateToken(user *entities.User) (string, error) {
@@ -41,16 +40,15 @@ func (m *MockJwtService) GenerateToken(user *entities.User) (string, error) {
 }
 
 func (m *MockJwtService) DecodeToken(token string) (jwt.MapClaims, error) {
-	return m.DecodeTokenFunc(token)
+	return nil, nil
 }
 
 type MockHashService struct {
-	HashFunc  func(word string) (string, error)
 	MatchFunc func(hashedWord, plainWord string) (bool, error)
 }
 
 func (m *MockHashService) Hash(word string) (string, error) {
-	return m.HashFunc(word)
+	return "", nil
 }
 
 func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
