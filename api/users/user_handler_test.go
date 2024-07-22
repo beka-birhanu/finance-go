@@ -16,7 +16,7 @@ import (
 	querieAuth "github.com/beka-birhanu/finance-go/application/common/cqrs/i_queries/authentication"
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
 	"github.com/beka-birhanu/finance-go/domain/domain_errors"
-	"github.com/beka-birhanu/finance-go/domain/models.go"
+	"github.com/beka-birhanu/finance-go/domain/models"
 	"github.com/gorilla/mux"
 )
 
@@ -71,8 +71,15 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 	mockRepo := &mockUserRepository{}
 	mockRegisterCommandHandler := &mockUserRegisterCommandHandler{
 		handleFunc: func(cmd *commands.UserRegisterCommand) (*common.AuthResult, error) {
-			if cmd.Username == "existinguser" {
+			switch cmd.Username {
+			case "existinguser":
 				return &common.AuthResult{}, domain_errors.ErrUsernameConflict
+			case "toolongusername":
+				return &common.AuthResult{}, domain_errors.ErrUsernameTooLong
+			case "short":
+				return &common.AuthResult{}, domain_errors.ErrUsernameTooShort
+			case "invalidformat!":
+				return &common.AuthResult{}, domain_errors.ErrUsernameInvalidFormat
 			}
 			if cmd.Password == "weakpassword" {
 				return &common.AuthResult{}, domain_errors.ErrWeakPassword
@@ -124,6 +131,27 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 			requestBody:    dto.RegisterRequest{Username: "newuser", Password: "weakpassword"},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  domain_errors.ErrWeakPassword.Error(),
+		},
+		{
+			name:           "Username Too Long",
+			url:            "/users/register",
+			requestBody:    dto.RegisterRequest{Username: "toolongusername", Password: "StrongPassword!123"},
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  domain_errors.ErrUsernameTooLong.Error(),
+		},
+		{
+			name:           "Username Too Short",
+			url:            "/users/register",
+			requestBody:    dto.RegisterRequest{Username: "short", Password: "StrongPassword!123"},
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  domain_errors.ErrUsernameTooShort.Error(),
+		},
+		{
+			name:           "Username Invalid Format",
+			url:            "/users/register",
+			requestBody:    dto.RegisterRequest{Username: "invalidformat!", Password: "StrongPassword!123"},
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  domain_errors.ErrUsernameInvalidFormat.Error(),
 		},
 		{
 			name:           "Invalid Register Request Body",
@@ -187,3 +215,4 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 		})
 	}
 }
+
