@@ -70,7 +70,7 @@ func (u *User) GetExpenses() *[]Expense {
 }
 
 func (u *User) AddExpense(expense *Expense) error {
-	if expense.ID != u.ID {
+	if expense.ID() != u.ID {
 		return fmt.Errorf("ID under user and expense dont match")
 	}
 	copyExpense := *expense

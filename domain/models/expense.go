@@ -13,16 +13,16 @@ const (
 )
 
 type Expense struct {
-	ID          uuid.UUID
-	Description string
-	Amount      float32
-	Date        time.Time
-	UserId      uuid.UUID
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	id          uuid.UUID
+	description string
+	amount      float32
+	date        time.Time
+	userId      uuid.UUID
+	createdAt   time.Time
+	updatedAt   time.Time
 }
 
-func NewExpense(description string, amount float32, userId uuid.UUID) (*Expense, error) {
+func NewExpense(description string, amount float32, userId uuid.UUID, date time.Time) (*Expense, error) {
 	description = strings.TrimSpace(description)
 
 	if amount <= 0 {
@@ -38,12 +38,41 @@ func NewExpense(description string, amount float32, userId uuid.UUID) (*Expense,
 	}
 
 	return &Expense{
-		ID:          uuid.New(),
-		Description: description,
-		Amount:      amount,
-		UserId:      userId,
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
+		id:          uuid.New(),
+		description: description,
+		amount:      amount,
+		userId:      userId,
+		date:        date,
+		createdAt:   time.Now().UTC(),
+		updatedAt:   time.Now().UTC(),
 	}, nil
+}
+
+func (e *Expense) ID() uuid.UUID {
+	return e.id
+}
+
+func (e *Expense) Description() string {
+	return e.description
+}
+
+func (e *Expense) Amount() float32 {
+	return e.amount
+}
+
+func (e *Expense) Date() time.Time {
+	return e.date
+}
+
+func (e *Expense) UserID() uuid.UUID {
+	return e.userId
+}
+
+func (e *Expense) CreatedAt() time.Time {
+	return e.createdAt
+}
+
+func (e *Expense) UpdatedAt() time.Time {
+	return e.updatedAt
 }
 
