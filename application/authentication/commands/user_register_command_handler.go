@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/beka-birhanu/finance-go/application/authentication/common"
-	"github.com/beka-birhanu/finance-go/application/common/interfaces/hash"
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/jwt"
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
+	"github.com/beka-birhanu/finance-go/domain/common/authentication"
 	"github.com/beka-birhanu/finance-go/domain/domain_errors"
 	"github.com/beka-birhanu/finance-go/domain/entities"
 	"github.com/nbutton23/zxcvbn-go"
