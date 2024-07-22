@@ -44,11 +44,11 @@ type MockHashService struct {
 }
 
 func (m *MockHashService) Hash(word string) (string, error) {
-	return "", nil
+	return "hashed" + word, nil
 }
 
 func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
-	return false, nil
+	return hashedWord == "hashed"+plainWord, nil
 }
 
 func TestUserRegisterCommandHandler_Handle(t *testing.T) {
@@ -57,7 +57,6 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 			if user.Username != "uniqueUsername" {
 				return domain_errors.ErrUsernameConflict
 			}
-
 			return nil
 		},
 	}
@@ -74,17 +73,17 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 
 	validCommand, err := NewUserRegisterCommand("uniqueUsername", "#%strongPassword#%")
 	if err != nil {
-		t.Errorf("unexpected error '%v'on creating validCommand", err)
+		t.Errorf("unexpected error '%v' on creating validCommand", err)
 	}
 
 	duplicateCommand, err := NewUserRegisterCommand("duplicateUsername", "#%strongPassword#%")
 	if err != nil {
-		t.Errorf("unexpected error '%v'on creating duplicateCommandCommand", err)
+		t.Errorf("unexpected error '%v' on creating duplicateCommand", err)
 	}
 
 	weakPasswordCommand, err := NewUserRegisterCommand("uniqueUsername", "weakPassword")
 	if err != nil {
-		t.Errorf("unexpected error '%v'on creating weakPasswordCommand", err)
+		t.Errorf("unexpected error '%v' on creating weakPasswordCommand", err)
 	}
 
 	tests := []struct {
@@ -124,3 +123,4 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 		})
 	}
 }
+
