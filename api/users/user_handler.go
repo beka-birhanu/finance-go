@@ -18,13 +18,13 @@ import (
 )
 
 type Handler struct {
-	UserRepository             persistance.IUserRepository
-	UserRegisterCommandHandler commandAuth.IUserRegisterCommandHandler
-	UserQueryHandler           querieAuth.IUserLoginQueryHandler
+	userRepository             persistance.IUserRepository
+	userRegisterCommandHandler commandAuth.IUserRegisterCommandHandler
+	userQueryHandler           querieAuth.IUserLoginQueryHandler
 }
 
 func NewHandler(userRepository persistance.IUserRepository, commandHandler commandAuth.IUserRegisterCommandHandler, queryHandler querieAuth.IUserLoginQueryHandler) *Handler {
-	return &Handler{UserRepository: userRepository, UserRegisterCommandHandler: commandHandler, UserQueryHandler: queryHandler}
+	return &Handler{userRepository: userRepository, userRegisterCommandHandler: commandHandler, userQueryHandler: queryHandler}
 }
 
 func (h *Handler) RegisterPublicRoutes(router *mux.Router) {
@@ -61,7 +61,7 @@ func (h *Handler) HandleUserRegistration(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	authResult, err := h.UserRegisterCommandHandler.Handle(registerCommand)
+	authResult, err := h.userRegisterCommandHandler.Handle(registerCommand)
 	if err != nil {
 		switch err {
 		case domain_errors.ErrUsernameConflict:
@@ -107,7 +107,7 @@ func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 
 	loginQuery := queries.NewUserLoginQuery(loginRequest.Username, loginRequest.Password)
 
-	authResult, err := h.UserQueryHandler.Handle(loginQuery)
+	authResult, err := h.userQueryHandler.Handle(loginQuery)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return
