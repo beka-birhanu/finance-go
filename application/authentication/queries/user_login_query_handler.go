@@ -10,22 +10,22 @@ import (
 )
 
 type UserLoginQueryHandler struct {
-	UserRepository persistance.IUserRepository
-	JwtService     jwt.IJwtService
-	HashService    hash.IHashService
+	userRepository persistance.IUserRepository
+	jwtService     jwt.IJwtService
+	hashService    hash.IHashService
 }
 
 func NewUserLoginQueryHandler(repository persistance.IUserRepository, jwtService jwt.IJwtService, hashService hash.IHashService) *UserLoginQueryHandler {
-	return &UserLoginQueryHandler{UserRepository: repository, JwtService: jwtService, HashService: hashService}
+	return &UserLoginQueryHandler{userRepository: repository, jwtService: jwtService, hashService: hashService}
 }
 
 func (h *UserLoginQueryHandler) Handle(query *UserLoginQuery) (*common.AuthResult, error) {
-	user, err := h.UserRepository.GetUserByUsername(query.Username)
+	user, err := h.userRepository.GetUserByUsername(query.Username)
 	if err != nil {
 		return nil, fmt.Errorf("invalid username or password")
 	}
 
-	isPassowrdCorrect, err := h.HashService.Match(user.PasswordHash(), query.Password)
+	isPassowrdCorrect, err := h.hashService.Match(user.PasswordHash(), query.Password)
 	if err != nil {
 		return nil, fmt.Errorf("server error")
 	}
@@ -34,7 +34,7 @@ func (h *UserLoginQueryHandler) Handle(query *UserLoginQuery) (*common.AuthResul
 		return nil, fmt.Errorf("invalid username or password")
 	}
 
-	token, err := h.JwtService.GenerateToken(user)
+	token, err := h.jwtService.GenerateToken(user)
 	if err != nil {
 		return nil, fmt.Errorf("server error")
 	}
