@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/beka-birhanu/finance-go/domain/models.go"
+	"github.com/beka-birhanu/finance-go/domain/models"
 	"github.com/dgrijalva/jwt-go"
 )
 

@@ -9,7 +9,7 @@ import (
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
 	hash "github.com/beka-birhanu/finance-go/domain/common/authentication"
 	"github.com/beka-birhanu/finance-go/domain/domain_errors"
-	"github.com/beka-birhanu/finance-go/domain/models.go"
+	"github.com/beka-birhanu/finance-go/domain/models"
 )
 
 type UserRegisterCommandHandler struct {
@@ -19,7 +19,6 @@ type UserRegisterCommandHandler struct {
 }
 
 func NewRegisterCommandHandler(repository persistance.IUserRepository, jwtService jwt.IJwtService, hashService hash.IHashService) *UserRegisterCommandHandler {
-
 	return &UserRegisterCommandHandler{UserRepository: repository, JwtService: jwtService, HashService: hashService}
 }
 

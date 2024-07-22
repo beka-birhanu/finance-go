@@ -1,7 +1,7 @@
 package persistance
 
 import (
-	"github.com/beka-birhanu/finance-go/domain/models.go"
+	"github.com/beka-birhanu/finance-go/domain/models"
 )
 
 type IUserRepository interface {
