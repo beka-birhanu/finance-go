@@ -63,11 +63,15 @@ func (h *Handler) HandleUserRegistration(w http.ResponseWriter, r *http.Request)
 
 	authResult, err := h.UserRegisterCommandHandler.Handle(registerCommand)
 	if err != nil {
-		if err == domain_errors.ErrUsernameConflict {
+		switch err {
+		case domain_errors.ErrUsernameConflict:
 			utils.WriteError(w, http.StatusConflict, err)
-		} else if err == domain_errors.ErrWeakPassword {
+		case domain_errors.ErrWeakPassword,
+			domain_errors.ErrUsernameTooLong,
+			domain_errors.ErrUsernameTooShort,
+			domain_errors.ErrUsernameInvalidFormat:
 			utils.WriteError(w, http.StatusBadRequest, err)
-		} else {
+		default:
 			utils.WriteError(w, http.StatusInternalServerError, err)
 		}
 		return
