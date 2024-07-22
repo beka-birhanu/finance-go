@@ -29,7 +29,7 @@ type User struct {
 	PasswordHash string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
-	Expenses     []Expense
+	expenses     []Expense
 }
 
 func NewUser(username, plainPassword string, passwordHasher hash.IHashService) (*User, error) {
@@ -63,3 +63,17 @@ func NewUser(username, plainPassword string, passwordHasher hash.IHashService) (
 	}, nil
 }
 
+func (u *User) GetExpenses() *[]Expense {
+	expensesCopy := make([]Expense, len(u.expenses))
+	copy(expensesCopy, u.expenses)
+	return &expensesCopy
+}
+
+func (u *User) AddExpense(expense *Expense) error {
+	if expense.ID != u.ID {
+		return fmt.Errorf("ID under user and expense dont match")
+	}
+	copyExpense := *expense
+	u.expenses = append(u.expenses, copyExpense)
+	return nil
+}
