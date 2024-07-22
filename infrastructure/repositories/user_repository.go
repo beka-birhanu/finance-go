@@ -7,7 +7,7 @@ import (
 
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
 	"github.com/beka-birhanu/finance-go/domain/domain_errors"
-	"github.com/beka-birhanu/finance-go/domain/entities"
+	"github.com/beka-birhanu/finance-go/domain/models.go"
 	"github.com/google/uuid"
 )
 
@@ -15,7 +15,7 @@ type UserRepository struct {
 	DB *sql.DB
 }
 
-var users = map[uuid.UUID]entities.User{}
+var users = map[uuid.UUID]models.User{}
 var NotFound = errors.New("username already taken")
 
 // Ensure UserRepository implements interfaces.persistance.IUserRepository
@@ -27,10 +27,10 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 	}
 }
 
-func (u *UserRepository) CreateUser(user *entities.User) error {
+func (u *UserRepository) CreateUser(user *models.User) error {
 	for _, existingUser := range users {
 		if existingUser.Username == user.Username {
-			return domain_errors.UsernameConflict
+			return domain_errors.ErrUsernameConflict
 		}
 	}
 
@@ -39,7 +39,7 @@ func (u *UserRepository) CreateUser(user *entities.User) error {
 	return nil
 }
 
-func (u *UserRepository) GetUserById(id string) (*entities.User, error) {
+func (u *UserRepository) GetUserById(id string) (*models.User, error) {
 	userID, err := uuid.Parse(id)
 	if err != nil {
 		return nil, fmt.Errorf("invalid UUID format: %v", err)
@@ -53,7 +53,7 @@ func (u *UserRepository) GetUserById(id string) (*entities.User, error) {
 	return &user, nil
 }
 
-func (u *UserRepository) GetUserByUsername(username string) (*entities.User, error) {
+func (u *UserRepository) GetUserByUsername(username string) (*models.User, error) {
 	for _, user := range users {
 		if user.Username == username {
 			return &user, nil
@@ -62,11 +62,10 @@ func (u *UserRepository) GetUserByUsername(username string) (*entities.User, err
 	return nil, NotFound
 }
 
-func (u *UserRepository) ListUser() ([]*entities.User, error) {
-	var userList []*entities.User
+func (u *UserRepository) ListUser() ([]*models.User, error) {
+	var userList []*models.User
 	for _, user := range users {
 		userList = append(userList, &user)
 	}
 	return userList, nil
 }
-

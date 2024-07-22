@@ -25,7 +25,7 @@ func (h *UserLoginQueryHandler) Handle(query *UserLoginQuery) (*common.AuthResul
 		return nil, fmt.Errorf("invalid username or password")
 	}
 
-	isPassowrdCorrect, err := h.HashService.Match(user.Password, query.Password)
+	isPassowrdCorrect, err := h.HashService.Match(user.PasswordHash, query.Password)
 	if err != nil {
 		return nil, fmt.Errorf("server error")
 	}

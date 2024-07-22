@@ -3,35 +3,36 @@ package commands
 import (
 	"testing"
 
-	"github.com/beka-birhanu/finance-go/domain/entities"
+	"github.com/beka-birhanu/finance-go/domain/domain_errors"
+	"github.com/beka-birhanu/finance-go/domain/models.go"
 	"github.com/dgrijalva/jwt-go"
 )
 
 type MockUserRepository struct {
-	CreateUserFunc func(user *entities.User) error
+	CreateUserFunc func(user *models.User) error
 }
 
-func (m *MockUserRepository) CreateUser(user *entities.User) error {
+func (m *MockUserRepository) CreateUser(user *models.User) error {
 	return m.CreateUserFunc(user)
 }
 
-func (m *MockUserRepository) GetUserById(id string) (*entities.User, error) {
+func (m *MockUserRepository) GetUserById(id string) (*models.User, error) {
 	return nil, nil
 }
 
-func (m *MockUserRepository) GetUserByUsername(username string) (*entities.User, error) {
+func (m *MockUserRepository) GetUserByUsername(username string) (*models.User, error) {
 	return nil, nil
 }
 
-func (m *MockUserRepository) ListUser() ([]*entities.User, error) {
+func (m *MockUserRepository) ListUser() ([]*models.User, error) {
 	return nil, nil
 }
 
 type MockJwtService struct {
-	GenerateTokenFunc func(user *entities.User) (string, error)
+	GenerateTokenFunc func(user *models.User) (string, error)
 }
 
-func (m *MockJwtService) GenerateToken(user *entities.User) (string, error) {
+func (m *MockJwtService) GenerateToken(user *models.User) (string, error) {
 	return m.GenerateTokenFunc(user)
 }
 
@@ -52,9 +53,9 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 
 func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 	mockUserRepository := &MockUserRepository{
-		CreateUserFunc: func(user *entities.User) error {
+		CreateUserFunc: func(user *models.User) error {
 			if user.Username != "uniqueUsername" {
-				return ErrUsernameInUse
+				return domain_errors.ErrUsernameConflict
 			}
 
 			return nil
@@ -62,7 +63,7 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 	}
 
 	mockJwtService := &MockJwtService{
-		GenerateTokenFunc: func(user *entities.User) (string, error) {
+		GenerateTokenFunc: func(user *models.User) (string, error) {
 			return "validToken", nil
 		},
 	}
@@ -99,12 +100,12 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 		{
 			name:          "duplicate register",
 			command:       duplicateCommand,
-			expectedError: ErrUsernameInUse,
+			expectedError: domain_errors.ErrUsernameConflict,
 		},
 		{
 			name:          "weak password register",
 			command:       weakPasswordCommand,
-			expectedError: ErrWeakPassword,
+			expectedError: domain_errors.ErrWeakPassword,
 		},
 	}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/beka-birhanu/finance-go/api/users/dto"
 	"github.com/beka-birhanu/finance-go/api/utils"
 	"github.com/beka-birhanu/finance-go/application/authentication/commands"
+	"github.com/beka-birhanu/finance-go/domain/domain_errors"
 
 	"github.com/beka-birhanu/finance-go/application/authentication/queries"
 	commandAuth "github.com/beka-birhanu/finance-go/application/common/cqrs/i_commands/authentication"
@@ -62,9 +63,9 @@ func (h *Handler) HandleUserRegistration(w http.ResponseWriter, r *http.Request)
 
 	authResult, err := h.UserRegisterCommandHandler.Handle(registerCommand)
 	if err != nil {
-		if err == commands.ErrUsernameInUse {
+		if err == domain_errors.ErrUsernameConflict {
 			utils.WriteError(w, http.StatusConflict, err)
-		} else if err == commands.ErrWeakPassword {
+		} else if err == domain_errors.ErrWeakPassword {
 			utils.WriteError(w, http.StatusBadRequest, err)
 		} else {
 			utils.WriteError(w, http.StatusInternalServerError, err)

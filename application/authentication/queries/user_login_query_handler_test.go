@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/beka-birhanu/finance-go/domain/entities"
+	"github.com/beka-birhanu/finance-go/domain/models.go"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 )
@@ -12,30 +12,30 @@ import (
 // Mock implementations
 
 type MockUserRepository struct {
-	GetUserByUsernameFunc func(username string) (*entities.User, error)
+	GetUserByUsernameFunc func(username string) (*models.User, error)
 }
 
-func (m *MockUserRepository) CreateUser(user *entities.User) error {
+func (m *MockUserRepository) CreateUser(user *models.User) error {
 	return nil
 }
 
-func (m *MockUserRepository) GetUserById(id string) (*entities.User, error) {
+func (m *MockUserRepository) GetUserById(id string) (*models.User, error) {
 	return nil, nil
 }
 
-func (m *MockUserRepository) GetUserByUsername(username string) (*entities.User, error) {
+func (m *MockUserRepository) GetUserByUsername(username string) (*models.User, error) {
 	return m.GetUserByUsernameFunc(username)
 }
 
-func (m *MockUserRepository) ListUser() ([]*entities.User, error) {
+func (m *MockUserRepository) ListUser() ([]*models.User, error) {
 	return nil, nil
 }
 
 type MockJwtService struct {
-	GenerateTokenFunc func(user *entities.User) (string, error)
+	GenerateTokenFunc func(user *models.User) (string, error)
 }
 
-func (m *MockJwtService) GenerateToken(user *entities.User) (string, error) {
+func (m *MockJwtService) GenerateToken(user *models.User) (string, error) {
 	return m.GenerateTokenFunc(user)
 }
 
@@ -57,12 +57,12 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 
 func TestUserLoginQueryHandler_Handle(t *testing.T) {
 	mockUserRepository := &MockUserRepository{
-		GetUserByUsernameFunc: func(username string) (*entities.User, error) {
+		GetUserByUsernameFunc: func(username string) (*models.User, error) {
 			if username == "validUser" {
-				return &entities.User{
-					ID:       uuid.New(),
-					Username: "validUser",
-					Password: "hashedPassword",
+				return &models.User{
+					ID:           uuid.New(),
+					Username:     "validUser",
+					PasswordHash: "hashedPassword",
 				}, nil
 			}
 			return nil, errors.New("user not found")
@@ -70,7 +70,7 @@ func TestUserLoginQueryHandler_Handle(t *testing.T) {
 	}
 
 	mockJwtService := &MockJwtService{
-		GenerateTokenFunc: func(user *entities.User) (string, error) {
+		GenerateTokenFunc: func(user *models.User) (string, error) {
 			return "validToken", nil
 		},
 	}
@@ -132,4 +132,3 @@ func TestUserLoginQueryHandler_Handle(t *testing.T) {
 		})
 	}
 }
-

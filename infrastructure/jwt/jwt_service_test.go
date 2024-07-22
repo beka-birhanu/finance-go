@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/beka-birhanu/finance-go/domain/entities"
+	"github.com/beka-birhanu/finance-go/domain/models.go"
 	"github.com/google/uuid"
 )
 
@@ -16,7 +16,7 @@ func TestJwtService(t *testing.T) {
 	jwtService := NewJwtService(secretKey, issuer, expTime)
 
 	userID := uuid.New()
-	user := &entities.User{ID: userID}
+	user := &models.User{ID: userID}
 
 	t.Run("GenerateToken", func(t *testing.T) {
 		token, err := jwtService.GenerateToken(user)
@@ -61,4 +61,3 @@ func TestJwtService(t *testing.T) {
 		}
 	})
 }
-

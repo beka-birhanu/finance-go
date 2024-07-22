@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/beka-birhanu/finance-go/domain/domain_errors"
-	"github.com/beka-birhanu/finance-go/domain/entities"
+	"github.com/beka-birhanu/finance-go/domain/models.go"
 	"github.com/google/uuid"
 )
 
@@ -14,10 +14,10 @@ func TestUserRepository(t *testing.T) {
 
 	// Create a user for testing
 	userID := uuid.New()
-	user := &entities.User{
-		ID:       userID,
-		Username: "testuser",
-		Password: "testuserpassword",
+	user := &models.User{
+		ID:           userID,
+		Username:     "testuser",
+		PasswordHash: "testuserpassword",
 	}
 
 	t.Run("CreateUser", func(t *testing.T) {
@@ -30,9 +30,9 @@ func TestUserRepository(t *testing.T) {
 	t.Run("CreateUserWithClashingUsername", func(t *testing.T) {
 		err := repo.CreateUser(user)
 		if err == nil {
-			t.Errorf("expected conflict error %v, got %v", domain_errors.UsernameConflict, err)
+			t.Errorf("expected conflict error %v, got %v", domain_errors.ErrUsernameConflict, err)
 		}
-		if !errors.Is(err, domain_errors.UsernameConflict) {
+		if !errors.Is(err, domain_errors.ErrUsernameConflict) {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
@@ -88,4 +88,3 @@ func TestUserRepository(t *testing.T) {
 		}
 	})
 }
-

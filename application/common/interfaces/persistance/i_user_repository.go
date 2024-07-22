@@ -1,10 +1,12 @@
 package persistance
 
-import "github.com/beka-birhanu/finance-go/domain/entities"
+import (
+	"github.com/beka-birhanu/finance-go/domain/models.go"
+)
 
 type IUserRepository interface {
-	CreateUser(user *entities.User) error
-	GetUserById(id string) (*entities.User, error)
-	GetUserByUsername(id string) (*entities.User, error)
-	ListUser() ([]*entities.User, error)
+	CreateUser(user *models.User) error
+	GetUserById(id string) (*models.User, error)
+	GetUserByUsername(id string) (*models.User, error)
+	ListUser() ([]*models.User, error)
 }

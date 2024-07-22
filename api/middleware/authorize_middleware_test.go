@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/beka-birhanu/finance-go/domain/entities"
+	"github.com/beka-birhanu/finance-go/domain/models.go"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -14,7 +14,7 @@ type MockJwtService struct {
 	DecodeTokenFunc func(token string) (jwt.MapClaims, error)
 }
 
-func (m *MockJwtService) GenerateToken(user *entities.User) (string, error) {
+func (m *MockJwtService) GenerateToken(user *models.User) (string, error) {
 	return "", nil
 }
 
@@ -108,4 +108,3 @@ func TestAuthorizationMiddleware(t *testing.T) {
 		})
 	}
 }
-

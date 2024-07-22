@@ -1,4 +1,4 @@
-package users_test
+package users
 
 import (
 	"bytes"
@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/beka-birhanu/finance-go/api/users"
 	"github.com/beka-birhanu/finance-go/api/users/dto"
 	"github.com/beka-birhanu/finance-go/application/authentication/commands"
 	"github.com/beka-birhanu/finance-go/application/authentication/common"
@@ -16,26 +15,27 @@ import (
 	commandAuth "github.com/beka-birhanu/finance-go/application/common/cqrs/i_commands/authentication"
 	querieAuth "github.com/beka-birhanu/finance-go/application/common/cqrs/i_queries/authentication"
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
-	"github.com/beka-birhanu/finance-go/domain/entities"
+	"github.com/beka-birhanu/finance-go/domain/domain_errors"
+	"github.com/beka-birhanu/finance-go/domain/models.go"
 	"github.com/gorilla/mux"
 )
 
 // Mock implementations for the IUserRepository interface
 type mockUserRepository struct{}
 
-func (m *mockUserRepository) CreateUser(user *entities.User) error {
+func (m *mockUserRepository) CreateUser(user *models.User) error {
 	return nil
 }
 
-func (m *mockUserRepository) GetUserById(id string) (*entities.User, error) {
+func (m *mockUserRepository) GetUserById(id string) (*models.User, error) {
 	return nil, nil
 }
 
-func (m *mockUserRepository) GetUserByUsername(username string) (*entities.User, error) {
+func (m *mockUserRepository) GetUserByUsername(username string) (*models.User, error) {
 	return nil, nil
 }
 
-func (m *mockUserRepository) ListUser() ([]*entities.User, error) {
+func (m *mockUserRepository) ListUser() ([]*models.User, error) {
 	return nil, nil
 }
 
@@ -72,10 +72,10 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 	mockRegisterCommandHandler := &mockUserRegisterCommandHandler{
 		handleFunc: func(cmd *commands.UserRegisterCommand) (*common.AuthResult, error) {
 			if cmd.Username == "existinguser" {
-				return &common.AuthResult{}, commands.ErrUsernameInUse
+				return &common.AuthResult{}, domain_errors.ErrUsernameConflict
 			}
 			if cmd.Password == "weakpassword" {
-				return &common.AuthResult{}, commands.ErrWeakPassword
+				return &common.AuthResult{}, domain_errors.ErrWeakPassword
 			}
 			return &common.AuthResult{Token: "testtoken"}, nil
 		},
@@ -92,7 +92,7 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 		},
 	}
 
-	h := users.NewHandler(mockRepo, mockRegisterCommandHandler, mockLoginQueryHandler)
+	h := NewHandler(mockRepo, mockRegisterCommandHandler, mockLoginQueryHandler)
 
 	router := mux.NewRouter()
 	h.RegisterPublicRoutes(router)
@@ -116,14 +116,14 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "existinguser", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusConflict,
-			expectedError:  commands.ErrUsernameInUse.Error(),
+			expectedError:  domain_errors.ErrUsernameConflict.Error(),
 		},
 		{
 			name:           "Weak Password",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "newuser", Password: "weakpassword"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  commands.ErrWeakPassword.Error(),
+			expectedError:  domain_errors.ErrWeakPassword.Error(),
 		},
 		{
 			name:           "Invalid Register Request Body",
@@ -187,4 +187,3 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 		})
 	}
 }
-
