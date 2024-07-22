@@ -13,29 +13,29 @@ import (
 )
 
 type UserRegisterCommandHandler struct {
-	UserRepository persistance.IUserRepository
-	JwtService     jwt.IJwtService
-	HashService    hash.IHashService
+	userRepository persistance.IUserRepository
+	jwtService     jwt.IJwtService
+	hashService    hash.IHashService
 }
 
 func NewRegisterCommandHandler(repository persistance.IUserRepository, jwtService jwt.IJwtService, hashService hash.IHashService) *UserRegisterCommandHandler {
-	return &UserRegisterCommandHandler{UserRepository: repository, JwtService: jwtService, HashService: hashService}
+	return &UserRegisterCommandHandler{userRepository: repository, jwtService: jwtService, hashService: hashService}
 }
 
 func (h *UserRegisterCommandHandler) Handle(command *UserRegisterCommand) (*common.AuthResult, error) {
-	user, err := fromRegisterCommand(command, h.HashService)
+	user, err := fromRegisterCommand(command, h.hashService)
 	if err != nil {
 		return nil, err
 	}
 
-	err = h.UserRepository.CreateUser(user)
+	err = h.userRepository.CreateUser(user)
 	if errors.Is(err, domain_errors.ErrUsernameConflict) {
 		return nil, err
 	} else if err != nil {
 		return nil, fmt.Errorf("server error")
 	}
 
-	token, err := h.JwtService.GenerateToken(user)
+	token, err := h.jwtService.GenerateToken(user)
 	if err != nil {
 		return nil, fmt.Errorf("server error")
 	}
