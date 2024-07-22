@@ -6,19 +6,23 @@ import (
 
 	"github.com/beka-birhanu/finance-go/domain/domain_errors"
 	"github.com/beka-birhanu/finance-go/domain/models"
-	"github.com/google/uuid"
 )
+
+type MockHashService struct {
+}
+
+func (m *MockHashService) Hash(word string) (string, error) {
+	return word, nil
+}
+
+func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
+	return false, nil
+}
+
+var user, _ = models.NewUser("validUser", "#%strongPassword#%", &MockHashService{})
 
 func TestUserRepository(t *testing.T) {
 	repo := NewUserRepository(nil) // Passing nil as we're using an in-memory implementation
-
-	// Create a user for testing
-	userID := uuid.New()
-	user := &models.User{
-		ID:           userID,
-		Username:     "testuser",
-		PasswordHash: "testuserpassword",
-	}
 
 	t.Run("CreateUser", func(t *testing.T) {
 		err := repo.CreateUser(user)
@@ -38,15 +42,15 @@ func TestUserRepository(t *testing.T) {
 	})
 
 	t.Run("GetUserById", func(t *testing.T) {
-		createdUser, err := repo.GetUserById(userID.String())
+		createdUser, err := repo.GetUserById(user.ID().String())
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 		if createdUser == nil { //nolint
 			t.Error("expected user to be found")
 		}
-		if createdUser.ID != userID { //nolint
-			t.Errorf("expected user ID to be %v, got %v", userID, createdUser.ID)
+		if createdUser.ID() != user.ID() { //nolint
+			t.Errorf("expected user ID to be %v, got %v", user.ID(), createdUser.ID())
 		}
 	})
 
@@ -59,19 +63,19 @@ func TestUserRepository(t *testing.T) {
 	})
 
 	t.Run("GetUserByUsername", func(t *testing.T) {
-		createdUser, err := repo.GetUserByUsername(user.Username)
+		createdUser, err := repo.GetUserByUsername(user.Username())
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 		if createdUser == nil { //nolint
 			t.Error("expected user to be found")
 		}
-		if createdUser.Username != user.Username { //nolint
-			t.Errorf("expected username to be %v, got %v", user.Username, createdUser.Username)
+		if createdUser.Username() != user.Username() { //nolint
+			t.Errorf("expected username to be %v, got %v", user.Username(), createdUser.Username())
 		}
 	})
 
-	t.Run("GetUserByUsername", func(t *testing.T) {
+	t.Run("GetUserByInvalidUsername", func(t *testing.T) {
 		_, err := repo.GetUserByUsername("invalidUsername")
 		if err == nil {
 			t.Errorf("expected error %v", NotFound)

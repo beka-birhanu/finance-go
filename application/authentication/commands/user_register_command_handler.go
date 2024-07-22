@@ -40,7 +40,7 @@ func (h *UserRegisterCommandHandler) Handle(command *UserRegisterCommand) (*comm
 		return nil, fmt.Errorf("server error")
 	}
 
-	return common.NewAuthResult(user.ID, user.Username, token), nil
+	return common.NewAuthResult(user.ID(), user.Username(), token), nil
 }
 
 func fromRegisterCommand(command *UserRegisterCommand, hashService hash.IHashService) (*models.User, error) {

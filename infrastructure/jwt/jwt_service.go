@@ -24,7 +24,7 @@ func NewJwtService(secretKey, issuer string, expTime time.Duration) *JwtService 
 
 func (s *JwtService) GenerateToken(user *models.User) (string, error) {
 	claims := jwt.MapClaims{
-		"user_id": user.ID.String(),
+		"user_id": user.ID().String(),
 		"exp":     time.Now().Add(s.expTime).Unix(),
 		"iss":     s.issuer,
 	}

@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
@@ -16,7 +15,7 @@ type UserRepository struct {
 }
 
 var users = map[uuid.UUID]models.User{}
-var NotFound = errors.New("username already taken")
+var NotFound = domain_errors.ErrUsernameConflict
 
 // Ensure UserRepository implements interfaces.persistance.IUserRepository
 var _ persistance.IUserRepository = &UserRepository{}
@@ -29,12 +28,12 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 
 func (u *UserRepository) CreateUser(user *models.User) error {
 	for _, existingUser := range users {
-		if existingUser.Username == user.Username {
+		if existingUser.Username() == user.Username() {
 			return domain_errors.ErrUsernameConflict
 		}
 	}
 
-	users[user.ID] = *user
+	users[user.ID()] = *user
 
 	return nil
 }
@@ -55,7 +54,7 @@ func (u *UserRepository) GetUserById(id string) (*models.User, error) {
 
 func (u *UserRepository) GetUserByUsername(username string) (*models.User, error) {
 	for _, user := range users {
-		if user.Username == username {
+		if user.Username() == username {
 			return &user, nil
 		}
 	}

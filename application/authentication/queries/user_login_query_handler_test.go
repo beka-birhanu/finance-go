@@ -6,7 +6,6 @@ import (
 
 	"github.com/beka-birhanu/finance-go/domain/models"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/google/uuid"
 )
 
 // Mock implementations
@@ -48,22 +47,20 @@ type MockHashService struct {
 }
 
 func (m *MockHashService) Hash(word string) (string, error) {
-	return "", nil
+	return word, nil
 }
 
 func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return m.MatchFunc(hashedWord, plainWord)
 }
 
+var validUser, _ = models.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{})
+
 func TestUserLoginQueryHandler_Handle(t *testing.T) {
 	mockUserRepository := &MockUserRepository{
 		GetUserByUsernameFunc: func(username string) (*models.User, error) {
 			if username == "validUser" {
-				return &models.User{
-					ID:           uuid.New(),
-					Username:     "validUser",
-					PasswordHash: "hashedPassword",
-				}, nil
+				return validUser, nil
 			}
 			return nil, errors.New("user not found")
 		},
@@ -77,7 +74,7 @@ func TestUserLoginQueryHandler_Handle(t *testing.T) {
 
 	mockHashService := &MockHashService{
 		MatchFunc: func(hashedWord, plainWord string) (bool, error) {
-			if hashedWord == "hashedPassword" && plainWord == "password" {
+			if hashedWord == validUser.PasswordHash() && plainWord == "password" {
 				return true, nil
 			}
 			return false, nil

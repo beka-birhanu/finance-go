@@ -5,8 +5,21 @@ import (
 	"time"
 
 	"github.com/beka-birhanu/finance-go/domain/models"
-	"github.com/google/uuid"
 )
+
+type MockHashService struct {
+	MatchFunc func(hashedWord, plainWord string) (bool, error)
+}
+
+func (m *MockHashService) Hash(word string) (string, error) {
+	return word, nil
+}
+
+func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
+	return m.MatchFunc(hashedWord, plainWord)
+}
+
+var user, _ = models.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{})
 
 func TestJwtService(t *testing.T) {
 	secretKey := "secret"
@@ -14,9 +27,6 @@ func TestJwtService(t *testing.T) {
 	expTime := time.Minute * 15
 
 	jwtService := NewJwtService(secretKey, issuer, expTime)
-
-	userID := uuid.New()
-	user := &models.User{ID: userID}
 
 	t.Run("GenerateToken", func(t *testing.T) {
 		token, err := jwtService.GenerateToken(user)
@@ -41,8 +51,8 @@ func TestJwtService(t *testing.T) {
 		if err != nil {
 			t.Errorf("expected no error, got %v", err)
 		}
-		if claims["user_id"] != userID.String() {
-			t.Errorf("expected user_id to be %v, got %v", userID.String(), claims["user_id"])
+		if claims["user_id"] != user.ID().String() {
+			t.Errorf("expected user_id to be %v, got %v", user.ID().String(), claims["user_id"])
 		}
 		if claims["iss"] != issuer {
 			t.Errorf("expected issuer to be %v, got %v", issuer, claims["iss"])

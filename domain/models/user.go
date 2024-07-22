@@ -24,11 +24,11 @@ var (
 )
 
 type User struct {
-	ID           uuid.UUID
-	Username     string
-	PasswordHash string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	id           uuid.UUID
+	username     string
+	passwordHash string
+	createdAt    time.Time
+	updatedAt    time.Time
 	expenses     []Expense
 }
 
@@ -55,25 +55,47 @@ func NewUser(username, plainPassword string, passwordHasher hash.IHashService) (
 	}
 
 	return &User{
-		ID:           uuid.New(),
-		Username:     username,
-		PasswordHash: passwordHash,
-		CreatedAt:    time.Now().UTC(),
-		UpdatedAt:    time.Now().UTC(),
+		id:           uuid.New(),
+		username:     username,
+		passwordHash: passwordHash,
+		createdAt:    time.Now().UTC(),
+		updatedAt:    time.Now().UTC(),
+		expenses:     []Expense{},
 	}, nil
 }
 
-func (u *User) GetExpenses() *[]Expense {
+func (u *User) ID() uuid.UUID {
+	return u.id
+}
+
+func (u *User) Username() string {
+	return u.username
+}
+
+func (u *User) PasswordHash() string {
+	return u.passwordHash
+}
+
+func (u *User) CreatedAt() time.Time {
+	return u.createdAt
+}
+
+func (u *User) UpdatedAt() time.Time {
+	return u.updatedAt
+}
+
+func (u *User) Expenses() []Expense {
 	expensesCopy := make([]Expense, len(u.expenses))
 	copy(expensesCopy, u.expenses)
-	return &expensesCopy
+	return expensesCopy
 }
 
 func (u *User) AddExpense(expense *Expense) error {
-	if expense.ID() != u.ID {
-		return fmt.Errorf("ID under user and expense dont match")
+	if expense.ID() != u.id {
+		return fmt.Errorf("ID under user and expense don't match")
 	}
 	copyExpense := *expense
 	u.expenses = append(u.expenses, copyExpense)
 	return nil
 }
+

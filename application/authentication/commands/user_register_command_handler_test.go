@@ -54,7 +54,7 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 	mockUserRepository := &MockUserRepository{
 		CreateUserFunc: func(user *models.User) error {
-			if user.Username != "uniqueUsername" {
+			if user.Username() != "uniqueUsername" {
 				return domain_errors.ErrUsernameConflict
 			}
 			return nil
@@ -123,4 +123,3 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 		})
 	}
 }
-
