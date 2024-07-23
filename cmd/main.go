@@ -7,8 +7,9 @@ import (
 
 	"github.com/beka-birhanu/finance-go/api"
 	"github.com/beka-birhanu/finance-go/api/middleware"
-	"github.com/beka-birhanu/finance-go/application/authentication/commands"
+	userCommands "github.com/beka-birhanu/finance-go/application/authentication/commands"
 	"github.com/beka-birhanu/finance-go/application/authentication/queries"
+	expenseCommands "github.com/beka-birhanu/finance-go/application/expense/commands"
 	"github.com/beka-birhanu/finance-go/configs"
 	"github.com/beka-birhanu/finance-go/infrastructure/db"
 	"github.com/beka-birhanu/finance-go/infrastructure/hash"
@@ -31,8 +32,9 @@ func main() {
 	authorizationMiddleware := middleware.AuthorizationMiddleware(jwtService)
 
 	// Initialize command and query handlers
-	userRegisterCommandHandler := commands.NewRegisterCommandHandler(userRepository, jwtService, hashService)
+	userRegisterCommandHandler := userCommands.NewRegisterCommandHandler(userRepository, jwtService, hashService)
 	userLoginQueryHandler := queries.NewUserLoginQueryHandler(userRepository, jwtService, hashService)
+	addExpenseHandler := expenseCommands.NewAddExpenseCommandHandler(userRepository)
 
 	// Create and run the server
 	server := api.NewAPIServer(
@@ -41,6 +43,7 @@ func main() {
 		userRegisterCommandHandler,
 		userLoginQueryHandler,
 		authorizationMiddleware,
+		addExpenseHandler,
 	)
 
 	if err := server.Run(); err != nil {
