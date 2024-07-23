@@ -15,7 +15,7 @@ type UserRepository struct {
 }
 
 var users = map[uuid.UUID]models.User{}
-var NotFound = domain_errors.ErrUsernameConflict
+var NotFound = fmt.Errorf("user not found")
 
 // Ensure UserRepository implements interfaces.persistance.IUserRepository
 var _ persistance.IUserRepository = &UserRepository{}
