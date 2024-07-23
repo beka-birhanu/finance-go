@@ -91,11 +91,10 @@ func (u *User) Expenses() []Expense {
 }
 
 func (u *User) AddExpense(expense *Expense) error {
-	if expense.ID() != u.id {
+	if expense.UserID() != u.id {
 		return fmt.Errorf("ID under user and expense don't match")
 	}
 	copyExpense := *expense
 	u.expenses = append(u.expenses, copyExpense)
 	return nil
 }
-
