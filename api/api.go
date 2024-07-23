@@ -12,20 +12,20 @@ import (
 )
 
 type APIServer struct {
-	Addr                       string
-	UserRepository             persistance.IUserRepository
-	UserRegisterCommandHandler commandAuth.IUserRegisterCommandHandler
-	UserLoginQueryHandler      querieAuth.IUserLoginQueryHandler
-	AuthorizationMiddleware    func(http.Handler) http.Handler
+	addr                       string
+	userRepository             persistance.IUserRepository
+	userRegisterCommandHandler commandAuth.IUserRegisterCommandHandler
+	userLoginQueryHandler      querieAuth.IUserLoginQueryHandler
+	authorizationMiddleware    func(http.Handler) http.Handler
 }
 
 func NewAPIServer(addr string, userRepository persistance.IUserRepository, userRegisterCommandHandler commandAuth.IUserRegisterCommandHandler, userQueryHandler querieAuth.IUserLoginQueryHandler, authorizationMiddleware func(http.Handler) http.Handler) *APIServer {
 	return &APIServer{
-		Addr:                       addr,
-		UserRepository:             userRepository,
-		UserRegisterCommandHandler: userRegisterCommandHandler,
-		UserLoginQueryHandler:      userQueryHandler,
-		AuthorizationMiddleware:    authorizationMiddleware,
+		addr:                       addr,
+		userRepository:             userRepository,
+		userRegisterCommandHandler: userRegisterCommandHandler,
+		userLoginQueryHandler:      userQueryHandler,
+		authorizationMiddleware:    authorizationMiddleware,
 	}
 }
 
@@ -37,13 +37,13 @@ func (s *APIServer) Run() error {
 
 	// Routes that require authentication
 	protectedRouter := router.PathPrefix("/api/v1").Subrouter()
-	protectedRouter.Use(s.AuthorizationMiddleware)
+	protectedRouter.Use(s.authorizationMiddleware)
 
-	userHandler := users.NewHandler(s.UserRepository, s.UserRegisterCommandHandler, s.UserLoginQueryHandler)
+	userHandler := users.NewHandler(s.userRepository, s.userRegisterCommandHandler, s.userLoginQueryHandler)
 	userHandler.RegisterPublicRoutes(publicRouter)
 	userHandler.RegisterProtectedRoutes(protectedRouter)
 
-	log.Println("Listening on", s.Addr)
+	log.Println("Listening on", s.addr)
 
-	return http.ListenAndServe(s.Addr, router)
+	return http.ListenAndServe(s.addr, router)
 }
