@@ -4,28 +4,31 @@ import (
 	"errors"
 	"time"
 
+	timeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
 	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/dgrijalva/jwt-go"
 )
 
 type JwtService struct {
-	secretKey string
-	issuer    string
-	expTime   time.Duration
+	secretKey   string
+	issuer      string
+	expTime     time.Duration
+	timeService timeservice.ITimeService
 }
 
-func NewJwtService(secretKey, issuer string, expTime time.Duration) *JwtService {
+func NewJwtService(secretKey, issuer string, expTime time.Duration, timeService timeservice.ITimeService) *JwtService {
 	return &JwtService{
-		secretKey: secretKey,
-		issuer:    issuer,
-		expTime:   expTime,
+		secretKey:   secretKey,
+		issuer:      issuer,
+		expTime:     expTime,
+		timeService: timeService,
 	}
 }
 
 func (s *JwtService) GenerateToken(user *model.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": user.ID().String(),
-		"exp":     time.Now().Add(s.expTime).Unix(),
+		"exp":     s.timeService.NowUTC().Add(s.expTime).Unix(),
 		"iss":     s.issuer,
 	}
 

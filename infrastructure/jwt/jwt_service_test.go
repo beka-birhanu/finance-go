@@ -19,14 +19,20 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return m.MatchFunc(hashedWord, plainWord)
 }
 
-var user, _ = model.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{})
+type MockTimeService struct{}
+
+func (m *MockTimeService) NowUTC() time.Time {
+	return time.Now().UTC()
+}
+
+var user, _ = model.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{}, time.Now().UTC())
 
 func TestJwtService(t *testing.T) {
 	secretKey := "secret"
 	issuer := "test_issuer"
 	expTime := time.Minute * 15
 
-	jwtService := NewJwtService(secretKey, issuer, expTime)
+	jwtService := NewJwtService(secretKey, issuer, expTime, &MockTimeService{})
 
 	t.Run("GenerateToken", func(t *testing.T) {
 		token, err := jwtService.GenerateToken(user)

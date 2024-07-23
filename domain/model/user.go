@@ -32,7 +32,7 @@ type User struct {
 	expenses     []Expense
 }
 
-func NewUser(username, plainPassword string, passwordHasher hash.IHashService) (*User, error) {
+func NewUser(username, plainPassword string, passwordHasher hash.IHashService, currentUTCTime time.Time) (*User, error) {
 	if len(username) < MIN_USERNAME_LENGTH {
 		return nil, domainError.ErrUsernameTooShort
 	}
@@ -58,8 +58,8 @@ func NewUser(username, plainPassword string, passwordHasher hash.IHashService) (
 		id:           uuid.New(),
 		username:     username,
 		passwordHash: passwordHash,
-		createdAt:    time.Now().UTC(),
-		updatedAt:    time.Now().UTC(),
+		createdAt:    currentUTCTime,
+		updatedAt:    currentUTCTime,
 		expenses:     []Expense{},
 	}, nil
 }
@@ -90,11 +90,13 @@ func (u *User) Expenses() []Expense {
 	return expensesCopy
 }
 
-func (u *User) AddExpense(expense *Expense) error {
+func (u *User) AddExpense(expense *Expense, currentUTCTime time.Time) error {
 	if expense.UserID() != u.id {
 		return fmt.Errorf("ID under user and expense don't match")
 	}
+
 	copyExpense := *expense
 	u.expenses = append(u.expenses, copyExpense)
+	u.updatedAt = currentUTCTime
 	return nil
 }

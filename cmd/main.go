@@ -17,6 +17,7 @@ import (
 	"github.com/beka-birhanu/finance-go/infrastructure/hash"
 	"github.com/beka-birhanu/finance-go/infrastructure/jwt"
 	"github.com/beka-birhanu/finance-go/infrastructure/repository"
+	timeservice "github.com/beka-birhanu/finance-go/infrastructure/time_service"
 )
 
 var dbUser = config.Envs.DBUser
@@ -30,19 +31,21 @@ func main() {
 	database := db.Connect(dbUser, dbPassword, dbName, dbHost, dbPort)
 
 	// Initialize dependencies
+	timeService := timeservice.NewTimeService()
 	userRepository := repository.NewUserRepository(database)
 	jwtService := jwt.NewJwtService(
 		config.Envs.JWTSecret,
 		config.Envs.ServerHost,
 		time.Duration(config.Envs.JWTExpirationInSeconds)*time.Second,
+		timeService,
 	)
 	hashService := hash.GetHashService()
 	authorizationMiddleware := middleware.AuthorizationMiddleware(jwtService)
 
 	// Initialize command and query handlers
-	userRegisterCommandHandler := authCommand.NewRegisterCommandHandler(userRepository, jwtService, hashService)
+	userRegisterCommandHandler := authCommand.NewRegisterCommandHandler(userRepository, jwtService, hashService, timeService)
 	userLoginQueryHandler := authQuery.NewUserLoginQueryHandler(userRepository, jwtService, hashService)
-	addExpenseHandler := expenseCommand.NewAddExpenseCommandHandler(userRepository)
+	addExpenseHandler := expenseCommand.NewAddExpenseCommandHandler(userRepository, timeService)
 
 	// Create and run the server
 	server := api.NewAPIServer(

@@ -22,7 +22,7 @@ type Expense struct {
 	updatedAt   time.Time
 }
 
-func NewExpense(description string, amount float32, userId uuid.UUID, date time.Time) (*Expense, error) {
+func NewExpense(description string, amount float32, userId uuid.UUID, date time.Time, currentUTCTime time.Time) (*Expense, error) {
 	description = strings.TrimSpace(description)
 
 	if amount <= 0 {
@@ -43,8 +43,8 @@ func NewExpense(description string, amount float32, userId uuid.UUID, date time.
 		amount:      amount,
 		userId:      userId,
 		date:        date,
-		createdAt:   time.Now().UTC(),
-		updatedAt:   time.Now().UTC(),
+		createdAt:   currentUTCTime,
+		updatedAt:   currentUTCTime,
 	}, nil
 }
 

@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"testing"
+	"time"
 
 	domainError "github.com/beka-birhanu/finance-go/domain/error"
 	"github.com/beka-birhanu/finance-go/domain/model"
@@ -20,7 +21,7 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return false, nil
 }
 
-var user, _ = model.NewUser("validUser", "#%strongPassword#%", &MockHashService{})
+var user, _ = model.NewUser("validUser", "#%strongPassword#%", &MockHashService{}, time.Now().UTC())
 
 func TestUserRepository(t *testing.T) {
 	repo := NewUserRepository(nil) // Passing nil as we're using an in-memory implementation

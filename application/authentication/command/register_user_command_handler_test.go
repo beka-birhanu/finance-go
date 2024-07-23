@@ -2,6 +2,7 @@ package command
 
 import (
 	"testing"
+	"time"
 
 	domainError "github.com/beka-birhanu/finance-go/domain/error"
 	"github.com/beka-birhanu/finance-go/domain/model"
@@ -53,6 +54,12 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return hashedWord == "hashed"+plainWord, nil
 }
 
+type MokeTimeService struct{}
+
+func (m *MokeTimeService) NowUTC() time.Time {
+	return time.Now().UTC()
+}
+
 func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 	mockUserRepository := &MockUserRepository{
 		CreateUserFunc: func(user *model.User) error {
@@ -70,8 +77,9 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 	}
 
 	mockHashService := &MockHashService{}
+	mockTimeService := &MokeTimeService{}
 
-	handler := NewRegisterCommandHandler(mockUserRepository, mockJwtService, mockHashService)
+	handler := NewRegisterCommandHandler(mockUserRepository, mockJwtService, mockHashService, mockTimeService)
 
 	validCommand, err := NewUserRegisterCommand("uniqueUsername", "#%strongPassword#%")
 	if err != nil {

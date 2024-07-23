@@ -3,6 +3,7 @@ package query
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/dgrijalva/jwt-go"
@@ -55,7 +56,7 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return m.MatchFunc(hashedWord, plainWord)
 }
 
-var validUser, _ = model.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{})
+var validUser, _ = model.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{}, time.Now().UTC())
 
 func TestUserLoginQueryHandler_Handle(t *testing.T) {
 	mockUserRepository := &MockUserRepository{
