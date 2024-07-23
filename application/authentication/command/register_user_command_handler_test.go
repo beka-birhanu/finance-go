@@ -5,6 +5,7 @@ import (
 
 	domainError "github.com/beka-birhanu/finance-go/domain/error"
 	"github.com/beka-birhanu/finance-go/domain/model"
+	"github.com/google/uuid"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -17,7 +18,7 @@ func (m *MockUserRepository) CreateUser(user *model.User) error {
 	return m.CreateUserFunc(user)
 }
 
-func (m *MockUserRepository) GetUserById(id string) (*model.User, error) {
+func (m *MockUserRepository) GetUserById(id uuid.UUID) (*model.User, error) {
 	return nil, nil
 }
 

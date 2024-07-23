@@ -6,6 +6,7 @@ import (
 
 	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 )
 
 // Mock implementations
@@ -18,7 +19,7 @@ func (m *MockUserRepository) CreateUser(user *model.User) error {
 	return nil
 }
 
-func (m *MockUserRepository) GetUserById(id string) (*model.User, error) {
+func (m *MockUserRepository) GetUserById(id uuid.UUID) (*model.User, error) {
 	return nil, nil
 }
 

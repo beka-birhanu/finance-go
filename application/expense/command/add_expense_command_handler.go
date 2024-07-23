@@ -19,7 +19,7 @@ func (h *AddExpenseCommandHandler) Handle(command *AddExpenseCommand) (*model.Ex
 		return nil, err
 	}
 
-	user, err := h.userRepository.GetUserById(command.UserId.String())
+	user, err := h.userRepository.GetUserById(command.UserId)
 	if err != nil {
 		return nil, err
 	}
