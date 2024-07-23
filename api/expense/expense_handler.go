@@ -2,6 +2,7 @@ package expenses
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/beka-birhanu/finance-go/api/expenses/dto"
@@ -9,7 +10,6 @@ import (
 	"github.com/beka-birhanu/finance-go/application/common/cqrs/i_commands/expense"
 	"github.com/beka-birhanu/finance-go/application/expense/commands"
 	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -30,25 +30,15 @@ func (h *ExpensesHandler) RegisterProtectedRoutes(router *mux.Router) {
 		"/users/{userId}/expenses",
 		h.handleAddExpense,
 	).Methods(http.MethodPost)
+
+	router.HandleFunc(
+		"/users/{userId}/expenses/{expenseId}",
+		h.handleGetSingleExpenseById,
+	).Methods(http.MethodGet)
 }
 
 func (h *ExpensesHandler) handleAddExpense(w http.ResponseWriter, r *http.Request) {
 	var addExpenseRequest dto.AddExpenseRequest
-
-	// Extract user ID from URL path
-	vars := mux.Vars(r)
-	userIdStr, ok := vars["userId"]
-	if !ok {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing user ID in path"))
-		return
-	}
-
-	// Parse user ID to UUID
-	userId, err := uuid.Parse(userIdStr)
-	if err != nil {
-		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid user ID format: %v", err))
-		return
-	}
 
 	if err := utils.ParseJSON(r, &addExpenseRequest); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload: %v", err))
@@ -59,6 +49,11 @@ func (h *ExpensesHandler) handleAddExpense(w http.ResponseWriter, r *http.Reques
 		errors := err.(validator.ValidationErrors)
 		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload: %v", errors))
 		return
+	}
+
+	userId, err := utils.GetIdFromUrl(r, "userId")
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
 	}
 
 	addExpenseCommand := &commands.AddExpenseCommand{
@@ -81,4 +76,18 @@ func (h *ExpensesHandler) handleAddExpense(w http.ResponseWriter, r *http.Reques
 
 	w.Header().Set("Location", resourceLocation)
 	utils.WriteJSON(w, http.StatusCreated, nil)
+}
+
+func (h *ExpensesHandler) handleGetSingleExpenseById(w http.ResponseWriter, r *http.Request) {
+	userId, err := utils.GetIdFromUrl(r, "userId")
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+	}
+
+	expenseId, err := utils.GetIdFromUrl(r, "expenseId")
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+	}
+
+	log.Println(userId, expenseId)
 }

@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 )
 
 var Validate = validator.New()
@@ -46,4 +48,20 @@ func GetBaseURL(r *http.Request) string {
 		scheme = "https"
 	}
 	return fmt.Sprintf("%s://%s", scheme, r.Host)
+}
+
+func GetIdFromUrl(r *http.Request, paramName string) (uuid.UUID, error) {
+	// Extract user ID from URL path
+	vars := mux.Vars(r)
+	idStr, ok := vars[paramName]
+	if !ok {
+		return uuid.Nil, fmt.Errorf("missing user %s in path", paramName)
+	}
+
+	// Parse user ID to UUID
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("invalid user %s format: %v", paramName, err)
+	}
+	return id, nil
 }

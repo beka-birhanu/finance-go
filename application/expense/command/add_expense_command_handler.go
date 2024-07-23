@@ -29,7 +29,7 @@ func (h *AddExpenseCommandHandler) Handle(command *AddExpenseCommand) (*models.E
 		return nil, err
 	}
 
-	// TODO: save user
+	// TODO: save user and expense
 
 	return newExpense, nil
 }

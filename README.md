@@ -1,6 +1,6 @@
 # Financial Tracker
 
-This is a back-end for a Financial-tracker, an app I made to learn React and to learn the basics of CRUD RESTful API in go
+This is a back-end for a Financial-tracker, an app I made to learn Clean Architecture and Domain Driven Design using vanilla Go
 
 ## Technologies
 
