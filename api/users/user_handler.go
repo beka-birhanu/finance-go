@@ -30,18 +30,18 @@ func NewHandler(userRepository persistance.IUserRepository, commandHandler comma
 func (h *UsersHandler) RegisterPublicRoutes(router *mux.Router) {
 	router.HandleFunc(
 		"/users/register",
-		h.HandleUserRegistration,
+		h.handleUserRegistration,
 	).Methods(http.MethodPost)
 
 	router.HandleFunc(
 		"/users/login",
-		h.HandleUserLogin,
+		h.handleUserLogin,
 	).Methods(http.MethodPost)
 }
 
 func (h *UsersHandler) RegisterProtectedRoutes(router *mux.Router) {}
 
-func (h *UsersHandler) HandleUserRegistration(w http.ResponseWriter, r *http.Request) {
+func (h *UsersHandler) handleUserRegistration(w http.ResponseWriter, r *http.Request) {
 	var registerRequest dto.RegisterRequest
 
 	if err := utils.ParseJSON(r, &registerRequest); err != nil {
@@ -91,7 +91,7 @@ func (h *UsersHandler) HandleUserRegistration(w http.ResponseWriter, r *http.Req
 	utils.WriteJSONWithCookie(w, http.StatusOK, registorResponse, []*http.Cookie{&cookie})
 }
 
-func (h *UsersHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
+func (h *UsersHandler) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 	var loginRequest dto.LoginUserRequest
 
 	if err := utils.ParseJSON(r, &loginRequest); err != nil {

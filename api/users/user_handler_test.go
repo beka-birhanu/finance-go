@@ -215,4 +215,3 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 		})
 	}
 }
-
