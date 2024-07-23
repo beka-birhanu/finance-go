@@ -17,17 +17,17 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Handler struct {
+type UsersHandler struct {
 	userRepository             persistance.IUserRepository
 	userRegisterCommandHandler commandAuth.IUserRegisterCommandHandler
 	userQueryHandler           querieAuth.IUserLoginQueryHandler
 }
 
-func NewHandler(userRepository persistance.IUserRepository, commandHandler commandAuth.IUserRegisterCommandHandler, queryHandler querieAuth.IUserLoginQueryHandler) *Handler {
-	return &Handler{userRepository: userRepository, userRegisterCommandHandler: commandHandler, userQueryHandler: queryHandler}
+func NewHandler(userRepository persistance.IUserRepository, commandHandler commandAuth.IUserRegisterCommandHandler, queryHandler querieAuth.IUserLoginQueryHandler) *UsersHandler {
+	return &UsersHandler{userRepository: userRepository, userRegisterCommandHandler: commandHandler, userQueryHandler: queryHandler}
 }
 
-func (h *Handler) RegisterPublicRoutes(router *mux.Router) {
+func (h *UsersHandler) RegisterPublicRoutes(router *mux.Router) {
 	router.HandleFunc(
 		"/users/register",
 		h.HandleUserRegistration,
@@ -39,9 +39,9 @@ func (h *Handler) RegisterPublicRoutes(router *mux.Router) {
 	).Methods(http.MethodPost)
 }
 
-func (h *Handler) RegisterProtectedRoutes(router *mux.Router) {}
+func (h *UsersHandler) RegisterProtectedRoutes(router *mux.Router) {}
 
-func (h *Handler) HandleUserRegistration(w http.ResponseWriter, r *http.Request) {
+func (h *UsersHandler) HandleUserRegistration(w http.ResponseWriter, r *http.Request) {
 	var registerRequest dto.RegisterRequest
 
 	if err := utils.ParseJSON(r, &registerRequest); err != nil {
@@ -91,7 +91,7 @@ func (h *Handler) HandleUserRegistration(w http.ResponseWriter, r *http.Request)
 	utils.WriteJSONWithCookie(w, http.StatusOK, registorResponse, []*http.Cookie{&cookie})
 }
 
-func (h *Handler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
+func (h *UsersHandler) HandleUserLogin(w http.ResponseWriter, r *http.Request) {
 	var loginRequest dto.LoginUserRequest
 
 	if err := utils.ParseJSON(r, &loginRequest); err != nil {
