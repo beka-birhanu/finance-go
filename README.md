@@ -16,21 +16,125 @@ Simply clone the repository and run the command:
 docker-compose up
 ```
 
+## API Definition (User)
+
+### Create User
+
+#### Request
+
+```
+Post api/v1/users
+```
+
+```json
+{
+  "username": "beka_birhanu",
+  "password": "************"
+}
+```
+
+#### Response
+
+```
+201 Created
+```
+
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "username": "beka_birhanu"
+}
+```
+
+**Headers**
+
+```
+Set-Cookie: token=<token_value>; HttpOnly; Secure
+```
+
+## API Definition (Authentication)
+
+### Sign in
+
+#### Request
+
+```
+Post api/v1/auth/signIn
+```
+
+```json
+{
+  "username": "beka_birhanu"
+  "password": "************"
+}
+```
+
+#### Response
+
+```
+200 Ok
+```
+
+**Headers**
+
+```
+Set-Cookie: token=<token_value>; HttpOnly; Secure
+```
+
+```json
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "username": "beka_birhanu"
+}
+```
+
+### Sign out
+
+#### Request
+
+**Headers**
+
+```
+Cookie: token=<token_value>
+```
+
+```
+Post api/v1/auth/signOut
+```
+
+#### Response
+
+```
+204 No Content
+```
+
+**Headers**
+
+```
+Set-Cookie: token=; HttpOnly; Secure; Max-Age=0
+```
+
 ## API Definition (Expense)
 
 ### Create Expense
 
 #### Request
 
+**Headers**
+
 ```
-POST /expenses
+Cookie: token=<token_value>
+```
+
+```
+POST api/v1/users/{{userId}}/expenses
 ```
 
 ```json
 {
-  "title": "Groceries",
+  "description": "Groceries",
   "amount": 279.7,
-  "date": "2024-06-08T08:00:00"
+  "date": "2024-06-08T08:00:00Z"
 }
 ```
 
@@ -41,15 +145,15 @@ POST /expenses
 ```
 
 ```
-Location: {{host}}/expenses/{{id}}
+Location: {{host}/api/v1/users/{{userId}}/expenses}
 ```
 
 ```json
 {
   "id": "00000000-0000-0000-0000-000000000000",
-  "title": "Groceries",
+  "description": "Groceries",
   "amount": 279.7,
-  "date": "2024-06-08T08:00:00"
+  "date": "2024-06-08T08:00:00Z"
 }
 ```
 
@@ -57,8 +161,14 @@ Location: {{host}}/expenses/{{id}}
 
 #### Get Bulk Request
 
+**Headers**
+
 ```
-GET /expenses?pageNumber={yourPart}&pageSize={yourPart}&filterField={yourPart}&filterValue={yourPart}&sortField={yourPart}&sortOrder={yourPart}
+Cookie: token=<token_value>
+```
+
+```
+GET api/v1/users/{{userId}}/expenses?pageNumber={yourPart}&pageSize={yourPart}&filterField={yourPart}&filterValue={yourPart}&sortField={yourPart}&sortOrder={yourPart}
 ```
 
 #### Response
@@ -72,34 +182,17 @@ GET /expenses?pageNumber={yourPart}&pageSize={yourPart}&filterField={yourPart}&f
   "expenses": [
     {
       "id": "286d7bbf-e6e0-4bfd-b4e0-906a613193db",
-      "title": "Car Repair",
+      "description": "Car Repair",
       "amount": 350.5,
-      "date": "2024-02-15T08:00:00"
+      "date": "2024-02-15T08:00:00Z"
     },
     {
       "id": "3f91f017-af32-46b3-9c53-47adb1314c9a",
-      "title": "Groceries",
+      "description": "Groceries",
       "amount": 75.3,
-      "date": "2024-03-10T08:00:00"
+      "date": "2024-03-10T08:00:00Z"
     },
-    {
-      "id": "9faf45e0-38c5-4c27-b9d8-f6b04b719060",
-      "title": "Electric Bill",
-      "amount": 120.75,
-      "date": "2024-04-05T08:00:00"
-    },
-    {
-      "id": "805795d0-f73d-4334-94af-ce4fab83e142",
-      "title": "Dinner Out",
-      "amount": 60.2,
-      "date": "2024-04-18T08:00:00"
-    },
-    {
-      "id": "537126c9-f485-4674-900e-c77ae349c25f",
-      "title": "Movie Tickets",
-      "amount": 45.0,
-      "date": "2024-05-01T08:00:00"
-    }
+    ...
   ],
   "totalCount": 5,
   "pageNumber": 1,
@@ -109,8 +202,14 @@ GET /expenses?pageNumber={yourPart}&pageSize={yourPart}&filterField={yourPart}&f
 
 #### Get One Request
 
+**Headers**
+
 ```
-GET /expenses/{{id}}
+Cookie: token=<token_value>
+```
+
+```
+GET api/v1/users/{{userId}}/expenses/{{id}}
 ```
 
 #### Response
@@ -122,9 +221,9 @@ GET /expenses/{{id}}
 ```json
 {
   "id": "00000000-0000-0000-0000-000000000000",
-  "title": "Groceries",
+  "description": "Groceries",
   "amount": 279.7,
-  "date": "2024-06-08T08:00:00"
+  "date": "2024-06-08T08:00:00Z"
 }
 ```
 
@@ -132,16 +231,22 @@ GET /expenses/{{id}}
 
 #### Request
 
+**Headers**
+
 ```
-PUT /expenses/{{id}}
+Cookie: token=<token_value>
+```
+
+```
+PUT api/v1/users/{{userId}}/expenses/{{id}}
 ```
 
 ```json
 {
   "id": "00000000-0000-0000-0000-000000000000",
-  "title": "Groceries",
+  "description": "Groceries",
   "amount": 279.7,
-  "date": "2024-06-08T08:00:00"
+  "date": "2024-06-08T08:00:00Z"
 }
 ```
 
@@ -158,107 +263,21 @@ or
 ```
 
 ```
-Location: {{host}}/expenses/{{id}}
+Location: {{host}}/api/v1/users/{{userId}}/expenses/{{id}}
 ```
 
 ### Delete Expense
 
 #### Request
 
-```
-DELETE /expenses/{{id}}
-```
-
-#### Response
-
-```
-204 No Content
-```
-
-## API Definition (User)
-
-### Create User
-
-#### Request
-
-```
-Post /users
-```
-
-```json
-{
-  "firstName": "Beka",
-  "lastName": "Birhanu",
-  "email": "romareo@gmail.com",
-  "password": "************"
-}
-```
-
-#### Response
-
-```
-201 Created
-```
-
 **Headers**
 
 ```
-Set-Cookie: token
+Cookie: token=<token_value>
 ```
 
-```json
-{
-  "id": "00000000-0000-0000-0000-000000000000",
-  "firstName": "Beka",
-  "lastName": "Birhanu",
-  "email": "romareo@gmail.com"
-}
 ```
-
-## API Definition (Authentication)
-
-### Sign in
-
-#### Request
-
-```
-Post /auth/signIn
-```
-
-```json
-{
-  "email": "romareo@gmail.com",
-  "password": "************"
-}
-```
-
-#### Response
-
-```
-200 Ok
-```
-
-**Headers**
-
-```
-Set-Cookie: token
-```
-
-```json
-{
-  "id": "00000000-0000-0000-0000-000000000000",
-  "firstName": "Beka",
-  "lastName": "Birhanu",
-  "email": "romareo@gmail.com"
-}
-```
-
-### Sign out
-
-#### Request
-
-```
-Post /auth/signOut
+DELETE api/v1/users/{{userId}}/expenses/{{id}}
 ```
 
 #### Response
