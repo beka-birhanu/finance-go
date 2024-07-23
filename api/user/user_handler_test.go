@@ -18,6 +18,7 @@ import (
 	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
 	domainError "github.com/beka-birhanu/finance-go/domain/error"
 	"github.com/beka-birhanu/finance-go/domain/model"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -28,7 +29,7 @@ func (m *mockUserRepository) CreateUser(user *model.User) error {
 	return nil
 }
 
-func (m *mockUserRepository) GetUserById(id string) (*model.User, error) {
+func (m *mockUserRepository) GetUserById(id uuid.UUID) (*model.User, error) {
 	return nil, nil
 }
 

@@ -38,13 +38,9 @@ func (u *UserRepository) CreateUser(user *model.User) error {
 	return nil
 }
 
-func (u *UserRepository) GetUserById(id string) (*model.User, error) {
-	userID, err := uuid.Parse(id)
-	if err != nil {
-		return nil, fmt.Errorf("invalid UUID format: %v", err)
-	}
+func (u *UserRepository) GetUserById(id uuid.UUID) (*model.User, error) {
 
-	user, found := users[userID]
+	user, found := users[id]
 	if !found {
 		return nil, NotFound
 	}

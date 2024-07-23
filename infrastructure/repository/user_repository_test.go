@@ -6,6 +6,7 @@ import (
 
 	domainError "github.com/beka-birhanu/finance-go/domain/error"
 	"github.com/beka-birhanu/finance-go/domain/model"
+	"github.com/google/uuid"
 )
 
 type MockHashService struct {
@@ -42,7 +43,7 @@ func TestUserRepository(t *testing.T) {
 	})
 
 	t.Run("GetUserById", func(t *testing.T) {
-		createdUser, err := repo.GetUserById(user.ID().String())
+		createdUser, err := repo.GetUserById(user.ID())
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -55,7 +56,7 @@ func TestUserRepository(t *testing.T) {
 	})
 
 	t.Run("GetUserByIdWithInvalidId", func(t *testing.T) {
-		_, err := repo.GetUserById("invalidId")
+		_, err := repo.GetUserById(uuid.New()) // random invalid id
 		if err == nil {
 			t.Errorf("expected error %v", NotFound)
 		}
