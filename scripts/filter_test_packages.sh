@@ -3,13 +3,17 @@
 # List of packages to exclude (adjust as needed)
 exclude_packages=(
   "github.com/beka-birhanu/finance-go/api"
-  "github.com/beka-birhanu/finance-go/api/users/dto"
+  "github.com/beka-birhanu/finance-go/docs"
+  "github.com/beka-birhanu/finance-go/scripts"
+  "github.com/beka-birhanu/finance-go/api/user/dto"
+  "github.com/beka-birhanu/finance-go/api/expense/dto"
   "github.com/beka-birhanu/finance-go/application/authentication/common"
-  "github.com/beka-birhanu/finance-go/application/common/cqrs/i_commands/authentication"
-  "github.com/beka-birhanu/finance-go/application/common/cqrs/i_queries/authentication"
-  "github.com/beka-birhanu/finance-go/application/common/interfaces/hash"
-  "github.com/beka-birhanu/finance-go/application/common/interfaces/jwt"
-  "github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
+  "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
+  "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
+  "github.com/beka-birhanu/finance-go/application/common/interface/hash"
+  "github.com/beka-birhanu/finance-go/application/common/interface/jwt"
+  "github.com/beka-birhanu/finance-go/application/common/interface/repository"
+  "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
   "github.com/beka-birhanu/finance-go/infrastructure/db"
 )
 
