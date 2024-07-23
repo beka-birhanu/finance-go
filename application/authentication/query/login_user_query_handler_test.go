@@ -1,40 +1,40 @@
-package queries
+package query
 
 import (
 	"errors"
 	"testing"
 
-	"github.com/beka-birhanu/finance-go/domain/models"
+	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/dgrijalva/jwt-go"
 )
 
 // Mock implementations
 
 type MockUserRepository struct {
-	GetUserByUsernameFunc func(username string) (*models.User, error)
+	GetUserByUsernameFunc func(username string) (*model.User, error)
 }
 
-func (m *MockUserRepository) CreateUser(user *models.User) error {
+func (m *MockUserRepository) CreateUser(user *model.User) error {
 	return nil
 }
 
-func (m *MockUserRepository) GetUserById(id string) (*models.User, error) {
+func (m *MockUserRepository) GetUserById(id string) (*model.User, error) {
 	return nil, nil
 }
 
-func (m *MockUserRepository) GetUserByUsername(username string) (*models.User, error) {
+func (m *MockUserRepository) GetUserByUsername(username string) (*model.User, error) {
 	return m.GetUserByUsernameFunc(username)
 }
 
-func (m *MockUserRepository) ListUser() ([]*models.User, error) {
+func (m *MockUserRepository) ListUser() ([]*model.User, error) {
 	return nil, nil
 }
 
 type MockJwtService struct {
-	GenerateTokenFunc func(user *models.User) (string, error)
+	GenerateTokenFunc func(user *model.User) (string, error)
 }
 
-func (m *MockJwtService) GenerateToken(user *models.User) (string, error) {
+func (m *MockJwtService) GenerateToken(user *model.User) (string, error) {
 	return m.GenerateTokenFunc(user)
 }
 
@@ -54,11 +54,11 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return m.MatchFunc(hashedWord, plainWord)
 }
 
-var validUser, _ = models.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{})
+var validUser, _ = model.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{})
 
 func TestUserLoginQueryHandler_Handle(t *testing.T) {
 	mockUserRepository := &MockUserRepository{
-		GetUserByUsernameFunc: func(username string) (*models.User, error) {
+		GetUserByUsernameFunc: func(username string) (*model.User, error) {
 			if username == "validUser" {
 				return validUser, nil
 			}
@@ -67,7 +67,7 @@ func TestUserLoginQueryHandler_Handle(t *testing.T) {
 	}
 
 	mockJwtService := &MockJwtService{
-		GenerateTokenFunc: func(user *models.User) (string, error) {
+		GenerateTokenFunc: func(user *model.User) (string, error) {
 			return "validToken", nil
 		},
 	}

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/beka-birhanu/finance-go/domain/models"
+	"github.com/beka-birhanu/finance-go/domain/model"
 )
 
 type MockHashService struct {
@@ -19,7 +19,7 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return m.MatchFunc(hashedWord, plainWord)
 }
 
-var user, _ = models.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{})
+var user, _ = model.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{})
 
 func TestJwtService(t *testing.T) {
 	secretKey := "secret"

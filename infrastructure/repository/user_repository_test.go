@@ -1,11 +1,11 @@
-package repositories
+package repository
 
 import (
 	"errors"
 	"testing"
 
-	"github.com/beka-birhanu/finance-go/domain/domain_errors"
-	"github.com/beka-birhanu/finance-go/domain/models"
+	domainError "github.com/beka-birhanu/finance-go/domain/error"
+	"github.com/beka-birhanu/finance-go/domain/model"
 )
 
 type MockHashService struct {
@@ -19,7 +19,7 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return false, nil
 }
 
-var user, _ = models.NewUser("validUser", "#%strongPassword#%", &MockHashService{})
+var user, _ = model.NewUser("validUser", "#%strongPassword#%", &MockHashService{})
 
 func TestUserRepository(t *testing.T) {
 	repo := NewUserRepository(nil) // Passing nil as we're using an in-memory implementation
@@ -34,9 +34,9 @@ func TestUserRepository(t *testing.T) {
 	t.Run("CreateUserWithClashingUsername", func(t *testing.T) {
 		err := repo.CreateUser(user)
 		if err == nil {
-			t.Errorf("expected conflict error %v, got %v", domain_errors.ErrUsernameConflict, err)
+			t.Errorf("expected conflict error %v, got %v", domainError.ErrUsernameConflict, err)
 		}
-		if !errors.Is(err, domain_errors.ErrUsernameConflict) {
+		if !errors.Is(err, domainError.ErrUsernameConflict) {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})

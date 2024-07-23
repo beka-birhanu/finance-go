@@ -1,24 +1,28 @@
-package commands
+package command
 
 import (
 	"errors"
 	"fmt"
 
 	"github.com/beka-birhanu/finance-go/application/authentication/common"
-	"github.com/beka-birhanu/finance-go/application/common/interfaces/jwt"
-	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
-	hash "github.com/beka-birhanu/finance-go/domain/common/authentication"
-	"github.com/beka-birhanu/finance-go/domain/domain_errors"
-	"github.com/beka-birhanu/finance-go/domain/models"
+	"github.com/beka-birhanu/finance-go/application/common/cqrs/command"
+	"github.com/beka-birhanu/finance-go/application/common/interface/jwt"
+	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	"github.com/beka-birhanu/finance-go/domain/common/hash"
+	domainError "github.com/beka-birhanu/finance-go/domain/error"
+	"github.com/beka-birhanu/finance-go/domain/model"
 )
 
 type UserRegisterCommandHandler struct {
-	userRepository persistance.IUserRepository
+	userRepository repository.IUserRepository
 	jwtService     jwt.IJwtService
 	hashService    hash.IHashService
 }
 
-func NewRegisterCommandHandler(repository persistance.IUserRepository, jwtService jwt.IJwtService, hashService hash.IHashService) *UserRegisterCommandHandler {
+// Ensure UserRegisterCommandHandler implements the ICommandHandler interface.
+var _ command.ICommandHandler[*UserRegisterCommand, *common.AuthResult] = &UserRegisterCommandHandler{}
+
+func NewRegisterCommandHandler(repository repository.IUserRepository, jwtService jwt.IJwtService, hashService hash.IHashService) *UserRegisterCommandHandler {
 	return &UserRegisterCommandHandler{userRepository: repository, jwtService: jwtService, hashService: hashService}
 }
 
@@ -29,7 +33,7 @@ func (h *UserRegisterCommandHandler) Handle(command *UserRegisterCommand) (*comm
 	}
 
 	err = h.userRepository.CreateUser(user)
-	if errors.Is(err, domain_errors.ErrUsernameConflict) {
+	if errors.Is(err, domainError.ErrUsernameConflict) {
 		return nil, err
 	} else if err != nil {
 		return nil, fmt.Errorf("server error")
@@ -43,6 +47,6 @@ func (h *UserRegisterCommandHandler) Handle(command *UserRegisterCommand) (*comm
 	return common.NewAuthResult(user.ID(), user.Username(), token), nil
 }
 
-func fromRegisterCommand(command *UserRegisterCommand, hashService hash.IHashService) (*models.User, error) {
-	return models.NewUser(command.Username, command.Password, hashService)
+func fromRegisterCommand(command *UserRegisterCommand, hashService hash.IHashService) (*model.User, error) {
+	return model.NewUser(command.Username, command.Password, hashService)
 }

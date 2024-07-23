@@ -1,4 +1,4 @@
-package expense_queries
+package query
 
 import "github.com/google/uuid"
 

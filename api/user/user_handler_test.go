@@ -1,4 +1,4 @@
-package users
+package user
 
 import (
 	"bytes"
@@ -8,34 +8,35 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/beka-birhanu/finance-go/api/users/dto"
-	"github.com/beka-birhanu/finance-go/application/authentication/commands"
+	"github.com/beka-birhanu/finance-go/api/user/dto"
+	"github.com/beka-birhanu/finance-go/application/authentication/command"
+	authCommand "github.com/beka-birhanu/finance-go/application/authentication/command"
 	"github.com/beka-birhanu/finance-go/application/authentication/common"
-	"github.com/beka-birhanu/finance-go/application/authentication/queries"
-	commandAuth "github.com/beka-birhanu/finance-go/application/common/cqrs/i_commands/authentication"
-	querieAuth "github.com/beka-birhanu/finance-go/application/common/cqrs/i_queries/authentication"
-	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
-	"github.com/beka-birhanu/finance-go/domain/domain_errors"
-	"github.com/beka-birhanu/finance-go/domain/models"
+	"github.com/beka-birhanu/finance-go/application/authentication/query"
+	authQuery "github.com/beka-birhanu/finance-go/application/authentication/query"
+	handlerInterface "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
+	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	domainError "github.com/beka-birhanu/finance-go/domain/error"
+	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/gorilla/mux"
 )
 
 // Mock implementations for the IUserRepository interface
 type mockUserRepository struct{}
 
-func (m *mockUserRepository) CreateUser(user *models.User) error {
+func (m *mockUserRepository) CreateUser(user *model.User) error {
 	return nil
 }
 
-func (m *mockUserRepository) GetUserById(id string) (*models.User, error) {
+func (m *mockUserRepository) GetUserById(id string) (*model.User, error) {
 	return nil, nil
 }
 
-func (m *mockUserRepository) GetUserByUsername(username string) (*models.User, error) {
+func (m *mockUserRepository) GetUserByUsername(username string) (*model.User, error) {
 	return nil, nil
 }
 
-func (m *mockUserRepository) ListUser() ([]*models.User, error) {
+func (m *mockUserRepository) ListUser() ([]*model.User, error) {
 	return nil, nil
 }
 
@@ -43,52 +44,52 @@ func (m *mockUserRepository) SomeRepoMethod() error {
 	return nil
 }
 
-var _ persistance.IUserRepository = &mockUserRepository{}
+var _ repository.IUserRepository = &mockUserRepository{}
 
 // Mock implementations for the IUserRegisterCommandHandler interface
 type mockUserRegisterCommandHandler struct {
-	handleFunc func(cmd *commands.UserRegisterCommand) (*common.AuthResult, error)
+	handleFunc func(cmd *command.UserRegisterCommand) (*common.AuthResult, error)
 }
 
-func (m *mockUserRegisterCommandHandler) Handle(cmd *commands.UserRegisterCommand) (*common.AuthResult, error) {
+func (m *mockUserRegisterCommandHandler) Handle(cmd *command.UserRegisterCommand) (*common.AuthResult, error) {
 	return m.handleFunc(cmd)
 }
 
-var _ commandAuth.IUserRegisterCommandHandler = &mockUserRegisterCommandHandler{}
+var _ handlerInterface.ICommandHandler[*authCommand.UserRegisterCommand, *common.AuthResult] = &mockUserRegisterCommandHandler{}
 
 // Mock implementations for the IUserLoginQueryHandler interface
 type mockUserLoginQueryHandler struct {
-	handleFunc func(query *queries.UserLoginQuery) (*common.AuthResult, error)
+	handleFunc func(query *query.UserLoginQuery) (*common.AuthResult, error)
 }
 
-func (m *mockUserLoginQueryHandler) Handle(q *queries.UserLoginQuery) (*common.AuthResult, error) {
+func (m *mockUserLoginQueryHandler) Handle(q *query.UserLoginQuery) (*common.AuthResult, error) {
 	return m.handleFunc(q)
 }
 
-var _ querieAuth.IUserLoginQueryHandler = &mockUserLoginQueryHandler{}
+var _ handlerInterface.ICommandHandler[*authQuery.UserLoginQuery, *common.AuthResult] = &mockUserLoginQueryHandler{}
 
 func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 	mockRepo := &mockUserRepository{}
 	mockRegisterCommandHandler := &mockUserRegisterCommandHandler{
-		handleFunc: func(cmd *commands.UserRegisterCommand) (*common.AuthResult, error) {
+		handleFunc: func(cmd *command.UserRegisterCommand) (*common.AuthResult, error) {
 			switch cmd.Username {
 			case "existinguser":
-				return &common.AuthResult{}, domain_errors.ErrUsernameConflict
+				return &common.AuthResult{}, domainError.ErrUsernameConflict
 			case "toolongusername":
-				return &common.AuthResult{}, domain_errors.ErrUsernameTooLong
+				return &common.AuthResult{}, domainError.ErrUsernameTooLong
 			case "short":
-				return &common.AuthResult{}, domain_errors.ErrUsernameTooShort
+				return &common.AuthResult{}, domainError.ErrUsernameTooShort
 			case "invalidformat!":
-				return &common.AuthResult{}, domain_errors.ErrUsernameInvalidFormat
+				return &common.AuthResult{}, domainError.ErrUsernameInvalidFormat
 			}
 			if cmd.Password == "weakpassword" {
-				return &common.AuthResult{}, domain_errors.ErrWeakPassword
+				return &common.AuthResult{}, domainError.ErrWeakPassword
 			}
 			return &common.AuthResult{Token: "testtoken"}, nil
 		},
 	}
 	mockLoginQueryHandler := &mockUserLoginQueryHandler{
-		handleFunc: func(query *queries.UserLoginQuery) (*common.AuthResult, error) {
+		handleFunc: func(query *authQuery.UserLoginQuery) (*common.AuthResult, error) {
 			if query.Username == "nonexistentuser" {
 				return &common.AuthResult{}, errors.New("user not found")
 			}
@@ -123,35 +124,35 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "existinguser", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusConflict,
-			expectedError:  domain_errors.ErrUsernameConflict.Error(),
+			expectedError:  domainError.ErrUsernameConflict.Error(),
 		},
 		{
 			name:           "Weak Password",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "newuser", Password: "weakpassword"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  domain_errors.ErrWeakPassword.Error(),
+			expectedError:  domainError.ErrWeakPassword.Error(),
 		},
 		{
 			name:           "Username Too Long",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "toolongusername", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  domain_errors.ErrUsernameTooLong.Error(),
+			expectedError:  domainError.ErrUsernameTooLong.Error(),
 		},
 		{
 			name:           "Username Too Short",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "short", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  domain_errors.ErrUsernameTooShort.Error(),
+			expectedError:  domainError.ErrUsernameTooShort.Error(),
 		},
 		{
 			name:           "Username Invalid Format",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "invalidformat!", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  domain_errors.ErrUsernameInvalidFormat.Error(),
+			expectedError:  domainError.ErrUsernameInvalidFormat.Error(),
 		},
 		{
 			name:           "Invalid Register Request Body",

@@ -4,37 +4,40 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/beka-birhanu/finance-go/api/expenses"
-	"github.com/beka-birhanu/finance-go/api/users"
-	commandAuth "github.com/beka-birhanu/finance-go/application/common/cqrs/i_commands/authentication"
-	"github.com/beka-birhanu/finance-go/application/common/cqrs/i_commands/expense"
-	querieAuth "github.com/beka-birhanu/finance-go/application/common/cqrs/i_queries/authentication"
-	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
+	"github.com/beka-birhanu/finance-go/api/expense"
+	"github.com/beka-birhanu/finance-go/api/user"
+	authCommand "github.com/beka-birhanu/finance-go/application/authentication/command"
+	"github.com/beka-birhanu/finance-go/application/authentication/common"
+	authQuery "github.com/beka-birhanu/finance-go/application/authentication/query"
+	handlerInterface "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
+	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	expenseCommand "github.com/beka-birhanu/finance-go/application/expense/command"
+	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/gorilla/mux"
 )
 
 type APIServer struct {
 	addr                       string
-	userRepository             persistance.IUserRepository
-	userRegisterCommandHandler commandAuth.IUserRegisterCommandHandler
-	userLoginQueryHandler      querieAuth.IUserLoginQueryHandler
+	userRepository             repository.IUserRepository
+	userRegisterCommandHandler handlerInterface.ICommandHandler[*authCommand.UserRegisterCommand, *common.AuthResult]
+	userLoginQueryHandler      handlerInterface.ICommandHandler[*authQuery.UserLoginQuery, *common.AuthResult]
 	authorizationMiddleware    func(http.Handler) http.Handler
-	addExpenseCommandHandler   expense.IAddExpenseCommand
+	addExpenseCommandHandler   handlerInterface.ICommandHandler[*expenseCommand.AddExpenseCommand, *model.Expense]
 }
 
 func NewAPIServer(
 	addr string,
-	userRepository persistance.IUserRepository,
-	userRegisterCommandHandler commandAuth.IUserRegisterCommandHandler,
-	userQueryHandler querieAuth.IUserLoginQueryHandler,
+	userRepository repository.IUserRepository,
+	userRegisterCommandHandler handlerInterface.ICommandHandler[*authCommand.UserRegisterCommand, *common.AuthResult],
+	userLoginQueryHandler handlerInterface.ICommandHandler[*authQuery.UserLoginQuery, *common.AuthResult],
 	authorizationMiddleware func(http.Handler) http.Handler,
-	addExpenseCommandHandler expense.IAddExpenseCommand,
+	addExpenseCommandHandler handlerInterface.ICommandHandler[*expenseCommand.AddExpenseCommand, *model.Expense],
 ) *APIServer {
 	return &APIServer{
 		addr:                       addr,
 		userRepository:             userRepository,
 		userRegisterCommandHandler: userRegisterCommandHandler,
-		userLoginQueryHandler:      userQueryHandler,
+		userLoginQueryHandler:      userLoginQueryHandler,
 		authorizationMiddleware:    authorizationMiddleware,
 		addExpenseCommandHandler:   addExpenseCommandHandler,
 	}
@@ -50,7 +53,7 @@ func (s *APIServer) Run() error {
 	protectedRouter := router.PathPrefix("/api/v1").Subrouter()
 	protectedRouter.Use(s.authorizationMiddleware)
 
-	userHandler := users.NewHandler(
+	userHandler := user.NewHandler(
 		s.userRepository,
 		s.userRegisterCommandHandler,
 		s.userLoginQueryHandler,
@@ -58,7 +61,7 @@ func (s *APIServer) Run() error {
 	userHandler.RegisterPublicRoutes(publicRouter)
 	userHandler.RegisterProtectedRoutes(protectedRouter)
 
-	expenseHandler := expenses.NewHandler(s.addExpenseCommandHandler)
+	expenseHandler := expense.NewHandler(s.addExpenseCommandHandler)
 	expenseHandler.RegisterPublicRoutes(publicRouter)
 	expenseHandler.RegisterProtectedRoutes(protectedRouter)
 

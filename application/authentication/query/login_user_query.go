@@ -1,4 +1,4 @@
-package queries
+package query
 
 type UserLoginQuery struct {
 	Username string

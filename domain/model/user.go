@@ -1,12 +1,12 @@
-package models
+package model
 
 import (
 	"fmt"
 	"regexp"
 	"time"
 
-	hash "github.com/beka-birhanu/finance-go/domain/common/authentication"
-	"github.com/beka-birhanu/finance-go/domain/domain_errors"
+	"github.com/beka-birhanu/finance-go/domain/common/hash"
+	domainError "github.com/beka-birhanu/finance-go/domain/error"
 	"github.com/google/uuid"
 	"github.com/nbutton23/zxcvbn-go"
 )
@@ -34,19 +34,19 @@ type User struct {
 
 func NewUser(username, plainPassword string, passwordHasher hash.IHashService) (*User, error) {
 	if len(username) < MIN_USERNAME_LENGTH {
-		return nil, domain_errors.ErrUsernameTooShort
+		return nil, domainError.ErrUsernameTooShort
 	}
 	if len(username) > MAX_USERNAME_LENGTH {
-		return nil, domain_errors.ErrUsernameTooLong
+		return nil, domainError.ErrUsernameTooLong
 	}
 
 	if !usernameRegex.MatchString(username) {
-		return nil, domain_errors.ErrUsernameInvalidFormat
+		return nil, domainError.ErrUsernameInvalidFormat
 	}
 
 	result := zxcvbn.PasswordStrength(plainPassword, nil)
 	if result.Score < MIN_PASSWORD_STRENGTH_SCORE {
-		return nil, domain_errors.ErrWeakPassword
+		return nil, domainError.ErrWeakPassword
 	}
 
 	passwordHash, err := passwordHasher.Hash(plainPassword)

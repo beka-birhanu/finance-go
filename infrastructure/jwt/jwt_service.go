@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/beka-birhanu/finance-go/domain/models"
+	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -22,7 +22,7 @@ func NewJwtService(secretKey, issuer string, expTime time.Duration) *JwtService 
 	}
 }
 
-func (s *JwtService) GenerateToken(user *models.User) (string, error) {
+func (s *JwtService) GenerateToken(user *model.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": user.ID().String(),
 		"exp":     time.Now().Add(s.expTime).Unix(),

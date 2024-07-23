@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/beka-birhanu/finance-go/application/common/interfaces/jwt"
+	"github.com/beka-birhanu/finance-go/application/common/interface/jwt"
 )
 
 type contextKey string
@@ -44,4 +44,3 @@ func AuthorizationMiddleware(jwtService jwt.IJwtService) func(http.Handler) http
 		})
 	}
 }
-

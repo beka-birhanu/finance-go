@@ -1,19 +1,19 @@
-package commands
+package command
 
 import (
-	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
-	"github.com/beka-birhanu/finance-go/domain/models"
+	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	"github.com/beka-birhanu/finance-go/domain/model"
 )
 
 type AddExpenseCommandHandler struct {
-	userRepository persistance.IUserRepository
+	userRepository repository.IUserRepository
 }
 
-func NewAddExpenseCommandHandler(userRepository persistance.IUserRepository) *AddExpenseCommandHandler {
+func NewAddExpenseCommandHandler(userRepository repository.IUserRepository) *AddExpenseCommandHandler {
 	return &AddExpenseCommandHandler{userRepository: userRepository}
 }
 
-func (h *AddExpenseCommandHandler) Handle(command *AddExpenseCommand) (*models.Expense, error) {
+func (h *AddExpenseCommandHandler) Handle(command *AddExpenseCommand) (*model.Expense, error) {
 	newExpense, err := fromAddExpenseCommand(command)
 	if err != nil {
 		return nil, err
@@ -34,8 +34,8 @@ func (h *AddExpenseCommandHandler) Handle(command *AddExpenseCommand) (*models.E
 	return newExpense, nil
 }
 
-func fromAddExpenseCommand(command *AddExpenseCommand) (*models.Expense, error) {
-	return models.NewExpense(
+func fromAddExpenseCommand(command *AddExpenseCommand) (*model.Expense, error) {
+	return model.NewExpense(
 		command.Description,
 		command.Amount,
 		command.UserId,

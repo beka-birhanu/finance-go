@@ -1,4 +1,4 @@
-package utils
+package util
 
 import (
 	"bytes"
@@ -135,4 +135,3 @@ func TestUtils(t *testing.T) {
 		runTest(http.StatusOK, map[string]string{"key": "value"})
 	})
 }
-

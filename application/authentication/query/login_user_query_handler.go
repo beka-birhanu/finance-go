@@ -1,21 +1,21 @@
-package queries
+package query
 
 import (
 	"fmt"
 
 	"github.com/beka-birhanu/finance-go/application/authentication/common"
-	"github.com/beka-birhanu/finance-go/application/common/interfaces/jwt"
-	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
-	"github.com/beka-birhanu/finance-go/domain/common/authentication"
+	"github.com/beka-birhanu/finance-go/application/common/interface/jwt"
+	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	"github.com/beka-birhanu/finance-go/domain/common/hash"
 )
 
 type UserLoginQueryHandler struct {
-	userRepository persistance.IUserRepository
+	userRepository repository.IUserRepository
 	jwtService     jwt.IJwtService
 	hashService    hash.IHashService
 }
 
-func NewUserLoginQueryHandler(repository persistance.IUserRepository, jwtService jwt.IJwtService, hashService hash.IHashService) *UserLoginQueryHandler {
+func NewUserLoginQueryHandler(repository repository.IUserRepository, jwtService jwt.IJwtService, hashService hash.IHashService) *UserLoginQueryHandler {
 	return &UserLoginQueryHandler{userRepository: repository, jwtService: jwtService, hashService: hashService}
 }
 

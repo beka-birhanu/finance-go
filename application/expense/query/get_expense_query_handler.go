@@ -1,14 +1,14 @@
-package expense_queries
+package query
 
 import (
-	"github.com/beka-birhanu/finance-go/application/common/interfaces/persistance"
-	"github.com/beka-birhanu/finance-go/domain/models"
+	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	"github.com/beka-birhanu/finance-go/domain/model"
 )
 
 type GetSingleExpenseQueryHandler struct {
-	ExpenseRepository persistance.IUserRepository
+	ExpenseRepository repository.IUserRepository
 }
 
-func (h *GetSingleExpenseQuery) Handle(query *GetSingleExpenseQuery) (*models.Expense, error) {
+func (h *GetSingleExpenseQuery) Handle(query *GetSingleExpenseQuery) (*model.Expense, error) {
 	return nil, nil
 }

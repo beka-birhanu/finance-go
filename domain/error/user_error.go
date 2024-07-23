@@ -1,4 +1,4 @@
-package domain_errors
+package error
 
 import "errors"
 
@@ -9,4 +9,3 @@ var (
 	ErrWeakPassword          = errors.New("password is too weak")
 	ErrUsernameInvalidFormat = errors.New("username has an invalid format")
 )
-

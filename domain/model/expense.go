@@ -1,10 +1,10 @@
-package models
+package model
 
 import (
 	"strings"
 	"time"
 
-	"github.com/beka-birhanu/finance-go/domain/domain_errors"
+	domainError "github.com/beka-birhanu/finance-go/domain/error"
 	"github.com/google/uuid"
 )
 
@@ -26,15 +26,15 @@ func NewExpense(description string, amount float32, userId uuid.UUID, date time.
 	description = strings.TrimSpace(description)
 
 	if amount <= 0 {
-		return nil, domain_errors.ErrNegativeExpenseAmount
+		return nil, domainError.ErrNegativeExpenseAmount
 	}
 
 	if len(description) > MAX_DESCRIPTION_LENGTH {
-		return nil, domain_errors.ErrExpenseDescriptionTooLong
+		return nil, domainError.ErrExpenseDescriptionTooLong
 	}
 
 	if description == "" {
-		return nil, domain_errors.ErrEmptyExpenseDescription
+		return nil, domainError.ErrEmptyExpenseDescription
 	}
 
 	return &Expense{
@@ -75,4 +75,3 @@ func (e *Expense) CreatedAt() time.Time {
 func (e *Expense) UpdatedAt() time.Time {
 	return e.updatedAt
 }
-
