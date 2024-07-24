@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	timeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
+	"github.com/beka-birhanu/finance-go/domain/common/hash"
 	"github.com/beka-birhanu/finance-go/domain/model"
 )
 
@@ -19,11 +21,15 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return m.MatchFunc(hashedWord, plainWord)
 }
 
+var _ hash.IHashService = &MockHashService{}
+
 type MockTimeService struct{}
 
 func (m *MockTimeService) NowUTC() time.Time {
 	return time.Now().UTC()
 }
+
+var _ timeservice.ITimeService = &MockTimeService{}
 
 var user, _ = model.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{}, time.Now().UTC())
 

@@ -5,6 +5,9 @@ import (
 	"testing"
 	"time"
 
+	jwtInterface "github.com/beka-birhanu/finance-go/application/common/interface/jwt"
+	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	"github.com/beka-birhanu/finance-go/domain/common/hash"
 	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
@@ -32,6 +35,8 @@ func (m *MockUserRepository) ListUser() ([]*model.User, error) {
 	return nil, nil
 }
 
+var _ repository.IUserRepository = &MockUserRepository{}
+
 type MockJwtService struct {
 	GenerateTokenFunc func(user *model.User) (string, error)
 }
@@ -44,6 +49,8 @@ func (m *MockJwtService) DecodeToken(token string) (jwt.MapClaims, error) {
 	return nil, nil
 }
 
+var _ jwtInterface.IJwtService = &MockJwtService{}
+
 type MockHashService struct {
 	MatchFunc func(hashedWord, plainWord string) (bool, error)
 }
@@ -55,6 +62,8 @@ func (m *MockHashService) Hash(word string) (string, error) {
 func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return m.MatchFunc(hashedWord, plainWord)
 }
+
+var _ hash.IHashService = &MockHashService{}
 
 var validUser, _ = model.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{}, time.Now().UTC())
 

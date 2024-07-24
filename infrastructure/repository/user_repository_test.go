@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/beka-birhanu/finance-go/domain/common/hash"
 	domainError "github.com/beka-birhanu/finance-go/domain/error"
 	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/google/uuid"
@@ -20,6 +21,8 @@ func (m *MockHashService) Hash(word string) (string, error) {
 func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return false, nil
 }
+
+var _ hash.IHashService = &MockHashService{}
 
 var user, _ = model.NewUser("validUser", "#%strongPassword#%", &MockHashService{}, time.Now().UTC())
 

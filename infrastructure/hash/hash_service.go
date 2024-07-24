@@ -7,6 +7,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/beka-birhanu/finance-go/domain/common/hash"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -17,6 +18,8 @@ const (
 )
 
 type HashService struct{}
+
+var _ hash.IHashService = &HashService{}
 
 var (
 	instance *HashService

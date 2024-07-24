@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/beka-birhanu/finance-go/application/authentication/common"
+	"github.com/beka-birhanu/finance-go/application/common/cqrs/query"
 	"github.com/beka-birhanu/finance-go/application/common/interface/jwt"
 	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
 	"github.com/beka-birhanu/finance-go/domain/common/hash"
@@ -14,6 +15,8 @@ type UserLoginQueryHandler struct {
 	jwtService     jwt.IJwtService
 	hashService    hash.IHashService
 }
+
+var _ query.IQueryHandler[*UserLoginQuery, *common.AuthResult] = &UserLoginQueryHandler{}
 
 func NewUserLoginQueryHandler(repository repository.IUserRepository, jwtService jwt.IJwtService, hashService hash.IHashService) *UserLoginQueryHandler {
 	return &UserLoginQueryHandler{userRepository: repository, jwtService: jwtService, hashService: hashService}

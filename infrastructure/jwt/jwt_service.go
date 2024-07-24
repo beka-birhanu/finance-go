@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	jwtInterface "github.com/beka-birhanu/finance-go/application/common/interface/jwt"
 	timeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
 	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/dgrijalva/jwt-go"
@@ -15,6 +16,8 @@ type JwtService struct {
 	expTime     time.Duration
 	timeService timeservice.ITimeService
 }
+
+var _ jwtInterface.IJwtService = &JwtService{}
 
 func NewJwtService(secretKey, issuer string, expTime time.Duration, timeService timeservice.ITimeService) *JwtService {
 	return &JwtService{

@@ -3,6 +3,7 @@ package command
 import (
 	"time"
 
+	"github.com/beka-birhanu/finance-go/application/common/cqrs/command"
 	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
 	timeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
 	"github.com/beka-birhanu/finance-go/domain/model"
@@ -12,6 +13,8 @@ type AddExpenseCommandHandler struct {
 	userRepository repository.IUserRepository
 	timeService    timeservice.ITimeService
 }
+
+var _ command.ICommandHandler[*AddExpenseCommand, *model.Expense] = &AddExpenseCommandHandler{}
 
 func NewAddExpenseCommandHandler(userRepository repository.IUserRepository, timeService timeservice.ITimeService) *AddExpenseCommandHandler {
 	return &AddExpenseCommandHandler{userRepository: userRepository, timeService: timeService}
