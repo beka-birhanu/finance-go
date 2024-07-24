@@ -1,74 +1,37 @@
+/*
+Package error provides a way to define and handle application-specific errors.
+
+It provides errors to map specific domain errors to appropriate application error types.
+*/
 package error
 
 import (
 	"fmt"
-
-	domainError "github.com/beka-birhanu/finance-go/domain/error"
 )
 
+// ErrorType represents the type of an error.
 type ErrorType string
 
+// Predefined error types.
 const (
-	ValidationErrorType     ErrorType = "Validation"
-	ConflictErrorType       ErrorType = "Conflict"
-	ServerErrorType         ErrorType = "ServerError"
-	AuthenticationErrorType ErrorType = "Authentication"
-	NotFoundErrorType       ErrorType = "NotFound"
+	// AuthenticationErrorType is used for authentication-related errors.
+	Authentication ErrorType = "Authentication"
 )
 
+// Error represents a combined application error with a type and message.
 type Error struct {
 	Type    ErrorType
 	Message string
 }
 
+// Error formats the Error as a string.
 func (e Error) Error() string {
 	return fmt.Sprintf("%s: %s", e.Type, e.Message)
 }
 
+// Predefined errors for common scenarios.
 var (
-	ErrNegativeExpenseAmount     = Error{Type: ValidationErrorType, Message: "Expense.Amount cannot be negative"}
-	ErrExpenseDescriptionTooLong = Error{Type: ValidationErrorType, Message: "Expense.Description is too long"}
-	ErrEmptyExpenseDescription   = Error{Type: ValidationErrorType, Message: "Expense.Description cannot be empty"}
+	// InvalidCredential represents an authentication error due to invalid credentials.
+	InvalidCredential = Error{Type: Authentication, Message: "invalid credentials"}
 )
 
-var (
-	ErrUsernameTooShort      = Error{Type: ValidationErrorType, Message: "username is too short"}
-	ErrUsernameTooLong       = Error{Type: ValidationErrorType, Message: "username is too long"}
-	ErrWeakPassword          = Error{Type: ValidationErrorType, Message: "password is too weak"}
-	ErrUsernameInvalidFormat = Error{Type: ValidationErrorType, Message: "username has an invalid format"}
-)
-
-var (
-	ErrUsernameConflict = Error{Type: ConflictErrorType, Message: "username already taken"}
-	ErrIdConflict       = Error{Type: ConflictErrorType, Message: "ID under user and expense don't match"}
-)
-
-var (
-	ErrInvalidUsernameOrPassword = Error{Type: AuthenticationErrorType, Message: "invalid username or password"}
-)
-
-var (
-	ErrUserNotFound = Error{Type: NotFoundErrorType, Message: "user not found"}
-)
-var (
-	ServerError = Error{Type: ServerErrorType, Message: "unexpected server error"}
-)
-
-func ErrToAppErr(err error) error {
-	switch e := err.(type) {
-	case domainError.Error:
-		switch e.Type {
-		case domainError.ValidationErrorType:
-			return Error{Type: ValidationErrorType, Message: e.Message}
-		case domainError.ConflictErrorType:
-			return Error{Type: ConflictErrorType, Message: e.Message}
-		case domainError.ServerErrorType:
-			return Error{Type: ServerErrorType, Message: e.Message}
-		default:
-			return Error{Type: ServerErrorType, Message: "unknown error"}
-		}
-
-	default:
-		return Error{Type: ServerErrorType, Message: "unknown error"}
-	}
-}
