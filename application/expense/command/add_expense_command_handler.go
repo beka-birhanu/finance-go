@@ -3,28 +3,27 @@ package command
 import (
 	"time"
 
-	"github.com/beka-birhanu/finance-go/application/common/cqrs/command"
-	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
-	timeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
-	appError "github.com/beka-birhanu/finance-go/application/error"
-	"github.com/beka-birhanu/finance-go/domain/model"
+	icmd "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
+	irepository "github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	itimeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
+	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
 )
 
 type AddExpenseCommandHandler struct {
-	userRepository repository.IUserRepository
-	timeService    timeservice.ITimeService
+	userRepository irepository.IUserRepository
+	timeService    itimeservice.ITimeService
 }
 
-var _ command.ICommandHandler[*AddExpenseCommand, *model.Expense] = &AddExpenseCommandHandler{}
+var _ icmd.ICommandHandler[*AddExpenseCommand, *expensemodel.Expense] = &AddExpenseCommandHandler{}
 
-func NewAddExpenseCommandHandler(userRepository repository.IUserRepository, timeService timeservice.ITimeService) *AddExpenseCommandHandler {
+func New(userRepository irepository.IUserRepository, timeService itimeservice.ITimeService) *AddExpenseCommandHandler {
 	return &AddExpenseCommandHandler{userRepository: userRepository, timeService: timeService}
 }
 
-func (h *AddExpenseCommandHandler) Handle(command *AddExpenseCommand) (*model.Expense, error) {
-	newExpense, err := fromAddExpenseCommand(command, h.timeService.NowUTC())
+func (h *AddExpenseCommandHandler) Handle(command *AddExpenseCommand) (*expensemodel.Expense, error) {
+	newExpense, err := newExpense(command, h.timeService.NowUTC())
 	if err != nil {
-		return nil, appError.ErrToAppErr(err)
+		return nil, err
 	}
 
 	user, err := h.userRepository.GetUserById(command.UserId)
@@ -34,7 +33,7 @@ func (h *AddExpenseCommandHandler) Handle(command *AddExpenseCommand) (*model.Ex
 
 	err = user.AddExpense(newExpense, h.timeService.NowUTC())
 	if err != nil {
-		return nil, appError.ErrToAppErr(err)
+		return nil, err
 	}
 
 	// TODO: save user and expense
@@ -42,12 +41,13 @@ func (h *AddExpenseCommandHandler) Handle(command *AddExpenseCommand) (*model.Ex
 	return newExpense, nil
 }
 
-func fromAddExpenseCommand(command *AddExpenseCommand, currentUTCTime time.Time) (*model.Expense, error) {
-	return model.NewExpense(
-		command.Description,
-		command.Amount,
-		command.UserId,
-		command.Date,
-		currentUTCTime,
-	)
+func newExpense(command *AddExpenseCommand, currentUTCTime time.Time) (*expensemodel.Expense, error) {
+	config := expensemodel.Config{
+		Description:  command.Description,
+		Amount:       command.Amount,
+		UserId:       command.UserId,
+		Date:         command.Date,
+		CreationTime: currentUTCTime,
+	}
+	return expensemodel.New(config)
 }
