@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	apiError "github.com/beka-birhanu/finance-go/api/error"
 	"github.com/beka-birhanu/finance-go/api/expense/dto"
 	"github.com/beka-birhanu/finance-go/api/util"
 	handlerInterface "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
@@ -44,19 +45,22 @@ func (h *ExpensesHandler) handleAddExpense(w http.ResponseWriter, r *http.Reques
 	var addExpenseRequest dto.AddExpenseRequest
 
 	if err := util.ParseJSON(r, &addExpenseRequest); err != nil {
-		util.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload: %v", err))
+		apiErr := apiError.NewErrBadRequest(fmt.Sprintf("invalid payload: %v", err))
+		util.WriteError(w, apiErr)
 		return
 	}
 
 	if err := util.Validate.Struct(addExpenseRequest); err != nil {
 		errors := err.(validator.ValidationErrors)
-		util.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload: %v", errors))
+		apiErr := apiError.NewErrValidation(fmt.Sprintf("invalid payload: %v", errors))
+		util.WriteError(w, apiErr)
 		return
 	}
 
 	userId, err := util.GetIdFromUrl(r, "userId")
 	if err != nil {
-		util.WriteError(w, http.StatusBadRequest, err)
+		util.WriteError(w, err.(apiError.Error))
+		return
 	}
 
 	addExpenseCommand := &expenseCommand.AddExpenseCommand{
@@ -68,7 +72,8 @@ func (h *ExpensesHandler) handleAddExpense(w http.ResponseWriter, r *http.Reques
 
 	expense, err := h.addExpenseCommandHandler.Handle(addExpenseCommand)
 	if err != nil {
-		util.WriteError(w, http.StatusBadRequest, err)
+		apiErr := apiError.NewErrBadRequest(err.Error())
+		util.WriteError(w, apiErr)
 		return
 	}
 
@@ -84,13 +89,16 @@ func (h *ExpensesHandler) handleAddExpense(w http.ResponseWriter, r *http.Reques
 func (h *ExpensesHandler) handleGetSingleExpenseById(w http.ResponseWriter, r *http.Request) {
 	userId, err := util.GetIdFromUrl(r, "userId")
 	if err != nil {
-		util.WriteError(w, http.StatusBadRequest, err)
+		util.WriteError(w, err.(apiError.Error))
+		return
 	}
 
 	expenseId, err := util.GetIdFromUrl(r, "expenseId")
 	if err != nil {
-		util.WriteError(w, http.StatusBadRequest, err)
+		util.WriteError(w, err.(apiError.Error))
+		return
 	}
 
 	log.Println(userId, expenseId)
 }
+

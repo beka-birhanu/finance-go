@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
-	domainError "github.com/beka-birhanu/finance-go/domain/error"
+	appError "github.com/beka-birhanu/finance-go/application/error"
 	"github.com/beka-birhanu/finance-go/domain/model"
-	"github.com/google/uuid"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 )
 
 type MockUserRepository struct {
@@ -64,7 +64,7 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 	mockUserRepository := &MockUserRepository{
 		CreateUserFunc: func(user *model.User) error {
 			if user.Username() != "uniqueUsername" {
-				return domainError.ErrUsernameConflict
+				return appError.ErrUsernameConflict
 			}
 			return nil
 		},
@@ -109,12 +109,12 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 		{
 			name:          "duplicate register",
 			command:       duplicateCommand,
-			expectedError: domainError.ErrUsernameConflict,
+			expectedError: appError.ErrUsernameConflict,
 		},
 		{
 			name:          "weak password register",
 			command:       weakPasswordCommand,
-			expectedError: domainError.ErrWeakPassword,
+			expectedError: appError.ErrWeakPassword,
 		},
 	}
 

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
+	appError "github.com/beka-birhanu/finance-go/application/error"
 	"github.com/beka-birhanu/finance-go/domain/common/hash"
-	domainError "github.com/beka-birhanu/finance-go/domain/error"
 	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/google/uuid"
 )
@@ -39,10 +39,10 @@ func TestUserRepository(t *testing.T) {
 	t.Run("CreateUserWithClashingUsername", func(t *testing.T) {
 		err := repo.CreateUser(user)
 		if err == nil {
-			t.Errorf("expected conflict error %v, got %v", domainError.ErrUsernameConflict, err)
+			t.Errorf("expected conflict error %v, got %v", appError.ErrUsernameConflict, err)
 		}
-		if !errors.Is(err, domainError.ErrUsernameConflict) {
-			t.Errorf("unexpected error: %v", err)
+		if !errors.Is(err, appError.ErrUsernameConflict) {
+			t.Errorf("unexpected error: %v, %v", err, appError.ErrUsernameConflict)
 		}
 	})
 
@@ -62,7 +62,7 @@ func TestUserRepository(t *testing.T) {
 	t.Run("GetUserByIdWithInvalidId", func(t *testing.T) {
 		_, err := repo.GetUserById(uuid.New()) // random invalid id
 		if err == nil {
-			t.Errorf("expected error %v", NotFound)
+			t.Errorf("expected error %v", appError.ErrUserNotFound)
 		}
 
 	})
@@ -83,7 +83,7 @@ func TestUserRepository(t *testing.T) {
 	t.Run("GetUserByInvalidUsername", func(t *testing.T) {
 		_, err := repo.GetUserByUsername("invalidUsername")
 		if err == nil {
-			t.Errorf("expected error %v", NotFound)
+			t.Errorf("expected error %v", appError.ErrUserNotFound)
 		}
 	})
 

@@ -2,10 +2,9 @@ package repository
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
-	domainError "github.com/beka-birhanu/finance-go/domain/error"
+	appError "github.com/beka-birhanu/finance-go/application/error"
 	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/google/uuid"
 )
@@ -15,7 +14,6 @@ type UserRepository struct {
 }
 
 var users = map[uuid.UUID]model.User{}
-var NotFound = fmt.Errorf("user not found")
 
 // Ensure UserRepository implements interfaces.persistance.IUserRepository
 var _ repository.IUserRepository = &UserRepository{}
@@ -29,7 +27,7 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 func (u *UserRepository) CreateUser(user *model.User) error {
 	for _, existingUser := range users {
 		if existingUser.Username() == user.Username() {
-			return domainError.ErrUsernameConflict
+			return appError.ErrUsernameConflict
 		}
 	}
 
@@ -42,7 +40,7 @@ func (u *UserRepository) GetUserById(id uuid.UUID) (*model.User, error) {
 
 	user, found := users[id]
 	if !found {
-		return nil, NotFound
+		return nil, appError.ErrUserNotFound
 	}
 
 	return &user, nil
@@ -54,7 +52,7 @@ func (u *UserRepository) GetUserByUsername(username string) (*model.User, error)
 			return &user, nil
 		}
 	}
-	return nil, NotFound
+	return nil, appError.ErrUserNotFound
 }
 
 func (u *UserRepository) ListUser() ([]*model.User, error) {

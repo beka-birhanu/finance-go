@@ -6,6 +6,7 @@ import (
 	"github.com/beka-birhanu/finance-go/application/common/cqrs/command"
 	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
 	timeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
+	appError "github.com/beka-birhanu/finance-go/application/error"
 	"github.com/beka-birhanu/finance-go/domain/model"
 )
 
@@ -23,7 +24,7 @@ func NewAddExpenseCommandHandler(userRepository repository.IUserRepository, time
 func (h *AddExpenseCommandHandler) Handle(command *AddExpenseCommand) (*model.Expense, error) {
 	newExpense, err := fromAddExpenseCommand(command, h.timeService.NowUTC())
 	if err != nil {
-		return nil, err
+		return nil, appError.ErrToAppErr(err)
 	}
 
 	user, err := h.userRepository.GetUserById(command.UserId)
@@ -33,7 +34,7 @@ func (h *AddExpenseCommandHandler) Handle(command *AddExpenseCommand) (*model.Ex
 
 	err = user.AddExpense(newExpense, h.timeService.NowUTC())
 	if err != nil {
-		return nil, err
+		return nil, appError.ErrToAppErr(err)
 	}
 
 	// TODO: save user and expense

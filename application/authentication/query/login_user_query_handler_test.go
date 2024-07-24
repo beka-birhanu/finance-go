@@ -1,12 +1,12 @@
 package query
 
 import (
-	"errors"
 	"testing"
 	"time"
 
 	jwtInterface "github.com/beka-birhanu/finance-go/application/common/interface/jwt"
 	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	appError "github.com/beka-birhanu/finance-go/application/error"
 	"github.com/beka-birhanu/finance-go/domain/common/hash"
 	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/dgrijalva/jwt-go"
@@ -73,7 +73,7 @@ func TestUserLoginQueryHandler_Handle(t *testing.T) {
 			if username == "validUser" {
 				return validUser, nil
 			}
-			return nil, errors.New("user not found")
+			return nil, appError.ErrUserNotFound
 		},
 	}
 
@@ -113,7 +113,7 @@ func TestUserLoginQueryHandler_Handle(t *testing.T) {
 				Username: "invalidUser",
 				Password: "password",
 			},
-			expectedError: errors.New("invalid username or password"),
+			expectedError: appError.ErrInvalidUsernameOrPassword,
 		},
 		{
 			name: "invalid password",
@@ -121,7 +121,7 @@ func TestUserLoginQueryHandler_Handle(t *testing.T) {
 				Username: "validUser",
 				Password: "wrongPassword",
 			},
-			expectedError: errors.New("invalid username or password"),
+			expectedError: appError.ErrInvalidUsernameOrPassword,
 		},
 	}
 

@@ -3,11 +3,12 @@ package util
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	apiError "github.com/beka-birhanu/finance-go/api/error"
 )
 
 func TestUtils(t *testing.T) {
@@ -58,9 +59,11 @@ func TestUtils(t *testing.T) {
 	})
 
 	t.Run("WriteError", func(t *testing.T) {
-		runTest := func(status int, err error) {
+		runTest := func(status apiError.StatusCode, message string) {
+
+			testApiError := apiError.Error{StatusCode: status, Message: message}
 			w := httptest.NewRecorder()
-			WriteError(w, status, err)
+			WriteError(w, testApiError)
 
 			if status := w.Result().StatusCode; status != http.StatusBadRequest {
 				t.Errorf("expected status code %d, got %d", http.StatusBadRequest, status)
@@ -70,12 +73,12 @@ func TestUtils(t *testing.T) {
 			if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
 				t.Fatalf("failed to decode response body: %v", err)
 			}
-			if response["error"] != err.Error() {
-				t.Errorf("expected error message %q, got %q", err.Error(), response["error"])
+			if response["error"] != testApiError.Error() {
+				t.Errorf("expected error message %q, got %q", testApiError.Error(), response["error"])
 			}
 		}
 
-		runTest(http.StatusBadRequest, fmt.Errorf("test error"))
+		runTest(http.StatusBadRequest, "test error")
 	})
 
 	t.Run("WriteJSONWithCookie", func(t *testing.T) {

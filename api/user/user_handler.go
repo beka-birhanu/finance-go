@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	apiError "github.com/beka-birhanu/finance-go/api/error"
 	"github.com/beka-birhanu/finance-go/api/user/dto"
 	"github.com/beka-birhanu/finance-go/api/util"
 	"github.com/beka-birhanu/finance-go/application/authentication/command"
@@ -13,7 +14,6 @@ import (
 	authQuery "github.com/beka-birhanu/finance-go/application/authentication/query"
 	handlerInterface "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
 	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
-	domainError "github.com/beka-birhanu/finance-go/domain/error"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
@@ -55,39 +55,33 @@ func (h *UsersHandler) handleUserRegistration(w http.ResponseWriter, r *http.Req
 	var registerRequest dto.RegisterRequest
 
 	if err := util.ParseJSON(r, &registerRequest); err != nil {
-		util.WriteError(w, http.StatusBadRequest, err)
+		apiErr := apiError.NewErrBadRequest(err.Error())
+		util.WriteError(w, apiErr)
 		return
 	}
 
 	if err := util.Validate.Struct(registerRequest); err != nil {
 		errors := err.(validator.ValidationErrors)
-		util.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload: %v", errors))
+		apiErr := apiError.NewErrValidation(fmt.Sprintf("invalid payload: %v", errors))
+		util.WriteError(w, apiErr)
 		return
 	}
 
 	registerCommand, err := command.NewUserRegisterCommand(registerRequest.Username, registerRequest.Password)
 	if err != nil {
-		util.WriteError(w, http.StatusInternalServerError, err)
+		apiErr := apiError.NewErrServer(err.Error())
+		util.WriteError(w, apiErr)
 		return
 	}
 
 	authResult, err := h.userRegisterCommandHandler.Handle(registerCommand)
 	if err != nil {
-		switch err {
-		case domainError.ErrUsernameConflict:
-			util.WriteError(w, http.StatusConflict, err)
-		case domainError.ErrWeakPassword,
-			domainError.ErrUsernameTooLong,
-			domainError.ErrUsernameTooShort,
-			domainError.ErrUsernameInvalidFormat:
-			util.WriteError(w, http.StatusBadRequest, err)
-		default:
-			util.WriteError(w, http.StatusInternalServerError, err)
-		}
+		err := apiError.ErrToAPIError(err)
+		util.WriteError(w, err)
 		return
 	}
 
-	registorResponse := dto.FromAuthResult(authResult)
+	registerResponse := dto.FromAuthResult(authResult)
 	cookie := http.Cookie{
 		Name:     "accessToken",
 		Value:    authResult.Token,
@@ -98,20 +92,22 @@ func (h *UsersHandler) handleUserRegistration(w http.ResponseWriter, r *http.Req
 		SameSite: http.SameSiteStrictMode,
 	}
 
-	util.WriteJSONWithCookie(w, http.StatusOK, registorResponse, []*http.Cookie{&cookie})
+	util.WriteJSONWithCookie(w, http.StatusOK, registerResponse, []*http.Cookie{&cookie})
 }
 
 func (h *UsersHandler) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 	var loginRequest dto.LoginUserRequest
 
 	if err := util.ParseJSON(r, &loginRequest); err != nil {
-		util.WriteError(w, http.StatusBadRequest, err)
+		apiErr := apiError.ErrToAPIError(err)
+		util.WriteError(w, apiErr)
 		return
 	}
 
 	if err := util.Validate.Struct(loginRequest); err != nil {
 		errors := err.(validator.ValidationErrors)
-		util.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload: %v", errors))
+		apiErr := apiError.NewErrValidation(fmt.Sprintf("invalid payload: %v", errors))
+		util.WriteError(w, apiErr)
 		return
 	}
 
@@ -119,7 +115,8 @@ func (h *UsersHandler) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 
 	authResult, err := h.userLoginQueryHandler.Handle(loginQuery)
 	if err != nil {
-		util.WriteError(w, http.StatusBadRequest, err)
+		apiErr := apiError.ErrToAPIError(err)
+		util.WriteError(w, apiErr)
 		return
 	}
 
@@ -137,3 +134,4 @@ func (h *UsersHandler) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 
 	util.WriteJSONWithCookie(w, http.StatusOK, loginResponse, []*http.Cookie{&cookie})
 }
+

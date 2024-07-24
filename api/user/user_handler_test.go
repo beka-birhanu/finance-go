@@ -3,7 +3,6 @@ package user
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,7 +15,7 @@ import (
 	authQuery "github.com/beka-birhanu/finance-go/application/authentication/query"
 	handlerInterface "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
 	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
-	domainError "github.com/beka-birhanu/finance-go/domain/error"
+	appError "github.com/beka-birhanu/finance-go/application/error"
 	"github.com/beka-birhanu/finance-go/domain/model"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -75,16 +74,16 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 		handleFunc: func(cmd *command.UserRegisterCommand) (*common.AuthResult, error) {
 			switch cmd.Username {
 			case "existinguser":
-				return &common.AuthResult{}, domainError.ErrUsernameConflict
+				return &common.AuthResult{}, appError.ErrUsernameConflict
 			case "toolongusername":
-				return &common.AuthResult{}, domainError.ErrUsernameTooLong
+				return &common.AuthResult{}, appError.ErrUsernameTooLong
 			case "short":
-				return &common.AuthResult{}, domainError.ErrUsernameTooShort
+				return &common.AuthResult{}, appError.ErrUsernameTooShort
 			case "invalidformat!":
-				return &common.AuthResult{}, domainError.ErrUsernameInvalidFormat
+				return &common.AuthResult{}, appError.ErrUsernameInvalidFormat
 			}
 			if cmd.Password == "weakpassword" {
-				return &common.AuthResult{}, domainError.ErrWeakPassword
+				return &common.AuthResult{}, appError.ErrWeakPassword
 			}
 			return &common.AuthResult{Token: "testtoken"}, nil
 		},
@@ -92,10 +91,10 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 	mockLoginQueryHandler := &mockUserLoginQueryHandler{
 		handleFunc: func(query *authQuery.UserLoginQuery) (*common.AuthResult, error) {
 			if query.Username == "nonexistentuser" {
-				return &common.AuthResult{}, errors.New("user not found")
+				return &common.AuthResult{}, appError.ErrInvalidUsernameOrPassword
 			}
 			if query.Password != "correctpassword" {
-				return &common.AuthResult{}, errors.New("invalid credentials")
+				return &common.AuthResult{}, appError.ErrInvalidUsernameOrPassword
 			}
 			return &common.AuthResult{Token: "testtoken"}, nil
 		},
@@ -125,35 +124,35 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "existinguser", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusConflict,
-			expectedError:  domainError.ErrUsernameConflict.Error(),
+			expectedError:  appError.ErrUsernameConflict.Message,
 		},
 		{
 			name:           "Weak Password",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "newuser", Password: "weakpassword"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  domainError.ErrWeakPassword.Error(),
+			expectedError:  appError.ErrWeakPassword.Message,
 		},
 		{
 			name:           "Username Too Long",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "toolongusername", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  domainError.ErrUsernameTooLong.Error(),
+			expectedError:  appError.ErrUsernameTooLong.Message,
 		},
 		{
 			name:           "Username Too Short",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "short", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  domainError.ErrUsernameTooShort.Error(),
+			expectedError:  appError.ErrUsernameTooShort.Message,
 		},
 		{
 			name:           "Username Invalid Format",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "invalidformat!", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  domainError.ErrUsernameInvalidFormat.Error(),
+			expectedError:  appError.ErrUsernameInvalidFormat.Message,
 		},
 		{
 			name:           "Invalid Register Request Body",
@@ -174,7 +173,7 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 			url:            "/users/login",
 			requestBody:    dto.LoginUserRequest{Username: "nonexistentuser", Password: "correctpassword"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "user not found",
+			expectedError:  "invalid credentials",
 		},
 		{
 			name:           "Invalid Credentials",
@@ -186,7 +185,7 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 		{
 			name:           "Invalid Login Request Body",
 			url:            "/users/login",
-			requestBody:    struct{}{}, // empty object
+			requestBody:    struct{}{},
 			expectedStatus: http.StatusBadRequest,
 			expectedError:  "invalid payload: Key: 'LoginUserRequest.Username' Error:Field validation for 'Username' failed on the 'required' tag\nKey: 'LoginUserRequest.Password' Error:Field validation for 'Password' failed on the 'required' tag",
 		},

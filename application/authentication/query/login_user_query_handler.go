@@ -1,12 +1,11 @@
 package query
 
 import (
-	"fmt"
-
 	"github.com/beka-birhanu/finance-go/application/authentication/common"
 	"github.com/beka-birhanu/finance-go/application/common/cqrs/query"
 	"github.com/beka-birhanu/finance-go/application/common/interface/jwt"
 	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	appError "github.com/beka-birhanu/finance-go/application/error"
 	"github.com/beka-birhanu/finance-go/domain/common/hash"
 )
 
@@ -25,21 +24,21 @@ func NewUserLoginQueryHandler(repository repository.IUserRepository, jwtService 
 func (h *UserLoginQueryHandler) Handle(query *UserLoginQuery) (*common.AuthResult, error) {
 	user, err := h.userRepository.GetUserByUsername(query.Username)
 	if err != nil {
-		return nil, fmt.Errorf("invalid username or password")
+		return nil, appError.ErrInvalidUsernameOrPassword
 	}
 
 	isPassowrdCorrect, err := h.hashService.Match(user.PasswordHash(), query.Password)
 	if err != nil {
-		return nil, fmt.Errorf("server error")
+		return nil, appError.ServerError
 	}
 
 	if !isPassowrdCorrect {
-		return nil, fmt.Errorf("invalid username or password")
+		return nil, appError.ErrInvalidUsernameOrPassword
 	}
 
 	token, err := h.jwtService.GenerateToken(user)
 	if err != nil {
-		return nil, fmt.Errorf("server error")
+		return nil, appError.ServerError
 	}
 
 	return common.NewAuthResult(user.ID(), user.Username(), token), nil

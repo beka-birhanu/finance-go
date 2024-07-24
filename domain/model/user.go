@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"regexp"
 	"time"
 
@@ -51,7 +50,7 @@ func NewUser(username, plainPassword string, passwordHasher hash.IHashService, c
 
 	passwordHash, err := passwordHasher.Hash(plainPassword)
 	if err != nil {
-		return nil, fmt.Errorf("error hashing password: %w", err)
+		return nil, domainError.HashingError
 	}
 
 	return &User{
@@ -92,7 +91,7 @@ func (u *User) Expenses() []Expense {
 
 func (u *User) AddExpense(expense *Expense, currentUTCTime time.Time) error {
 	if expense.UserID() != u.id {
-		return fmt.Errorf("ID under user and expense don't match")
+		return domainError.ErrIdConflict
 	}
 
 	copyExpense := *expense
