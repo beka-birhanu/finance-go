@@ -3,7 +3,7 @@ Package query provides a generic interface for handling queries.
 
 It includes the `IQueryHandler` interface for processing queries of any type and returning results of any type.
 */
-package query
+package iquery
 
 // IQueryHandler defines a generic interface for handling queries.
 //

@@ -3,7 +3,7 @@ Package error provides a way to define and handle application-specific errors.
 
 It provides errors to map specific domain errors to appropriate application error types.
 */
-package error
+package apperror
 
 import (
 	"fmt"

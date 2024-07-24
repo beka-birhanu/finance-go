@@ -3,7 +3,7 @@ Package command provides a generic interface for handling commands.
 
 It includes the `ICommandHandler` interface for processing commands of any type and returning results of any type.
 */
-package command
+package icmd
 
 // ICommandHandler defines a generic interface for handling commands.
 //

@@ -3,7 +3,7 @@ Package repository provides an interface for user data access operations.
 
 It includes the `IUserRepository` interface for managing user data in a repository.
 */
-package repository
+package irepository
 
 import (
 	"github.com/beka-birhanu/finance-go/domain/model/user"

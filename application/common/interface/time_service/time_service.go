@@ -3,7 +3,7 @@ Package timeservice provides an interface for time-related operations.
 
 It includes the `ITimeService` interface for obtaining the current UTC time.
 */
-package timeservice
+package itimeservice
 
 import "time"
 

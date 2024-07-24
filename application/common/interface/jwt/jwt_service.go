@@ -3,7 +3,7 @@ Package jwt provides an interface for handling JSON Web Tokens (JWT).
 
 It includes the `IJwtService` interface for generating and decoding JWTs.
 */
-package jwt
+package ijwt
 
 import (
 	"github.com/beka-birhanu/finance-go/domain/model/user"
