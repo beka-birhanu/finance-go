@@ -35,8 +35,11 @@ func (e Error) Type() string {
 	return e.kind
 }
 
-// Predefined errors for common scenarios.
-var (
-	// InvalidCredential represents an authentication error due to invalid credentials.
-	InvalidCredential = Error{kind: Authentication, Message: "invalid credentials"}
-)
+func new(kind string, message string) Error {
+	return Error{kind: kind, Message: message}
+}
+
+// InvalidCredential return Error of type Authentication with the message recieved.
+func InvalidCredential(message string) Error {
+	return new(Authentication, "invalid credentials")
+}
