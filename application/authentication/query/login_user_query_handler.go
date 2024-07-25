@@ -1,45 +1,78 @@
-package query
+// Package loginqry provides functionality for handling login queries.
+package loginqry
 
 import (
-	"github.com/beka-birhanu/finance-go/application/authentication/common"
-	"github.com/beka-birhanu/finance-go/application/common/cqrs/query"
-	"github.com/beka-birhanu/finance-go/application/common/interface/jwt"
-	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	"errors"
+	"fmt"
+
+	auth "github.com/beka-birhanu/finance-go/application/authentication/common"
+	iquery "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
+	ijwt "github.com/beka-birhanu/finance-go/application/common/interface/jwt"
+	irepository "github.com/beka-birhanu/finance-go/application/common/interface/repository"
 	appError "github.com/beka-birhanu/finance-go/application/error"
 	"github.com/beka-birhanu/finance-go/domain/common/hash"
+	errdmn "github.com/beka-birhanu/finance-go/domain/error/common"
 )
 
-type UserLoginQueryHandler struct {
-	userRepository repository.IUserRepository
-	jwtService     jwt.IJwtService
+// Handler processes login queries.
+type Handler struct {
+	userRepository irepository.IUserRepository
+	jwtService     ijwt.IJwtService
 	hashService    hash.IHashService
 }
 
-var _ query.IQueryHandler[*UserLoginQuery, *common.AuthResult] = &UserLoginQueryHandler{}
+// Ensuring that Handler implements iquery.IHandler[*Query, *auth.Result]
+var _ iquery.IHandler[*Query, *auth.Result] = &Handler{}
 
-func NewUserLoginQueryHandler(repository repository.IUserRepository, jwtService jwt.IJwtService, hashService hash.IHashService) *UserLoginQueryHandler {
-	return &UserLoginQueryHandler{userRepository: repository, jwtService: jwtService, hashService: hashService}
+// Config holds the configuration for creating a new Handler.
+type Config struct {
+	UserRepository irepository.IUserRepository
+	JwtService     ijwt.IJwtService
+	HashService    hash.IHashService
 }
 
-func (h *UserLoginQueryHandler) Handle(query *UserLoginQuery) (*common.AuthResult, error) {
-	user, err := h.userRepository.GetUserByUsername(query.Username)
+// NewHandler creates a new Handler with the provided configuration.
+func NewHandler(config Config) *Handler {
+	return &Handler{
+		userRepository: config.UserRepository,
+		jwtService:     config.JwtService,
+		hashService:    config.HashService,
+	}
+}
+
+// Handle processes the login query and returns an auth.Result.
+//
+// Parameters:
+//   - query: A pointer to the Query containing the username and password.
+//
+// Returns:
+// - *auth.Result: A pointer to the auth.Result containing the user ID, username, and token.
+// - error: An error if the login process fails. Possible errors include:
+//   - InvalidCredential: If the username does not exist or the password is incorrect.
+//   - Unexpected: If there is an unexpected error during user retrieval or password validation.
+func (h *Handler) Handle(query *Query) (*auth.Result, error) {
+	user, err := h.userRepository.ByUsername(query.Username)
 	if err != nil {
-		return nil, appError.ErrInvalidUsernameOrPassword
+		var domainErr *errdmn.Error
+		if errors.As(err, &domainErr) {
+			return nil, appError.InvalidCredential(domainErr.Message)
+		}
+		return nil, errdmn.NewUnexpected(fmt.Sprintf("failed to retrieve user, %v", err))
 	}
 
-	isPassowrdCorrect, err := h.hashService.Match(user.PasswordHash(), query.Password)
+	isPasswordCorrect, err := h.hashService.Match(user.PasswordHash(), query.Password)
 	if err != nil {
-		return nil, appError.ServerError
+		return nil, fmt.Errorf("failed to validate user password, %w", err)
 	}
 
-	if !isPassowrdCorrect {
-		return nil, appError.ErrInvalidUsernameOrPassword
+	if !isPasswordCorrect {
+		return nil, appError.InvalidCredential("incorrect password")
 	}
 
-	token, err := h.jwtService.GenerateToken(user)
+	token, err := h.jwtService.Generate(user)
 	if err != nil {
-		return nil, appError.ServerError
+		return nil, fmt.Errorf("failed to generate JWT for user, %w", err)
 	}
 
-	return common.NewAuthResult(user.ID(), user.Username(), token), nil
+	return auth.NewResult(user.ID(), user.Username(), token), nil
 }
