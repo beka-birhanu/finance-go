@@ -1,14 +1,16 @@
-package query
+package loginqry
 
 import (
 	"testing"
 	"time"
 
-	jwtInterface "github.com/beka-birhanu/finance-go/application/common/interface/jwt"
-	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	ijwt "github.com/beka-birhanu/finance-go/application/common/interface/jwt"
+	irepository "github.com/beka-birhanu/finance-go/application/common/interface/repository"
 	appError "github.com/beka-birhanu/finance-go/application/error"
 	"github.com/beka-birhanu/finance-go/domain/common/hash"
-	"github.com/beka-birhanu/finance-go/domain/model"
+	errdmn "github.com/beka-birhanu/finance-go/domain/error/common"
+	erruser "github.com/beka-birhanu/finance-go/domain/error/user"
+	usermodel "github.com/beka-birhanu/finance-go/domain/model/user"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 )
@@ -16,47 +18,49 @@ import (
 // Mock implementations
 
 type MockUserRepository struct {
-	GetUserByUsernameFunc func(username string) (*model.User, error)
+	ByUsernameFunc func(username string) (*usermodel.User, error)
+	AddFunc        func(user *usermodel.User) error
 }
 
-func (m *MockUserRepository) CreateUser(user *model.User) error {
+func (m *MockUserRepository) Add(user *usermodel.User) error {
+	return m.AddFunc(user)
+}
+
+func (m *MockUserRepository) Update(user *usermodel.User) error {
 	return nil
 }
 
-func (m *MockUserRepository) GetUserById(id uuid.UUID) (*model.User, error) {
+func (m *MockUserRepository) ById(id uuid.UUID) (*usermodel.User, error) {
 	return nil, nil
 }
 
-func (m *MockUserRepository) GetUserByUsername(username string) (*model.User, error) {
-	return m.GetUserByUsernameFunc(username)
+func (m *MockUserRepository) ByUsername(username string) (*usermodel.User, error) {
+	return m.ByUsernameFunc(username)
 }
 
-func (m *MockUserRepository) ListUser() ([]*model.User, error) {
-	return nil, nil
-}
-
-var _ repository.IUserRepository = &MockUserRepository{}
+var _ irepository.IUserRepository = &MockUserRepository{}
 
 type MockJwtService struct {
-	GenerateTokenFunc func(user *model.User) (string, error)
+	GenerateTokenFunc func(user *usermodel.User) (string, error)
 }
 
-func (m *MockJwtService) GenerateToken(user *model.User) (string, error) {
+func (m *MockJwtService) Generate(user *usermodel.User) (string, error) {
 	return m.GenerateTokenFunc(user)
 }
 
-func (m *MockJwtService) DecodeToken(token string) (jwt.MapClaims, error) {
+func (m *MockJwtService) Decode(token string) (jwt.MapClaims, error) {
 	return nil, nil
 }
 
-var _ jwtInterface.IJwtService = &MockJwtService{}
+var _ ijwt.IJwtService = &MockJwtService{}
 
 type MockHashService struct {
 	MatchFunc func(hashedWord, plainWord string) (bool, error)
+	HashFunc  func(word string) (string, error)
 }
 
 func (m *MockHashService) Hash(word string) (string, error) {
-	return word, nil
+	return m.HashFunc(word)
 }
 
 func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
@@ -65,20 +69,32 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 
 var _ hash.IHashService = &MockHashService{}
 
-var validUser, _ = model.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{}, time.Now().UTC())
+var validUser, _ = usermodel.New(usermodel.Config{
+	Username:       "validUser",
+	PlainPassword:  `#%@@strong@@password#%`,
+	CreationTime:   time.Now().UTC(),
+	PasswordHasher: &MockHashService{},
+},
+)
 
-func TestUserLoginQueryHandler_Handle(t *testing.T) {
+func TestHandler_Handle(t *testing.T) {
 	mockUserRepository := &MockUserRepository{
-		GetUserByUsernameFunc: func(username string) (*model.User, error) {
+		ByUsernameFunc: func(username string) (*usermodel.User, error) {
 			if username == "validUser" {
 				return validUser, nil
 			}
-			return nil, appError.ErrUserNotFound
+			return nil, errdmn.NewNotFound("user not found")
+		},
+		AddFunc: func(user *usermodel.User) error {
+			if user.Username() == "newUser" {
+				return nil
+			}
+			return erruser.UsernameConflict
 		},
 	}
 
 	mockJwtService := &MockJwtService{
-		GenerateTokenFunc: func(user *model.User) (string, error) {
+		GenerateTokenFunc: func(user *usermodel.User) (string, error) {
 			return "validToken", nil
 		},
 	}
@@ -90,18 +106,25 @@ func TestUserLoginQueryHandler_Handle(t *testing.T) {
 			}
 			return false, nil
 		},
+		HashFunc: func(word string) (string, error) {
+			return "#%@@strong@@password#%", nil
+		},
 	}
 
-	handler := NewUserLoginQueryHandler(mockUserRepository, mockJwtService, mockHashService)
+	handler := NewHandler(Config{
+		UserRepository: mockUserRepository,
+		JwtService:     mockJwtService,
+		HashService:    mockHashService,
+	})
 
 	tests := []struct {
 		name          string
-		query         *UserLoginQuery
+		query         *Query
 		expectedError error
 	}{
 		{
 			name: "valid login",
-			query: &UserLoginQuery{
+			query: &Query{
 				Username: "validUser",
 				Password: "password",
 			},
@@ -109,19 +132,27 @@ func TestUserLoginQueryHandler_Handle(t *testing.T) {
 		},
 		{
 			name: "invalid username",
-			query: &UserLoginQuery{
+			query: &Query{
 				Username: "invalidUser",
 				Password: "password",
 			},
-			expectedError: appError.ErrInvalidUsernameOrPassword,
+			expectedError: appError.InvalidCredential("user not found"),
 		},
 		{
 			name: "invalid password",
-			query: &UserLoginQuery{
+			query: &Query{
 				Username: "validUser",
 				Password: "wrongPassword",
 			},
-			expectedError: appError.ErrInvalidUsernameOrPassword,
+			expectedError: appError.InvalidCredential("incorrect password"),
+		},
+		{
+			name: "new user registration",
+			query: &Query{
+				Username: "newUser",
+				Password: "password",
+			},
+			expectedError: nil,
 		},
 	}
 
@@ -140,3 +171,4 @@ func TestUserLoginQueryHandler_Handle(t *testing.T) {
 		})
 	}
 }
+
