@@ -13,25 +13,23 @@ import (
 // IUserRepository defines methods for accessing and managing user data.
 //
 // Methods:
-// - CreateUser(user *usermodel.User) error: Creates a new user in the repository and
-// returns an error if any occurs.
-// - GetUserById(id uuid.UUID) (*usermodel.User, error): Retrieves a user by their unique
+// - AddUser(user *usermodel.User) error: Creates a new user in the repository and
+// returns an error if conflict occurs.
+// - UserById(id uuid.UUID) (*usermodel.User, error): Retrieves a user by their unique
 // ID and returns the user or an error if the user does not exist.
-// - GetUserByUsername(username string) (*usermodel.User, error): Retrieves a user by their
+// - UserByUsername(username string) (*usermodel.User, error): Retrieves a user by their
 // username and returns the user or an error if the user does not exist.
-// - ListUser() ([]*usermodel.User, error): Lists all users in the repository and returns
-// a slice of users or an error.
+// - Update(user *usermodel.User) error: updates the user passed and returns an error if user doesnot exist
 type IUserRepository interface {
-	// CreateUser adds a new user to the repository.
-	CreateUser(user *usermodel.User) error
+	// Add adds a new user to the repository.
+	Add(user *usermodel.User) error
 
-	// GetUserById retrieves a user by their unique identifier.
-	GetUserById(id uuid.UUID) (*usermodel.User, error)
+	// Update updates the user passed and returns an error if user doesnot exist
+	Update(user *usermodel.User) error
+
+	// UserById retrieves a user by their unique identifier.
+	ById(id uuid.UUID) (*usermodel.User, error)
 
 	// GetUserByUsername retrieves a user by their username.
-	GetUserByUsername(username string) (*usermodel.User, error)
-
-	// ListUser returns a list of all users in the repository.
-	ListUser() ([]*usermodel.User, error)
+	ByUsername(username string) (*usermodel.User, error)
 }
-
