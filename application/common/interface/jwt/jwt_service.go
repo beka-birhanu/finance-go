@@ -13,14 +13,14 @@ import (
 // IJwtService defines methods for generating and decoding JSON Web Tokens (JWT).
 //
 // Methods:
-// - GenerateToken(user *usermodel.User) (string, error): Generates a JWT for the
+// - Generate(user *usermodel.User) (string, error): Generates a JWT for the
 // given user and returns the token or an error.
-// - DecodeToken(token string) (jwt.MapClaims, error): Decodes the provided JWT
+// - Decode(token string) (jwt.MapClaims, error): Decodes the provided JWT
 // and returns the claims or an error.
 type IJwtService interface {
-	// GenerateToken creates a JWT for the specified user.
-	GenerateToken(user *usermodel.User) (string, error)
+	// Generate creates a JWT for the specified user.
+	Generate(user *usermodel.User) (string, error)
 
-	// DecodeToken parses the provided JWT and returns the claims or an error.
-	DecodeToken(token string) (jwt.MapClaims, error)
+	// Decode parses the provided JWT and returns the claims or an error.
+	Decode(token string) (jwt.MapClaims, error)
 }
