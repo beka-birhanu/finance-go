@@ -21,7 +21,7 @@ type Handler struct {
 }
 
 // Ensure Handler implements the ICommandHandler interface.
-var _ icmd.ICommandHandler[*Command, *auth.AuthResult] = &Handler{}
+var _ icmd.IHandler[*Command, *auth.Result] = &Handler{}
 
 // Config is a configuration struct for creating a new register command handler.
 type Config struct {
@@ -43,7 +43,7 @@ func NewHandler(config Config) *Handler {
 	}
 }
 
-// Handle registers a new user from the command received and returns an AuthResult
+// Handle registers a new user from the command received and returns an Result
 // if successful.
 //
 // Returns an error if any of the following happens:
@@ -51,7 +51,7 @@ func NewHandler(config Config) *Handler {
 // - The username does not meet format, length, or validity constraints.
 // - The password does not meet the minimum strength requirements.
 // - An error occurs during password hashing or generating the JWT.
-func (h *Handler) Handle(cmd *Command) (*auth.AuthResult, error) {
+func (h *Handler) Handle(cmd *Command) (*auth.Result, error) {
 	user, err := newUser(cmd, h.hashService, h.timeService)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new user: %w", err)
@@ -67,7 +67,7 @@ func (h *Handler) Handle(cmd *Command) (*auth.AuthResult, error) {
 		return nil, fmt.Errorf("failed to generate JWT for user: %w", err)
 	}
 
-	return auth.Result(user.ID(), user.Username(), token), nil
+	return auth.NewResult(user.ID(), user.Username(), token), nil
 }
 
 // newUser creates a new user instance using the provided command, hash service,
@@ -83,4 +83,3 @@ func newUser(cmd *Command, hashService hash.IHashService, timeService itimeservi
 	}
 	return usermodel.New(config)
 }
-

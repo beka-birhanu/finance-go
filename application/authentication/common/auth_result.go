@@ -2,8 +2,8 @@ package auth
 
 import "github.com/google/uuid"
 
-// AuthResult represents the result of a successful authentication.
-type AuthResult struct {
+// Result represents the result of a successful authentication.
+type Result struct {
 	// ID is the unique identifier of the authenticated user.
 	ID uuid.UUID
 
@@ -14,10 +14,10 @@ type AuthResult struct {
 	Token string
 }
 
-// Result creates and return a new AuthResult instance with the provided
+// NewResult creates and return a new Result instance with the provided
 // user ID, username, and token.
-func Result(id uuid.UUID, username, token string) *AuthResult {
-	return &AuthResult{
+func NewResult(id uuid.UUID, username, token string) *Result {
+	return &Result{
 		ID:       id,
 		Username: username,
 		Token:    token,
