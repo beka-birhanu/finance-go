@@ -28,6 +28,23 @@ func (e Error) Error() string {
 	return fmt.Sprintf("%s: %s", e.Type, e.Message)
 }
 
-var (
-	ServerError = New(Unexpected, "server error") // Unexpected server error
-)
+// NewValidation creates a new validation error with the given message.
+func NewValidation(message string) *Error {
+	return New(Validation, message)
+}
+
+// NewConflict creates a new conflict error with the given message.
+func NewConflict(message string) *Error {
+	return New(Conflict, message)
+}
+
+// NewUnexpected creates a new unexpected server error with the given message.
+func NewUnexpected(message string) *Error {
+	return New(Unexpected, message)
+}
+
+// NewNotFound creates a new not found error with the given message.
+func NewNotFound(message string) *Error {
+	return New(NotFound, message)
+}
+
