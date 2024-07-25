@@ -9,24 +9,24 @@ import (
 	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
 )
 
-type AddExpenseCommandHandler struct {
+type AddHandler struct {
 	userRepository irepository.IUserRepository
 	timeService    itimeservice.ITimeService
 }
 
-var _ icmd.ICommandHandler[*AddExpenseCommand, *expensemodel.Expense] = &AddExpenseCommandHandler{}
+var _ icmd.IHandler[*AddExpenseCommand, *expensemodel.Expense] = &AddHandler{}
 
-func New(userRepository irepository.IUserRepository, timeService itimeservice.ITimeService) *AddExpenseCommandHandler {
-	return &AddExpenseCommandHandler{userRepository: userRepository, timeService: timeService}
+func New(userRepository irepository.IUserRepository, timeService itimeservice.ITimeService) *AddHandler {
+	return &AddHandler{userRepository: userRepository, timeService: timeService}
 }
 
-func (h *AddExpenseCommandHandler) Handle(command *AddExpenseCommand) (*expensemodel.Expense, error) {
+func (h *AddHandler) Handle(command *AddExpenseCommand) (*expensemodel.Expense, error) {
 	newExpense, err := newExpense(command, h.timeService.NowUTC())
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := h.userRepository.GetUserById(command.UserId)
+	user, err := h.userRepository.ById(command.UserId)
 	if err != nil {
 		return nil, err
 	}

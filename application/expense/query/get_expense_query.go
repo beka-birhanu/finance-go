@@ -1,8 +1,8 @@
-package query
+package expensqry
 
 import "github.com/google/uuid"
 
-type GetExpenseQuery struct {
+type GetQuery struct {
 	UserId    uuid.UUID
 	ExpenseId uuid.UUID
 }

@@ -1,22 +1,19 @@
-package query
+package expensqry
 
 import (
-	"github.com/beka-birhanu/finance-go/application/common/cqrs/query"
-	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
-	"github.com/beka-birhanu/finance-go/domain/model"
+	iquery "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
+	irepository "github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
 )
 
-type GetSingleExpenseQueryHandler struct {
-	ExpenseRepository repository.IUserRepository
+type GetHandler struct {
+	ExpenseRepository irepository.IUserRepository
 }
 
-// Handle implements query.IQueryHandler.
-func (h *GetSingleExpenseQueryHandler) Handle(query *GetExpenseQuery) (*model.Expense, error) {
-	panic("unimplemented")
+var _ iquery.IHandler[*GetQuery, *expensemodel.Expense] = &GetHandler{}
+
+func NewGetHandler(expenseRepository irepository.IUserRepository) {
 }
-
-var _ query.IQueryHandler[*GetExpenseQuery, *model.Expense] = &GetSingleExpenseQueryHandler{}
-
-func (h *GetExpenseQuery) Handle(query *GetExpenseQuery) (*model.Expense, error) {
+func (h *GetHandler) Handle(query *GetQuery) (*expensemodel.Expense, error) {
 	return nil, nil
 }
