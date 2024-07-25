@@ -1,60 +1,86 @@
-package command
+package registercmd
 
 import (
+	"fmt"
+
 	"github.com/beka-birhanu/finance-go/application/authentication/common"
-	"github.com/beka-birhanu/finance-go/application/common/cqrs/command"
-	"github.com/beka-birhanu/finance-go/application/common/interface/jwt"
-	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
-	timeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
-	appError "github.com/beka-birhanu/finance-go/application/error"
+	icmd "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
+	ijwt "github.com/beka-birhanu/finance-go/application/common/interface/jwt"
+	irepository "github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	itimeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
 	"github.com/beka-birhanu/finance-go/domain/common/hash"
-	"github.com/beka-birhanu/finance-go/domain/model"
+	usermodel "github.com/beka-birhanu/finance-go/domain/model/user"
 )
 
-type UserRegisterCommandHandler struct {
-	userRepository repository.IUserRepository
-	jwtService     jwt.IJwtService
+// Handler is a handler for user registration.
+type Handler struct {
+	userRepository irepository.IUserRepository
+	jwtService     ijwt.IJwtService
 	hashService    hash.IHashService
-	timeService    timeservice.ITimeService
+	timeService    itimeservice.ITimeService
 }
 
-// Ensure UserRegisterCommandHandler implements the ICommandHandler interface.
-var _ command.ICommandHandler[*UserRegisterCommand, *common.AuthResult] = &UserRegisterCommandHandler{}
+// Ensure Handler implements the ICommandHandler interface.
+var _ icmd.ICommandHandler[*Command, *auth.AuthResult] = &Handler{}
 
-func NewRegisterCommandHandler(
-	repository repository.IUserRepository,
-	jwtService jwt.IJwtService,
-	hashService hash.IHashService,
-	timeService timeservice.ITimeService,
-) *UserRegisterCommandHandler {
+// Config is a configuration struct for creating a new register command handler.
+type Config struct {
+	UserRepository irepository.IUserRepository
+	JwtService     ijwt.IJwtService
+	HashService    hash.IHashService
+	TimeService    itimeservice.ITimeService
+}
 
-	return &UserRegisterCommandHandler{
-		userRepository: repository,
-		jwtService:     jwtService,
-		hashService:    hashService,
-		timeService:    timeService,
+// NewHandler returns a new register command handler using the provided config.
+//
+// NOTE: All the fields in config are required for the Handle method to function.
+func NewHandler(config Config) *Handler {
+	return &Handler{
+		userRepository: config.UserRepository,
+		jwtService:     config.JwtService,
+		hashService:    config.HashService,
+		timeService:    config.TimeService,
 	}
 }
 
-func (h *UserRegisterCommandHandler) Handle(command *UserRegisterCommand) (*common.AuthResult, error) {
-	user, err := newUserFromRegisterCommand(command, h.hashService, h.timeService)
+// Handle registers a new user from the command received and returns an AuthResult
+// if successful.
+//
+// Returns an error if any of the following happens:
+// - The username is already taken by another user.
+// - The username does not meet format, length, or validity constraints.
+// - The password does not meet the minimum strength requirements.
+// - An error occurs during password hashing or generating the JWT.
+func (h *Handler) Handle(cmd *Command) (*auth.AuthResult, error) {
+	user, err := newUser(cmd, h.hashService, h.timeService)
 	if err != nil {
-		return nil, appError.ErrToAppErr(err)
+		return nil, fmt.Errorf("failed to create new user: %w", err)
 	}
 
-	err = h.userRepository.CreateUser(user)
+	err = h.userRepository.Add(user)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to add new user to repository: %w", err)
 	}
 
-	token, err := h.jwtService.GenerateToken(user)
+	token, err := h.jwtService.Generate(user)
 	if err != nil {
-		return nil, appError.ErrToAppErr(err)
+		return nil, fmt.Errorf("failed to generate JWT for user: %w", err)
 	}
 
-	return common.NewAuthResult(user.ID(), user.Username(), token), nil
+	return auth.Result(user.ID(), user.Username(), token), nil
 }
 
-func newUserFromRegisterCommand(command *UserRegisterCommand, hashService hash.IHashService, timeService timeservice.ITimeService) (*model.User, error) {
-	return model.NewUser(command.Username, command.Password, hashService, timeService.NowUTC())
+// newUser creates a new user instance using the provided command, hash service,
+// and time service.
+//
+// Returns an error if user creation fails.
+func newUser(cmd *Command, hashService hash.IHashService, timeService itimeservice.ITimeService) (*usermodel.User, error) {
+	config := usermodel.Config{
+		Username:       cmd.Username,
+		PlainPassword:  cmd.Password,
+		CreationTime:   timeService.NowUTC(),
+		PasswordHasher: hashService,
+	}
+	return usermodel.New(config)
 }
+

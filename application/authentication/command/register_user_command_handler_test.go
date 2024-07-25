@@ -1,50 +1,50 @@
-package command
+package registercmd
 
 import (
 	"testing"
 	"time"
 
-	appError "github.com/beka-birhanu/finance-go/application/error"
-	"github.com/beka-birhanu/finance-go/domain/model"
+	erruser "github.com/beka-birhanu/finance-go/domain/error/user"
+	usermodel "github.com/beka-birhanu/finance-go/domain/model/user"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 )
 
+// Mock implementations of interfaces for testing
 type MockUserRepository struct {
-	CreateUserFunc func(user *model.User) error
+	CreateUserFunc func(user *usermodel.User) error
 }
 
-func (m *MockUserRepository) CreateUser(user *model.User) error {
+func (m *MockUserRepository) Add(user *usermodel.User) error {
 	return m.CreateUserFunc(user)
 }
 
-func (m *MockUserRepository) GetUserById(id uuid.UUID) (*model.User, error) {
+func (m *MockUserRepository) Update(user *usermodel.User) error {
+	return nil
+}
+
+func (m *MockUserRepository) ById(id uuid.UUID) (*usermodel.User, error) {
 	return nil, nil
 }
 
-func (m *MockUserRepository) GetUserByUsername(username string) (*model.User, error) {
-	return nil, nil
-}
-
-func (m *MockUserRepository) ListUser() ([]*model.User, error) {
+func (m *MockUserRepository) ByUsername(username string) (*usermodel.User, error) {
 	return nil, nil
 }
 
 type MockJwtService struct {
-	GenerateTokenFunc func(user *model.User) (string, error)
+	GenerateTokenFunc func(user *usermodel.User) (string, error)
 }
 
-func (m *MockJwtService) GenerateToken(user *model.User) (string, error) {
+func (m *MockJwtService) Generate(user *usermodel.User) (string, error) {
 	return m.GenerateTokenFunc(user)
 }
 
-func (m *MockJwtService) DecodeToken(token string) (jwt.MapClaims, error) {
+func (m *MockJwtService) Decode(token string) (jwt.MapClaims, error) {
 	return nil, nil
 }
 
-type MockHashService struct {
-}
+type MockHashService struct{}
 
 func (m *MockHashService) Hash(word string) (string, error) {
 	return "hashed" + word, nil
@@ -54,51 +54,47 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return hashedWord == "hashed"+plainWord, nil
 }
 
-type MokeTimeService struct{}
+type MockTimeService struct{}
 
-func (m *MokeTimeService) NowUTC() time.Time {
+func (m *MockTimeService) NowUTC() time.Time {
 	return time.Now().UTC()
 }
 
+// TestUserRegisterCommandHandler_Handle tests the Handle method of UserRegisterCommandHandler
 func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 	mockUserRepository := &MockUserRepository{
-		CreateUserFunc: func(user *model.User) error {
+		CreateUserFunc: func(user *usermodel.User) error {
 			if user.Username() != "uniqueUsername" {
-				return appError.ErrUsernameConflict
+				return erruser.UsernameConflict
 			}
 			return nil
 		},
 	}
 
 	mockJwtService := &MockJwtService{
-		GenerateTokenFunc: func(user *model.User) (string, error) {
+		GenerateTokenFunc: func(user *usermodel.User) (string, error) {
 			return "validToken", nil
 		},
 	}
 
 	mockHashService := &MockHashService{}
-	mockTimeService := &MokeTimeService{}
+	mockTimeService := &MockTimeService{}
 
-	handler := NewRegisterCommandHandler(mockUserRepository, mockJwtService, mockHashService, mockTimeService)
+	handler := NewHandler(Config{
+		UserRepository: mockUserRepository,
+		JwtService:     mockJwtService,
+		HashService:    mockHashService,
+		TimeService:    mockTimeService,
+	})
 
-	validCommand, err := NewUserRegisterCommand("uniqueUsername", "#%strongPassword#%")
-	if err != nil {
-		t.Errorf("unexpected error '%v' on creating validCommand", err)
-	}
+	validCommand := &Command{Username: "uniqueUsername", Password: "#%strongPassword#%"}
+	duplicateCommand := &Command{Username: "duplicateUsername", Password: "#%strongPassword#%"}
+	weakPasswordCommand := &Command{Username: "uniqueUsername", Password: "weakPassword"}
 
-	duplicateCommand, err := NewUserRegisterCommand("duplicateUsername", "#%strongPassword#%")
-	if err != nil {
-		t.Errorf("unexpected error '%v' on creating duplicateCommand", err)
-	}
-
-	weakPasswordCommand, err := NewUserRegisterCommand("uniqueUsername", "weakPassword")
-	if err != nil {
-		t.Errorf("unexpected error '%v' on creating weakPasswordCommand", err)
-	}
-
+	// Define the test cases
 	tests := []struct {
 		name          string
-		command       *UserRegisterCommand
+		command       *Command
 		expectedError error
 	}{
 		{
@@ -109,15 +105,16 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 		{
 			name:          "duplicate register",
 			command:       duplicateCommand,
-			expectedError: appError.ErrUsernameConflict,
+			expectedError: erruser.UsernameConflict,
 		},
 		{
 			name:          "weak password register",
 			command:       weakPasswordCommand,
-			expectedError: appError.ErrWeakPassword,
+			expectedError: erruser.UsernameConflict,
 		},
 	}
 
+	// Run the test cases
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := handler.Handle(tt.command)
@@ -133,3 +130,4 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 		})
 	}
 }
+
