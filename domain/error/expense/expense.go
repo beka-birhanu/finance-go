@@ -12,17 +12,17 @@ import "github.com/beka-birhanu/finance-go/domain/error/common"
 // Validation errors
 var (
 	// Amount is negative.
-	NegativeAmount = errdmn.New(errdmn.Validation, "Expense.Amount cannot be negative.")
+	NegativeAmount = errdmn.NewValidation("Expense.Amount cannot be negative.")
 
 	// Description is longer than allowed.
-	DescriptionTooLong = errdmn.New(errdmn.Validation, "Expense.Description is too long.")
+	DescriptionTooLong = errdmn.NewValidation("Expense.Description is too long.")
 
 	// Description is empty.
-	EmptyDescription = errdmn.New(errdmn.Validation, "Expense.Description cannot be empty.")
+	EmptyDescription = errdmn.NewValidation("Expense.Description cannot be empty.")
 )
 
 // NotFound errors
 var (
 	// Expense is does not exist.
-	NotFound = errdmn.New(errdmn.NotFound, "Expense not found")
+	NotFound = errdmn.NewNotFound("Expense not found")
 )
