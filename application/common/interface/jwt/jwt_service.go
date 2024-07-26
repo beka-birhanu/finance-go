@@ -10,14 +10,14 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-// IJwtService defines methods for generating and decoding JSON Web Tokens (JWT).
+// IService defines methods for generating and decoding JSON Web Tokens (JWT).
 //
 // Methods:
 // - Generate(user *usermodel.User) (string, error): Generates a JWT for the
 // given user and returns the token or an error.
 // - Decode(token string) (jwt.MapClaims, error): Decodes the provided JWT
 // and returns the claims or an error.
-type IJwtService interface {
+type IService interface {
 	// Generate creates a JWT for the specified user.
 	Generate(user *usermodel.User) (string, error)
 
