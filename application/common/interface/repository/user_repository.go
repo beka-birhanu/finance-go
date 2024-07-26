@@ -15,9 +15,9 @@ import (
 // Methods:
 // - AddUser(user *usermodel.User) error: Creates a new user in the repository and
 // returns an error if conflict occurs.
-// - UserById(id uuid.UUID) (*usermodel.User, error): Retrieves a user by their unique
+// - ById(id uuid.UUID) (*usermodel.User, error): Retrieves a user by their unique
 // ID and returns the user or an error if the user does not exist.
-// - UserByUsername(username string) (*usermodel.User, error): Retrieves a user by their
+// - ByUsername(username string) (*usermodel.User, error): Retrieves a user by their
 // username and returns the user or an error if the user does not exist.
 // - Update(user *usermodel.User) error: updates the user passed and returns an error if user doesnot exist
 type IUserRepository interface {
