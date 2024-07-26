@@ -6,9 +6,10 @@ import (
 
 	timeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
 	"github.com/beka-birhanu/finance-go/domain/common/hash"
-	"github.com/beka-birhanu/finance-go/domain/model"
+	usermodel "github.com/beka-birhanu/finance-go/domain/model/user"
 )
 
+// MockHashService mocks the hash service for testing.
 type MockHashService struct {
 	MatchFunc func(hashedWord, plainWord string) (bool, error)
 }
@@ -21,27 +22,39 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return m.MatchFunc(hashedWord, plainWord)
 }
 
-var _ hash.IHashService = &MockHashService{}
+var _ hash.IService = &MockHashService{}
 
+// MockTimeService mocks the time service for testing.
 type MockTimeService struct{}
 
 func (m *MockTimeService) NowUTC() time.Time {
 	return time.Now().UTC()
 }
 
-var _ timeservice.ITimeService = &MockTimeService{}
+var _ timeservice.IService = &MockTimeService{}
 
-var user, _ = model.NewUser("validUser", "#%@@strong@@password#%", &MockHashService{}, time.Now().UTC())
+// Test user setup
+var testUser, _ = usermodel.New(usermodel.Config{
+	Username:       "validUser",
+	PlainPassword:  "#%@@strong@@password#%",
+	CreationTime:   time.Now().UTC(),
+	PasswordHasher: &MockHashService{},
+})
 
 func TestJwtService(t *testing.T) {
 	secretKey := "secret"
 	issuer := "test_issuer"
 	expTime := time.Minute * 15
 
-	jwtService := NewJwtService(secretKey, issuer, expTime, &MockTimeService{})
+	jwtService := New(Config{
+		SecretKey:   secretKey,
+		Issuer:      issuer,
+		ExpTime:     expTime,
+		TimeService: &MockTimeService{},
+	})
 
 	t.Run("GenerateToken", func(t *testing.T) {
-		token, err := jwtService.GenerateToken(user)
+		token, err := jwtService.Generate(testUser)
 		if err != nil {
 			t.Errorf("expected no error, got %v", err)
 		}
@@ -51,7 +64,7 @@ func TestJwtService(t *testing.T) {
 	})
 
 	t.Run("DecodeToken", func(t *testing.T) {
-		token, err := jwtService.GenerateToken(user)
+		token, err := jwtService.Generate(testUser)
 		if err != nil {
 			t.Errorf("expected no error, got %v", err)
 		}
@@ -59,12 +72,12 @@ func TestJwtService(t *testing.T) {
 			t.Error("expected token to be not empty")
 		}
 
-		claims, err := jwtService.DecodeToken(token)
+		claims, err := jwtService.Decode(token)
 		if err != nil {
 			t.Errorf("expected no error, got %v", err)
 		}
-		if claims["user_id"] != user.ID().String() {
-			t.Errorf("expected user_id to be %v, got %v", user.ID().String(), claims["user_id"])
+		if claims["user_id"] != testUser.ID().String() {
+			t.Errorf("expected user_id to be %v, got %v", testUser.ID().String(), claims["user_id"])
 		}
 		if claims["iss"] != issuer {
 			t.Errorf("expected issuer to be %v, got %v", issuer, claims["iss"])
@@ -77,9 +90,10 @@ func TestJwtService(t *testing.T) {
 	})
 
 	t.Run("DecodeInvalidToken", func(t *testing.T) {
-		_, err := jwtService.DecodeToken("invalid.token.string")
+		_, err := jwtService.Decode("invalid.token.string")
 		if err == nil {
 			t.Error("expected an error, got none")
 		}
 	})
 }
+
