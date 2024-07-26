@@ -17,23 +17,30 @@ const (
 	keySize    = 32
 )
 
-type HashService struct{}
+// Service is an implementation of hash.IService for hashing and matching.
+type Service struct{}
 
-var _ hash.IHashService = &HashService{}
+var _ hash.IService = &Service{}
 
 var (
-	instance *HashService
+	instance *Service
 	once     sync.Once
 )
 
-func GetHashService() *HashService {
+// singletonService returns a singleton instance of the hash Service.
+// It ensures that only one instance of the Service is created.
+func singletonService() *Service {
 	once.Do(func() {
-		instance = &HashService{}
+		instance = &Service{}
 	})
 	return instance
 }
 
-func (hs *HashService) Hash(word string) (string, error) {
+// Hash generates a hashed representation of the given word.
+// It creates a random salt, combines it with the word, and hashes the result
+// using PBKDF2 with SHA-256. The final result is the base64-encoded combination
+// of the salt and the hash.
+func (hs *Service) Hash(word string) (string, error) {
 	salt := make([]byte, saltSize)
 	if _, err := rand.Read(salt); err != nil {
 		return "", err
@@ -46,7 +53,18 @@ func (hs *HashService) Hash(word string) (string, error) {
 	return base64.StdEncoding.EncodeToString(result), nil
 }
 
-func (hs *HashService) Match(hashedWord, plainWord string) (bool, error) {
+// Match compares a plain text word to a hashed word to determine if they match.
+// It extracts the salt from the hashed word, re-hashes the plain text word with the same salt,
+// and compares the result to the hash part of the hashed word.
+//
+// Parameters:
+//   - hashedWord: The base64-encoded combination of salt and hash to be compared against.
+//   - plainWord: The plain text word to be hashed and compared.
+//
+// Returns:
+//   - A boolean indicating whether the plain text word matches the hashed word.
+//   - An error if the hashed word is not in the expected format.
+func (hs *Service) Match(hashedWord, plainWord string) (bool, error) {
 	hashedWordBytes, err := base64.StdEncoding.DecodeString(hashedWord)
 	if err != nil {
 		return false, err
@@ -68,3 +86,4 @@ func (hs *HashService) Match(hashedWord, plainWord string) (bool, error) {
 
 	return true, nil
 }
+
