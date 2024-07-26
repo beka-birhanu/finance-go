@@ -9,6 +9,8 @@ type LoginResponse struct {
 	Username string `json:"username"`
 }
 
-func FromAuthResult(authResult *common.AuthResult) *LoginResponse {
+// FromAuthResult extracts the info for the login response from the given
+// auth.Result and map them to new LoginResponse
+func FromAuthResult(authResult *auth.Result) *LoginResponse {
 	return &LoginResponse{ID: authResult.ID.String(), Username: authResult.Username}
 }
