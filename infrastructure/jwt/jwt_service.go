@@ -4,34 +4,61 @@ import (
 	"errors"
 	"time"
 
-	jwtInterface "github.com/beka-birhanu/finance-go/application/common/interface/jwt"
-	timeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
-	"github.com/beka-birhanu/finance-go/domain/model"
+	ijwt "github.com/beka-birhanu/finance-go/application/common/interface/jwt"
+	itimeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
+	usermodel "github.com/beka-birhanu/finance-go/domain/model/user"
 	"github.com/dgrijalva/jwt-go"
 )
 
-type JwtService struct {
+// Service implements the ijwt.IService interface for handling JWT operations.
+type Service struct {
 	secretKey   string
 	issuer      string
 	expTime     time.Duration
-	timeService timeservice.ITimeService
+	timeService itimeservice.IService
 }
 
-var _ jwtInterface.IJwtService = &JwtService{}
+var _ ijwt.IService = &Service{}
 
-func NewJwtService(secretKey, issuer string, expTime time.Duration, timeService timeservice.ITimeService) *JwtService {
-	return &JwtService{
-		secretKey:   secretKey,
-		issuer:      issuer,
-		expTime:     expTime,
-		timeService: timeService,
+// Config holds the configuration for creating a new JWT Service.
+type Config struct {
+	SecretKey   string
+	Issuer      string
+	ExpTime     time.Duration
+	TimeService itimeservice.IService
+}
+
+// New creates a new JWT Service with the given configuration.
+//
+// Parameters:
+//   - config: The configuration containing the secret key, issuer, expiration time, and time service.
+//
+// Returns:
+//   - *Service: A new instance of the JWT Service.
+func New(config Config) *Service {
+	return &Service{
+		secretKey:   config.SecretKey,
+		issuer:      config.Issuer,
+		expTime:     config.ExpTime,
+		timeService: config.TimeService,
 	}
 }
 
-func (s *JwtService) GenerateToken(user *model.User) (string, error) {
+// Generate creates a new JWT token for the given user.
+//
+// The token contains the user ID in the claims.
+//
+// Parameters:
+//   - user: The user for whom the token is being generated.
+//
+// Returns:
+//   - string: The signed JWT token.
+//   - error: An error if the token could not be generated.
+func (s *Service) Generate(user *usermodel.User) (string, error) {
+	expirationTime := s.timeService.NowUTC().Add(s.expTime).Unix()
 	claims := jwt.MapClaims{
 		"user_id": user.ID().String(),
-		"exp":     s.timeService.NowUTC().Add(s.expTime).Unix(),
+		"exp":     expirationTime,
 		"iss":     s.issuer,
 	}
 
@@ -39,15 +66,18 @@ func (s *JwtService) GenerateToken(user *model.User) (string, error) {
 	return token.SignedString([]byte(s.secretKey))
 }
 
-func (s *JwtService) DecodeToken(tokenString string) (jwt.MapClaims, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Check the signing method
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("unexpected signing method")
-		}
-		return []byte(s.secretKey), nil
-	})
-
+// Decode parses and validates a JWT token, returning its claims if valid.
+//
+// If the token is expired or signed with a different method or secret key, an error is returned.
+//
+// Parameters:
+//   - tokenString: The JWT token as a string.
+//
+// Returns:
+//   - jwt.MapClaims: The claims extracted from the token.
+//   - error: An error if the token is invalid or cannot be parsed.
+func (s *Service) Decode(tokenString string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, s.getSigningKey)
 	if err != nil {
 		return nil, err
 	}
@@ -58,3 +88,12 @@ func (s *JwtService) DecodeToken(tokenString string) (jwt.MapClaims, error) {
 
 	return nil, errors.New("invalid token")
 }
+
+// getSigningKey is a helper function to validate the token's signing method and provide the secret key.
+func (s *Service) getSigningKey(token *jwt.Token) (interface{}, error) {
+	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		return nil, errors.New("unexpected signing method")
+	}
+	return []byte(s.secretKey), nil
+}
+
