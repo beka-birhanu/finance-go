@@ -5,14 +5,14 @@ import (
 	"testing"
 	"time"
 
-	appError "github.com/beka-birhanu/finance-go/application/error"
 	"github.com/beka-birhanu/finance-go/domain/common/hash"
-	"github.com/beka-birhanu/finance-go/domain/model"
+	erruser "github.com/beka-birhanu/finance-go/domain/error/user"
+	usermodel "github.com/beka-birhanu/finance-go/domain/model/user"
 	"github.com/google/uuid"
 )
 
-type MockHashService struct {
-}
+// MockHashService is a mock implementation of the IHashService interface.
+type MockHashService struct{}
 
 func (m *MockHashService) Hash(word string) (string, error) {
 	return word, nil
@@ -22,78 +22,74 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return false, nil
 }
 
-var _ hash.IHashService = &MockHashService{}
+var _ hash.IService = &MockHashService{}
 
-var user, _ = model.NewUser("validUser", "#%strongPassword#%", &MockHashService{}, time.Now().UTC())
+var user, _ = usermodel.New(usermodel.Config{
+	Username:       "validUser",
+	PlainPassword:  "#%strongPassword#%",
+	CreationTime:   time.Now().UTC(),
+	PasswordHasher: &MockHashService{},
+})
 
+// TestUserRepository runs a suite of tests for the UserRepository.
 func TestUserRepository(t *testing.T) {
 	repo := NewUserRepository(nil) // Passing nil as we're using an in-memory implementation
 
 	t.Run("CreateUser", func(t *testing.T) {
-		err := repo.CreateUser(user)
+		err := repo.Add(user)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
 
 	t.Run("CreateUserWithClashingUsername", func(t *testing.T) {
-		err := repo.CreateUser(user)
+		err := repo.Add(user)
 		if err == nil {
-			t.Errorf("expected conflict error %v, got %v", appError.ErrUsernameConflict, err)
+			t.Errorf("expected conflict error %v, got %v", erruser.UsernameConflict, err)
 		}
-		if !errors.Is(err, appError.ErrUsernameConflict) {
-			t.Errorf("unexpected error: %v, %v", err, appError.ErrUsernameConflict)
+		if !errors.Is(err, erruser.UsernameConflict) {
+			t.Errorf("unexpected error: %v, %v", err, erruser.UsernameConflict)
 		}
 	})
 
 	t.Run("GetUserById", func(t *testing.T) {
-		createdUser, err := repo.GetUserById(user.ID())
+		createdUser, err := repo.ById(user.ID())
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
-		if createdUser == nil { //nolint
+		if createdUser == nil {
 			t.Error("expected user to be found")
 		}
-		if createdUser.ID() != user.ID() { //nolint
+		if createdUser.ID() != user.ID() {
 			t.Errorf("expected user ID to be %v, got %v", user.ID(), createdUser.ID())
 		}
 	})
 
 	t.Run("GetUserByIdWithInvalidId", func(t *testing.T) {
-		_, err := repo.GetUserById(uuid.New()) // random invalid id
+		_, err := repo.ById(uuid.New()) // random invalid id
 		if err == nil {
-			t.Errorf("expected error %v", appError.ErrUserNotFound)
+			t.Errorf("expected error %v", erruser.NotFound)
 		}
-
 	})
 
 	t.Run("GetUserByUsername", func(t *testing.T) {
-		createdUser, err := repo.GetUserByUsername(user.Username())
+		createdUser, err := repo.ByUsername(user.Username())
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
-		if createdUser == nil { //nolint
+		if createdUser == nil {
 			t.Error("expected user to be found")
 		}
-		if createdUser.Username() != user.Username() { //nolint
+		if createdUser.Username() != user.Username() {
 			t.Errorf("expected username to be %v, got %v", user.Username(), createdUser.Username())
 		}
 	})
 
 	t.Run("GetUserByInvalidUsername", func(t *testing.T) {
-		_, err := repo.GetUserByUsername("invalidUsername")
+		_, err := repo.ByUsername("invalidUsername")
 		if err == nil {
-			t.Errorf("expected error %v", appError.ErrUserNotFound)
-		}
-	})
-
-	t.Run("ListUser", func(t *testing.T) {
-		users, err := repo.ListUser()
-		if err != nil {
-			t.Errorf("unexpected error: %v", err)
-		}
-		if len(users) == 0 {
-			t.Error("expected users to be listed")
+			t.Errorf("expected error %v", erruser.NotFound)
 		}
 	})
 }
+
