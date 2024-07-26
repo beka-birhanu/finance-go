@@ -17,8 +17,8 @@ import (
 // Handler processes login queries.
 type Handler struct {
 	userRepository irepository.IUserRepository
-	jwtService     ijwt.IJwtService
-	hashService    hash.IHashService
+	jwtService     ijwt.IService
+	hashService    hash.IService
 }
 
 // Ensuring that Handler implements iquery.IHandler[*Query, *auth.Result]
@@ -27,8 +27,8 @@ var _ iquery.IHandler[*Query, *auth.Result] = &Handler{}
 // Config holds the configuration for creating a new Handler.
 type Config struct {
 	UserRepository irepository.IUserRepository
-	JwtService     ijwt.IJwtService
-	HashService    hash.IHashService
+	JwtService     ijwt.IService
+	HashService    hash.IService
 }
 
 // NewHandler creates a new Handler with the provided configuration.

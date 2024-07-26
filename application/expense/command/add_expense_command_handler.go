@@ -11,12 +11,12 @@ import (
 
 type AddHandler struct {
 	userRepository irepository.IUserRepository
-	timeService    itimeservice.ITimeService
+	timeService    itimeservice.IService
 }
 
 var _ icmd.IHandler[*AddExpenseCommand, *expensemodel.Expense] = &AddHandler{}
 
-func New(userRepository irepository.IUserRepository, timeService itimeservice.ITimeService) *AddHandler {
+func New(userRepository irepository.IUserRepository, timeService itimeservice.IService) *AddHandler {
 	return &AddHandler{userRepository: userRepository, timeService: timeService}
 }
 

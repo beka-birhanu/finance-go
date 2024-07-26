@@ -15,9 +15,9 @@ import (
 // Handler is a handler for user registration.
 type Handler struct {
 	userRepository irepository.IUserRepository
-	jwtService     ijwt.IJwtService
-	hashService    hash.IHashService
-	timeService    itimeservice.ITimeService
+	jwtService     ijwt.IService
+	hashService    hash.IService
+	timeService    itimeservice.IService
 }
 
 // Ensure Handler implements the ICommandHandler interface.
@@ -26,9 +26,9 @@ var _ icmd.IHandler[*Command, *auth.Result] = &Handler{}
 // Config is a configuration struct for creating a new register command handler.
 type Config struct {
 	UserRepository irepository.IUserRepository
-	JwtService     ijwt.IJwtService
-	HashService    hash.IHashService
-	TimeService    itimeservice.ITimeService
+	JwtService     ijwt.IService
+	HashService    hash.IService
+	TimeService    itimeservice.IService
 }
 
 // NewHandler returns a new register command handler using the provided config.
@@ -74,7 +74,7 @@ func (h *Handler) Handle(cmd *Command) (*auth.Result, error) {
 // and time service.
 //
 // Returns an error if user creation fails.
-func newUser(cmd *Command, hashService hash.IHashService, timeService itimeservice.ITimeService) (*usermodel.User, error) {
+func newUser(cmd *Command, hashService hash.IService, timeService itimeservice.IService) (*usermodel.User, error) {
 	config := usermodel.Config{
 		Username:       cmd.Username,
 		PlainPassword:  cmd.Password,

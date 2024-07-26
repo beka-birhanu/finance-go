@@ -52,7 +52,7 @@ func (m *MockJwtService) Decode(token string) (jwt.MapClaims, error) {
 	return nil, nil
 }
 
-var _ ijwt.IJwtService = &MockJwtService{}
+var _ ijwt.IService = &MockJwtService{}
 
 type MockHashService struct {
 	MatchFunc func(hashedWord, plainWord string) (bool, error)
@@ -67,7 +67,7 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 	return m.MatchFunc(hashedWord, plainWord)
 }
 
-var _ hash.IHashService = &MockHashService{}
+var _ hash.IService = &MockHashService{}
 
 var validUser, _ = usermodel.New(usermodel.Config{
 	Username:       "validUser",
@@ -171,4 +171,3 @@ func TestHandler_Handle(t *testing.T) {
 		})
 	}
 }
-
