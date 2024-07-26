@@ -1,17 +1,17 @@
 /*
 Package timeservice provides an interface for time-related operations.
 
-It includes the `ITimeService` interface for obtaining the current UTC time.
+It includes the `IService` interface for obtaining the current UTC time.
 */
 package itimeservice
 
 import "time"
 
-// ITimeService defines methods for obtaining time information.
+// IService defines methods for obtaining time information.
 //
 // Methods:
 // - NowUTC() time.Time: Returns the current time in UTC.
-type ITimeService interface {
+type IService interface {
 	// NowUTC returns the current time in UTC.
 	NowUTC() time.Time
 }
