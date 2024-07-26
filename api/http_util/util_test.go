@@ -1,4 +1,4 @@
-package util
+package httputil
 
 import (
 	"bytes"
@@ -11,7 +11,9 @@ import (
 	apiError "github.com/beka-birhanu/finance-go/api/error"
 )
 
+// TestUtils contains tests for the utility functions in the httputil package.
 func TestUtils(t *testing.T) {
+	// Test ParseJSON function
 	t.Run("ParseJSON", func(t *testing.T) {
 		runTestCase := func(input []byte, expected string, shouldErr bool) {
 			r := &http.Request{
@@ -58,34 +60,35 @@ func TestUtils(t *testing.T) {
 		}
 	})
 
-	t.Run("WriteError", func(t *testing.T) {
-		runTest := func(status apiError.StatusCode, message string) {
-
-			testApiError := apiError.Error{StatusCode: status, Message: message}
+	// Test RespondError function
+	t.Run("RespondError", func(t *testing.T) {
+		runTest := func(testErr apiError.Error) {
 			w := httptest.NewRecorder()
-			WriteError(w, testApiError)
+			RespondError(w, testErr)
 
-			if status := w.Result().StatusCode; status != http.StatusBadRequest {
-				t.Errorf("expected status code %d, got %d", http.StatusBadRequest, status)
+			if status := w.Result().StatusCode; status != testErr.StatusCode() {
+				t.Errorf("expected status code %d, got %d", testErr.StatusCode(), status)
 			}
 
 			var response map[string]string
 			if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
 				t.Fatalf("failed to decode response body: %v", err)
 			}
-			if response["error"] != testApiError.Error() {
-				t.Errorf("expected error message %q, got %q", testApiError.Error(), response["error"])
+			if response["error"] != testErr.Error() {
+				t.Errorf("expected error message %q, got %q", testErr.Error(), response["error"])
 			}
 		}
 
-		runTest(http.StatusBadRequest, "test error")
+		testErr := apiError.NewBadRequest("test error")
+		runTest(testErr)
 	})
 
-	t.Run("WriteJSONWithCookie", func(t *testing.T) {
+	// Test RespondWithCookies function
+	t.Run("RespondWithCookies", func(t *testing.T) {
 		runTest := func(status int, v any, cookies []*http.Cookie) {
 			w := httptest.NewRecorder()
 
-			WriteJSONWithCookie(w, status, v, cookies)
+			RespondWithCookies(w, status, v, cookies)
 
 			if status := w.Result().StatusCode; status != http.StatusOK {
 				t.Errorf("expected status code %d, got %d", http.StatusOK, status)
@@ -111,11 +114,12 @@ func TestUtils(t *testing.T) {
 		runTest(http.StatusOK, map[string]string{"key": "value"}, cookies)
 	})
 
-	t.Run("WriteJSON", func(t *testing.T) {
+	// Test Respond function
+	t.Run("Respond", func(t *testing.T) {
 		runTest := func(status int, v any) {
 			w := httptest.NewRecorder()
 
-			WriteJSON(w, status, v)
+			Respond(w, status, v)
 
 			if status := w.Result().StatusCode; status != http.StatusOK {
 				t.Errorf("expected status code %d, got %d", http.StatusOK, status)
@@ -138,3 +142,4 @@ func TestUtils(t *testing.T) {
 		runTest(http.StatusOK, map[string]string{"key": "value"})
 	})
 }
+
