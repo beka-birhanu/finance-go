@@ -1,85 +1,59 @@
-package error
+package errapi
 
 import (
 	"fmt"
-
-	appError "github.com/beka-birhanu/finance-go/application/error"
 )
 
+// StatusCode represents an HTTP status code.
 type StatusCode int
 
+// HTTP status codes used in the Error type.
 const (
-	BadRequestStatusCode     StatusCode = 400 // Bad Request
-	ConflictStatusCode       StatusCode = 409 // Conflict
-	ServerStatusCode         StatusCode = 500 // Internal Server Error
-	AuthenticationStatusCode StatusCode = 401 // Unauthorized
-	NotFoundStatusCode       StatusCode = 404 // Not Found
+	BadRequest     StatusCode = 400 // Bad Request
+	Conflict       StatusCode = 409 // Conflict
+	ServerError    StatusCode = 500 // Internal Server Error
+	Authentication StatusCode = 401 // Unauthorized
+	NotFound       StatusCode = 404 // Not Found
 )
 
+// Error represents an API error with a status code and message.
 type Error struct {
-	StatusCode StatusCode
-	Message    string
+	statusCode StatusCode
+	message    string
 }
 
-func NewErrBadRequest(message string) Error {
-	return Error{StatusCode: BadRequestStatusCode, Message: message}
+// NewBadRequest creates a new Error with a 400 Bad Request status code
+// and the message provided.
+func NewBadRequest(message string) Error {
+	return Error{statusCode: BadRequest, message: message}
 }
 
-func NewErrValidation(message string) Error {
-	return Error{StatusCode: BadRequestStatusCode, Message: message}
+// NewConflict creates a new Error with a 409 Conflict status code
+// and the message provided.
+func NewConflict(message string) Error {
+	return Error{statusCode: Conflict, message: message}
 }
 
-func NewErrConflict(message string) Error {
-	return Error{StatusCode: ConflictStatusCode, Message: message}
+// NewServerError creates a new Error with a 500 Internal Server Error status code
+// and the message provided.
+func NewServerError(message string) Error {
+	return Error{statusCode: ServerError, message: message}
 }
 
-func NewErrServer(message string) Error {
-	return Error{StatusCode: ServerStatusCode, Message: message}
+// NewAuthentication creates a new Error with a 401 Unauthorized status code
+// and the message provided.
+func NewAuthentication(message string) Error {
+	return Error{statusCode: Authentication, message: message}
 }
 
-func NewErrAuthentication(message string) Error {
-	return Error{StatusCode: AuthenticationStatusCode, Message: message}
+// NewNotFound creates a new Error with a 404 Not Found status code
+// and the message provided.
+func NewNotFound(message string) Error {
+	return Error{statusCode: NotFound, message: message}
 }
 
-func NewErrNotFound(message string) Error {
-	return Error{StatusCode: NotFoundStatusCode, Message: message}
-}
-
-func NewErrMissingParam(paramName string) Error {
-	return Error{StatusCode: BadRequestStatusCode, Message: fmt.Sprintf("%s parameter in path", paramName)}
-}
-
-func NewErrInvalidParam(paramName string) Error {
-	return Error{StatusCode: BadRequestStatusCode, Message: fmt.Sprintf("invalid %s format", paramName)}
-}
-
+// Error returns the error message.
 func (e Error) Error() string {
-	return fmt.Sprint(e.Message)
-}
-
-var (
-	ErrMissingRequestBody = Error{StatusCode: BadRequestStatusCode, Message: "missing request body"}
-)
-
-func ErrToAPIError(err error) Error {
-	switch e := err.(type) {
-	case appError.Error:
-		switch e.Type {
-		case appError.ValidationErrorType:
-			return Error{StatusCode: BadRequestStatusCode, Message: e.Message}
-		case appError.ConflictErrorType:
-			return Error{StatusCode: ConflictStatusCode, Message: e.Message}
-		case appError.ServerErrorType:
-			return Error{StatusCode: ServerStatusCode, Message: e.Message}
-		case appError.AuthenticationErrorType:
-			return Error{StatusCode: BadRequestStatusCode, Message: "invalid credentials"}
-		case appError.NotFoundErrorType:
-			return Error{StatusCode: NotFoundStatusCode, Message: e.Message}
-		default:
-			return Error{StatusCode: ServerStatusCode, Message: "unknown error"}
-		}
-	default:
-		return Error{StatusCode: ServerStatusCode, Message: "something went wrong"}
-	}
+	return fmt.Sprint(e.message)
 }
 
