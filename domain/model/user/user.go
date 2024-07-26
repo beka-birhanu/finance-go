@@ -61,7 +61,7 @@ type Config struct {
 	CreationTime time.Time
 
 	// PasswordHasher is a service used to hash the plain password.
-	PasswordHasher hash.IHashService
+	PasswordHasher hash.IService
 }
 
 // New creates a new User with the provided configuration.
