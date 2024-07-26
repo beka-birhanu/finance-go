@@ -4,21 +4,18 @@ import (
 	"fmt"
 )
 
-// StatusCode represents an HTTP status code.
-type StatusCode int
-
 // HTTP status codes used in the Error type.
 const (
-	BadRequest     StatusCode = 400 // Bad Request
-	Conflict       StatusCode = 409 // Conflict
-	ServerError    StatusCode = 500 // Internal Server Error
-	Authentication StatusCode = 401 // Unauthorized
-	NotFound       StatusCode = 404 // Not Found
+	BadRequest     = 400 // Bad Request
+	Conflict       = 409 // Conflict
+	ServerError    = 500 // Internal Server Error
+	Authentication = 401 // Unauthorized
+	NotFound       = 404 // Not Found
 )
 
 // Error represents an API error with a status code and message.
 type Error struct {
-	statusCode StatusCode
+	statusCode int
 	message    string
 }
 
@@ -57,3 +54,6 @@ func (e Error) Error() string {
 	return fmt.Sprint(e.message)
 }
 
+func (e Error) StatusCode() int {
+	return e.statusCode
+}
