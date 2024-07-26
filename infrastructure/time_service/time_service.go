@@ -6,14 +6,19 @@ import (
 	timeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
 )
 
-type TimeService struct{}
+// Service provides the current UTC time.
+type Service struct{}
 
-var _ timeservice.ITimeService = &TimeService{}
+// Ensure Service implements timeservice.IService.
+var _ timeservice.IService = &Service{}
 
-func NewTimeService() *TimeService {
-	return &TimeService{}
+// New creates a new instance of the Service.
+func New() *Service {
+	return &Service{}
 }
 
-func (t *TimeService) NowUTC() time.Time {
+// NowUTC returns the current time in UTC.
+func (t *Service) NowUTC() time.Time {
 	return time.Now().UTC()
 }
+
