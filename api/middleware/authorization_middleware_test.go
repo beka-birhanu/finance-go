@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/beka-birhanu/finance-go/domain/model"
+	usermodel "github.com/beka-birhanu/finance-go/domain/model/user"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -14,11 +14,11 @@ type MockJwtService struct {
 	DecodeTokenFunc func(token string) (jwt.MapClaims, error)
 }
 
-func (m *MockJwtService) GenerateToken(user *model.User) (string, error) {
+func (m *MockJwtService) Generate(user *usermodel.User) (string, error) {
 	return "", nil
 }
 
-func (m *MockJwtService) DecodeToken(token string) (jwt.MapClaims, error) {
+func (m *MockJwtService) Decode(token string) (jwt.MapClaims, error) {
 	return m.DecodeTokenFunc(token)
 }
 
@@ -63,7 +63,7 @@ func TestAuthorizationMiddleware(t *testing.T) {
 				DecodeTokenFunc: tt.mockDecodeTokenFunc,
 			}
 
-			mw := AuthorizationMiddleware(mockJwtService)
+			mw := Authorization(mockJwtService)
 
 			// Create a handler to be wrapped by the middleware
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
