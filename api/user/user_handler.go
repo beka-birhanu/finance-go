@@ -16,6 +16,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// Handler manages user-related HTTP requests.
 type Handler struct {
 	api.BaseHandler
 	repository      irepository.IUserRepository
@@ -23,12 +24,14 @@ type Handler struct {
 	loginHandler    iquery.IHandler[*loginqry.Query, *auth.Result]
 }
 
+// Config holds the dependencies needed to create a Handler.
 type Config struct {
 	UserRepository  irepository.IUserRepository
 	RegisterHandler icmd.IHandler[*registercmd.Command, *auth.Result]
-	LoginHandler    icmd.IHandler[*loginqry.Query, *auth.Result]
+	LoginHandler    iquery.IHandler[*loginqry.Query, *auth.Result]
 }
 
+// NewHandler creates a new Handler with the given configuration.
 func NewHandler(config Config) *Handler {
 	return &Handler{
 		repository:      config.UserRepository,
@@ -37,6 +40,7 @@ func NewHandler(config Config) *Handler {
 	}
 }
 
+// RegisterPublicRoutes registers the public routes for user-related actions.
 func (h *Handler) RegisterPublicRoutes(router *mux.Router) {
 	router.HandleFunc(
 		"/users/register",
@@ -49,14 +53,16 @@ func (h *Handler) RegisterPublicRoutes(router *mux.Router) {
 	).Methods(http.MethodPost)
 }
 
+// RegisterProtectedRoutes registers the protected routes for user-related actions.
 func (h *Handler) RegisterProtectedRoutes(router *mux.Router) {}
 
 func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 	var registerRequest dto.RegisterRequest
 
-	// populate registerRequest from request body
+	// Populate registerRequest from request body
 	if err := h.ValidatedBody(r, &registerRequest); err != nil {
 		h.Problem(w, err.(errapi.Error))
+		return
 	}
 
 	registerCommand, err := registercmd.NewCommand(registerRequest.Username, registerRequest.Password)
@@ -90,7 +96,7 @@ func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var loginRequest dto.LoginUserRequest
 
-	// populate loginRequest from request body
+	// Populate loginRequest from request body
 	if err := h.ValidatedBody(r, &loginRequest); err != nil {
 		h.Problem(w, err.(errapi.Error))
 		return
@@ -119,3 +125,4 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	httputil.RespondWithCookies(w, http.StatusOK, loginResponse, []*http.Cookie{&cookie})
 }
+
