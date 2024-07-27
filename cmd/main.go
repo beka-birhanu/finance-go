@@ -49,7 +49,7 @@ func main() {
 		})
 	hashService := hash.SingletonService()
 
-	authorizationMiddleware := middleware.AuthorizationMiddleware(jwtService)
+	authorizationMiddleware := middleware.Authorization(jwtService)
 
 	// Initialize command and query handlers
 	userRegisterCommandHandler := registercmd.NewHandler(registercmd.Config{
