@@ -73,16 +73,17 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 		handleFunc: func(cmd *registercmd.Command) (*auth.Result, error) {
 			switch cmd.Username {
 			case "existinguser":
-				return nil, erruser.UsernameConflict
+				return nil, fmt.Errorf("failed to create new user: %w", erruser.UsernameConflict)
+
 			case "toolongusername":
-				return nil, erruser.UsernameTooLong
+				return nil, fmt.Errorf("failed to create new user: %w", erruser.UsernameTooLong)
 			case "short":
-				return nil, erruser.UsernameTooShort
+				return nil, fmt.Errorf("failed to create new user: %w", erruser.UsernameTooShort)
 			case "invalidformat!":
-				return nil, erruser.UsernameInvalidFormat
+				return nil, fmt.Errorf("failed to create new user: %w", erruser.UsernameInvalidFormat)
 			}
 			if cmd.Password == "weakpassword" {
-				return nil, erruser.WeakPassword
+				return nil, fmt.Errorf("failed to create new user: %w", erruser.WeakPassword)
 			}
 			return auth.NewResult(uuid.New(), cmd.Username, "testtoken"), nil
 		},
@@ -128,35 +129,35 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "existinguser", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusConflict,
-			expectedError:  fmt.Sprintf("failed to create new user: %v", erruser.UsernameConflict),
+			expectedError:  erruser.UsernameConflict.Error(),
 		},
 		{
 			name:           "Weak Password",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "newuser", Password: "weakpassword"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  fmt.Sprintf("failed to create new user: %v", erruser.WeakPassword),
+			expectedError:  erruser.WeakPassword.Error(),
 		},
 		{
 			name:           "Username Too Long",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "toolongusername", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  fmt.Sprintf("failed to create new user: %v", erruser.UsernameTooLong),
+			expectedError:  erruser.UsernameTooLong.Error(),
 		},
 		{
 			name:           "Username Too Short",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "short", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  fmt.Sprintf("failed to create new user: %v", erruser.UsernameTooShort),
+			expectedError:  erruser.UsernameTooShort.Error(),
 		},
 		{
 			name:           "Username Invalid Format",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "invalidformat!", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  fmt.Sprintf("failed to create new user: %v", erruser.UsernameInvalidFormat),
+			expectedError:  erruser.UsernameInvalidFormat.Error(),
 		},
 		{
 			name:           "Invalid Register Request Body",
@@ -176,14 +177,14 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 			name:           "Nonexistent User",
 			url:            "/users/login",
 			requestBody:    dto.LoginUserRequest{Username: "nonexistentuser", Password: "correctpassword"},
-			expectedStatus: http.StatusBadRequest,
+			expectedStatus: http.StatusUnauthorized,
 			expectedError:  "invalid credentials",
 		},
 		{
 			name:           "Invalid Credentials",
 			url:            "/users/login",
 			requestBody:    dto.LoginUserRequest{Username: "existinguser", Password: "wrongpassword"},
-			expectedStatus: http.StatusBadRequest,
+			expectedStatus: http.StatusUnauthorized,
 			expectedError:  "invalid credentials",
 		},
 		{
@@ -220,4 +221,3 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 		})
 	}
 }
-
