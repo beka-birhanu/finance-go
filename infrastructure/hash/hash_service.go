@@ -27,9 +27,9 @@ var (
 	once     sync.Once
 )
 
-// singletonService returns a singleton instance of the hash Service.
+// SingletonService returns a singleton instance of the hash Service.
 // It ensures that only one instance of the Service is created.
-func singletonService() *Service {
+func SingletonService() *Service {
 	once.Do(func() {
 		instance = &Service{}
 	})
@@ -86,4 +86,3 @@ func (hs *Service) Match(hashedWord, plainWord string) (bool, error) {
 
 	return true, nil
 }
-

@@ -3,7 +3,7 @@ package hash
 import "testing"
 
 func setup() *Service {
-	return singletonService()
+	return SingletonService()
 }
 
 func TestHashService(t *testing.T) {
@@ -67,4 +67,3 @@ func TestHashService(t *testing.T) {
 		}
 	})
 }
-
