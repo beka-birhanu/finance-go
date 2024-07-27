@@ -1,4 +1,4 @@
-package repository
+package userrepo
 
 import (
 	"errors"
@@ -33,7 +33,7 @@ var user, _ = usermodel.New(usermodel.Config{
 
 // TestUserRepository runs a suite of tests for the UserRepository.
 func TestUserRepository(t *testing.T) {
-	repo := NewUserRepository(nil) // Passing nil as we're using an in-memory implementation
+	repo := New(nil) // Passing nil as we're using an in-memory implementation
 
 	t.Run("CreateUser", func(t *testing.T) {
 		err := repo.Add(user)
@@ -92,4 +92,3 @@ func TestUserRepository(t *testing.T) {
 		}
 	})
 }
-
