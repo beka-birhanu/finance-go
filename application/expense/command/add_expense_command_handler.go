@@ -1,6 +1,7 @@
-package command
+package expensecmd
 
 import (
+	"fmt"
 	"time"
 
 	icmd "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
@@ -10,17 +11,28 @@ import (
 )
 
 type AddHandler struct {
-	userRepository irepository.IUserRepository
-	timeService    itimeservice.IService
+	expenseRepository irepository.IExpenseRepository
+	userRepository    irepository.IUserRepository
+	timeService       itimeservice.IService
 }
 
-var _ icmd.IHandler[*AddExpenseCommand, *expensemodel.Expense] = &AddHandler{}
+var _ icmd.IHandler[*AddCommand, *expensemodel.Expense] = &AddHandler{}
 
-func New(userRepository irepository.IUserRepository, timeService itimeservice.IService) *AddHandler {
-	return &AddHandler{userRepository: userRepository, timeService: timeService}
+type Config struct {
+	UserRepository    irepository.IUserRepository
+	TimeService       itimeservice.IService
+	ExpenseRepository irepository.IExpenseRepository
 }
 
-func (h *AddHandler) Handle(command *AddExpenseCommand) (*expensemodel.Expense, error) {
+func NewAddHandler(config Config) *AddHandler {
+	return &AddHandler{
+		userRepository:    config.UserRepository,
+		timeService:       config.TimeService,
+		expenseRepository: config.ExpenseRepository,
+	}
+}
+
+func (h *AddHandler) Handle(command *AddCommand) (*expensemodel.Expense, error) {
 	newExpense, err := newExpense(command, h.timeService.NowUTC())
 	if err != nil {
 		return nil, err
@@ -36,12 +48,19 @@ func (h *AddHandler) Handle(command *AddExpenseCommand) (*expensemodel.Expense, 
 		return nil, err
 	}
 
-	// TODO: save user and expense
+	// TODO: make this in one transaction
+	if err := h.userRepository.Update(user); err != nil {
+		return nil, fmt.Errorf("unable to update user: %w", err)
+	}
+
+	if err := h.expenseRepository.Add(newExpense); err != nil {
+		return nil, fmt.Errorf("unable to save expense: %w", err)
+	}
 
 	return newExpense, nil
 }
 
-func newExpense(command *AddExpenseCommand, currentUTCTime time.Time) (*expensemodel.Expense, error) {
+func newExpense(command *AddCommand, currentUTCTime time.Time) (*expensemodel.Expense, error) {
 	config := expensemodel.Config{
 		Description:  command.Description,
 		Amount:       command.Amount,
