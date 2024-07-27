@@ -11,7 +11,7 @@ import (
 
 // UserRepository handles the persistence of user models.
 type UserRepository struct {
-	DB *sql.DB
+	db *sql.DB
 }
 
 var users = map[uuid.UUID]usermodel.User{} // In-memory storage for users
@@ -22,7 +22,7 @@ var _ irepository.IUserRepository = &UserRepository{}
 // NewUserRepository creates a new UserRepository with the given database connection.
 func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{
-		DB: db,
+		db: db,
 	}
 }
 
@@ -81,4 +81,3 @@ func (u *UserRepository) Update(user *usermodel.User) error {
 	users[user.ID()] = *user
 	return nil
 }
-
