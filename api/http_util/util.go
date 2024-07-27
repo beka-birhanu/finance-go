@@ -55,9 +55,11 @@ func Respond(w http.ResponseWriter, status int, v any) {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	err := json.NewEncoder(w).Encode(v)
-	if err != nil {
-		http.Error(w, "Failed to encode JSON response", http.StatusInternalServerError)
+	if v != nil {
+		err := json.NewEncoder(w).Encode(v)
+		if err != nil {
+			http.Error(w, "Failed to encode JSON response", http.StatusInternalServerError)
+		}
 	}
 }
 
