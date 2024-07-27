@@ -3,7 +3,7 @@ package user
 import (
 	"net/http"
 
-	"github.com/beka-birhanu/finance-go/api"
+	baseapi "github.com/beka-birhanu/finance-go/api/base_handler"
 	errapi "github.com/beka-birhanu/finance-go/api/error"
 	httputil "github.com/beka-birhanu/finance-go/api/http_util"
 	"github.com/beka-birhanu/finance-go/api/user/dto"
@@ -18,7 +18,7 @@ import (
 
 // Handler manages user-related HTTP requests.
 type Handler struct {
-	api.BaseHandler
+	baseapi.BaseHandler
 	repository      irepository.IUserRepository
 	registerHandler icmd.IHandler[*registercmd.Command, *auth.Result]
 	loginHandler    iquery.IHandler[*loginqry.Query, *auth.Result]

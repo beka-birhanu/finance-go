@@ -1,4 +1,4 @@
-package api
+package baseapi
 
 import (
 	"errors"
@@ -62,4 +62,3 @@ func (h *BaseHandler) Problem(w http.ResponseWriter, err errapi.Error) {
 	}
 
 }
-
