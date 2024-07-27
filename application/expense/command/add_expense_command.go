@@ -1,4 +1,4 @@
-package command
+package expensecmd
 
 import (
 	"time"
@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// AddExpenseCommand represents the command to add an expense.
-type AddExpenseCommand struct {
+// AddCommand represents the command to add an expense.
+type AddCommand struct {
 	// UserId: The unique identifier of the user to whom the expense belongs.
 	UserId uuid.UUID
 
