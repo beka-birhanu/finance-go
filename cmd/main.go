@@ -7,9 +7,8 @@ import (
 
 	"github.com/beka-birhanu/finance-go/api"
 	"github.com/beka-birhanu/finance-go/api/middleware"
-	authCommand "github.com/beka-birhanu/finance-go/application/authentication/command"
-	authQuery "github.com/beka-birhanu/finance-go/application/authentication/query"
-	expenseCommand "github.com/beka-birhanu/finance-go/application/expense/command"
+	registercmd "github.com/beka-birhanu/finance-go/application/authentication/command"
+	loginqry "github.com/beka-birhanu/finance-go/application/authentication/query"
 
 	// expenseQuery "github.com/beka-birhanu/finance-go/application/expense/query"
 	"github.com/beka-birhanu/finance-go/config"
@@ -28,24 +27,45 @@ var dbPort = config.Envs.DBPort
 
 func main() {
 	// Connect to the database
-	database := db.Connect(dbUser, dbPassword, dbName, dbHost, dbPort)
+	database := db.Connect(db.Config{
+		DbUser:     dbUser,
+		DbPassword: dbPassword,
+		DbName:     dbName,
+		DbHost:     dbHost,
+		DbPort:     dbPort,
+	})
 
 	// Initialize dependencies
-	timeService := timeservice.NewTimeService()
+	timeService := timeservice.New()
+
 	userRepository := repository.NewUserRepository(database)
-	jwtService := jwt.NewJwtService(
-		config.Envs.JWTSecret,
-		config.Envs.ServerHost,
-		time.Duration(config.Envs.JWTExpirationInSeconds)*time.Second,
-		timeService,
-	)
-	hashService := hash.GetHashService()
+
+	jwtService := jwt.New(
+		jwt.Config{
+			SecretKey:   config.Envs.JWTSecret,
+			Issuer:      config.Envs.ServerHost,
+			ExpTime:     time.Duration(config.Envs.JWTExpirationInSeconds) * time.Second,
+			TimeService: timeService,
+		})
+	hashService := hash.SingletonService()
+
 	authorizationMiddleware := middleware.AuthorizationMiddleware(jwtService)
 
 	// Initialize command and query handlers
-	userRegisterCommandHandler := authCommand.NewRegisterCommandHandler(userRepository, jwtService, hashService, timeService)
-	userLoginQueryHandler := authQuery.NewUserLoginQueryHandler(userRepository, jwtService, hashService)
-	addExpenseHandler := expenseCommand.NewAddExpenseCommandHandler(userRepository, timeService)
+	userRegisterCommandHandler := registercmd.NewHandler(registercmd.Config{
+		UserRepository: userRepository,
+		JwtService:     jwtService,
+		HashService:    hashService,
+		TimeService:    timeService,
+	})
+
+	userLoginQueryHandler := loginqry.NewHandler(loginqry.Config{
+		UserRepository: userRepository,
+		JwtService:     jwtService,
+		HashService:    hashService,
+	})
+
+	// addExpenseHandler := expense.NewHandler(userRepository, timeService)
 
 	// Create and run the server
 	server := api.NewAPIServer(
@@ -54,7 +74,7 @@ func main() {
 		userRegisterCommandHandler,
 		userLoginQueryHandler,
 		authorizationMiddleware,
-		addExpenseHandler,
+		// addExpenseHandler,
 	)
 
 	if err := server.Run(); err != nil {
