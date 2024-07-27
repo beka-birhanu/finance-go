@@ -5,25 +5,28 @@ import (
 	"log"
 	"net/http"
 
-	apiError "github.com/beka-birhanu/finance-go/api/error"
+	baseapi "github.com/beka-birhanu/finance-go/api/base_handler"
+	errapi "github.com/beka-birhanu/finance-go/api/error"
 	"github.com/beka-birhanu/finance-go/api/expense/dto"
-	"github.com/beka-birhanu/finance-go/api/util"
-	handlerInterface "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
-	expenseCommand "github.com/beka-birhanu/finance-go/application/expense/command"
-	"github.com/beka-birhanu/finance-go/domain/model"
-	"github.com/go-playground/validator/v10"
+	httputil "github.com/beka-birhanu/finance-go/api/http_util"
+	icmd "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
+	itimeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
+	expensecmd "github.com/beka-birhanu/finance-go/application/expense/command"
+	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
 	"github.com/gorilla/mux"
 )
 
 type ExpensesHandler struct {
-	addExpenseCommandHandler handlerInterface.ICommandHandler[*expenseCommand.AddExpenseCommand, *model.Expense]
+	baseapi.BaseHandler
+	addHandler icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
 }
 
 func NewHandler(
-	addExpenseCommandHandler handlerInterface.ICommandHandler[*expenseCommand.AddExpenseCommand, *model.Expense],
+	addHandler icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense],
+	timeServie itimeservice.IService,
 ) *ExpensesHandler {
 	return &ExpensesHandler{
-		addExpenseCommandHandler: addExpenseCommandHandler,
+		addHandler: addHandler,
 	}
 }
 
@@ -32,73 +35,63 @@ func (h *ExpensesHandler) RegisterPublicRoutes(router *mux.Router) {}
 func (h *ExpensesHandler) RegisterProtectedRoutes(router *mux.Router) {
 	router.HandleFunc(
 		"/users/{userId}/expenses",
-		h.handleAddExpense,
+		h.handleAdd,
 	).Methods(http.MethodPost)
 
 	router.HandleFunc(
 		"/users/{userId}/expenses/{expenseId}",
-		h.handleGetSingleExpenseById,
+		h.handleById,
 	).Methods(http.MethodGet)
 }
 
-func (h *ExpensesHandler) handleAddExpense(w http.ResponseWriter, r *http.Request) {
+func (h *ExpensesHandler) handleAdd(w http.ResponseWriter, r *http.Request) {
 	var addExpenseRequest dto.AddExpenseRequest
 
-	if err := util.ParseJSON(r, &addExpenseRequest); err != nil {
-		apiErr := apiError.NewErrBadRequest(fmt.Sprintf("invalid payload: %v", err))
-		util.WriteError(w, apiErr)
+	// Populate addExpenseRequest from request body
+	if err := h.ValidatedBody(r, &addExpenseRequest); err != nil {
+		h.Problem(w, err.(errapi.Error))
 		return
 	}
 
-	if err := util.Validate.Struct(addExpenseRequest); err != nil {
-		errors := err.(validator.ValidationErrors)
-		apiErr := apiError.NewErrValidation(fmt.Sprintf("invalid payload: %v", errors))
-		util.WriteError(w, apiErr)
-		return
-	}
-
-	userId, err := util.GetIdFromUrl(r, "userId")
+	userId, err := httputil.UUIDParam(r, "userId")
 	if err != nil {
-		util.WriteError(w, err.(apiError.Error))
+		h.Problem(w, err.(errapi.Error))
 		return
 	}
 
-	addExpenseCommand := &expenseCommand.AddExpenseCommand{
+	addExpenseCommand := &expensecmd.AddCommand{
 		UserId:      userId,
 		Description: addExpenseRequest.Description,
 		Amount:      addExpenseRequest.Amount,
 		Date:        addExpenseRequest.Date,
 	}
 
-	expense, err := h.addExpenseCommandHandler.Handle(addExpenseCommand)
+	expense, err := h.addHandler.Handle(addExpenseCommand)
 	if err != nil {
-		apiErr := apiError.NewErrBadRequest(err.Error())
-		util.WriteError(w, apiErr)
+		apiErr := errapi.NewBadRequest(err.Error())
+		h.Problem(w, apiErr)
 		return
 	}
 
-	baseURL := util.GetBaseURL(r)
+	baseURL := httputil.BaseURL(r)
 
-	// Construct the resource location URL dynamically
+	// Construct the resource location URL
 	resourceLocation := fmt.Sprintf("%s%s/%s", baseURL, r.URL.Path, expense.ID().String())
-
-	w.Header().Set("Location", resourceLocation)
-	util.WriteJSON(w, http.StatusCreated, nil)
+	httputil.ResondWithLocation(w, http.StatusCreated, nil, resourceLocation)
 }
 
-func (h *ExpensesHandler) handleGetSingleExpenseById(w http.ResponseWriter, r *http.Request) {
-	userId, err := util.GetIdFromUrl(r, "userId")
+func (h *ExpensesHandler) handleById(w http.ResponseWriter, r *http.Request) {
+	userId, err := httputil.UUIDParam(r, "userId")
 	if err != nil {
-		util.WriteError(w, err.(apiError.Error))
+		h.Problem(w, err.(errapi.Error))
 		return
 	}
 
-	expenseId, err := util.GetIdFromUrl(r, "expenseId")
+	expenseId, err := httputil.UUIDParam(r, "expenseId")
 	if err != nil {
-		util.WriteError(w, err.(apiError.Error))
+		h.Problem(w, err.(errapi.Error))
 		return
 	}
 
 	log.Println(userId, expenseId)
 }
-
