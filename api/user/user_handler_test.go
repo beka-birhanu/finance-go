@@ -3,104 +3,108 @@ package user
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/beka-birhanu/finance-go/api/user/dto"
-	"github.com/beka-birhanu/finance-go/application/authentication/command"
-	authCommand "github.com/beka-birhanu/finance-go/application/authentication/command"
-	"github.com/beka-birhanu/finance-go/application/authentication/common"
-	"github.com/beka-birhanu/finance-go/application/authentication/query"
-	authQuery "github.com/beka-birhanu/finance-go/application/authentication/query"
+	registercmd "github.com/beka-birhanu/finance-go/application/authentication/command"
+	auth "github.com/beka-birhanu/finance-go/application/authentication/common"
+	loginqry "github.com/beka-birhanu/finance-go/application/authentication/query"
 	handlerInterface "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
-	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	queryHandlerInterface "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
+	irepository "github.com/beka-birhanu/finance-go/application/common/interface/repository"
 	appError "github.com/beka-birhanu/finance-go/application/error"
-	"github.com/beka-birhanu/finance-go/domain/model"
+	erruser "github.com/beka-birhanu/finance-go/domain/error/user"
+	usermodel "github.com/beka-birhanu/finance-go/domain/model/user"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
 // Mock implementations for the IUserRepository interface
-type mockUserRepository struct{}
+type MockUserRepository struct {
+	CreateUserFunc func(user *usermodel.User) error
+}
 
-func (m *mockUserRepository) CreateUser(user *model.User) error {
+func (m *MockUserRepository) Add(user *usermodel.User) error {
+	return m.CreateUserFunc(user)
+}
+
+func (m *MockUserRepository) Update(user *usermodel.User) error {
 	return nil
 }
 
-func (m *mockUserRepository) GetUserById(id uuid.UUID) (*model.User, error) {
+func (m *MockUserRepository) ById(id uuid.UUID) (*usermodel.User, error) {
 	return nil, nil
 }
 
-func (m *mockUserRepository) GetUserByUsername(username string) (*model.User, error) {
+func (m *MockUserRepository) ByUsername(username string) (*usermodel.User, error) {
 	return nil, nil
 }
 
-func (m *mockUserRepository) ListUser() ([]*model.User, error) {
-	return nil, nil
-}
-
-func (m *mockUserRepository) SomeRepoMethod() error {
-	return nil
-}
-
-var _ repository.IUserRepository = &mockUserRepository{}
+var _ irepository.IUserRepository = &MockUserRepository{}
 
 // Mock implementations for the IUserRegisterCommandHandler interface
 type mockUserRegisterCommandHandler struct {
-	handleFunc func(cmd *command.UserRegisterCommand) (*common.AuthResult, error)
+	handleFunc func(cmd *registercmd.Command) (*auth.Result, error)
 }
 
-func (m *mockUserRegisterCommandHandler) Handle(cmd *command.UserRegisterCommand) (*common.AuthResult, error) {
+func (m *mockUserRegisterCommandHandler) Handle(cmd *registercmd.Command) (*auth.Result, error) {
 	return m.handleFunc(cmd)
 }
 
-var _ handlerInterface.ICommandHandler[*authCommand.UserRegisterCommand, *common.AuthResult] = &mockUserRegisterCommandHandler{}
+var _ handlerInterface.IHandler[*registercmd.Command, *auth.Result] = &mockUserRegisterCommandHandler{}
 
 // Mock implementations for the IUserLoginQueryHandler interface
 type mockUserLoginQueryHandler struct {
-	handleFunc func(query *query.UserLoginQuery) (*common.AuthResult, error)
+	handleFunc func(query *loginqry.Query) (*auth.Result, error)
 }
 
-func (m *mockUserLoginQueryHandler) Handle(q *query.UserLoginQuery) (*common.AuthResult, error) {
+func (m *mockUserLoginQueryHandler) Handle(q *loginqry.Query) (*auth.Result, error) {
 	return m.handleFunc(q)
 }
 
-var _ handlerInterface.ICommandHandler[*authQuery.UserLoginQuery, *common.AuthResult] = &mockUserLoginQueryHandler{}
+var _ queryHandlerInterface.IHandler[*loginqry.Query, *auth.Result] = &mockUserLoginQueryHandler{}
 
 func TestHandler_UserRegistrationAndLogin(t *testing.T) {
-	mockRepo := &mockUserRepository{}
+	mockRepo := &MockUserRepository{}
 	mockRegisterCommandHandler := &mockUserRegisterCommandHandler{
-		handleFunc: func(cmd *command.UserRegisterCommand) (*common.AuthResult, error) {
+		handleFunc: func(cmd *registercmd.Command) (*auth.Result, error) {
 			switch cmd.Username {
 			case "existinguser":
-				return &common.AuthResult{}, appError.ErrUsernameConflict
+				return nil, erruser.UsernameConflict
 			case "toolongusername":
-				return &common.AuthResult{}, appError.ErrUsernameTooLong
+				return nil, erruser.UsernameTooLong
 			case "short":
-				return &common.AuthResult{}, appError.ErrUsernameTooShort
+				return nil, erruser.UsernameTooShort
 			case "invalidformat!":
-				return &common.AuthResult{}, appError.ErrUsernameInvalidFormat
+				return nil, erruser.UsernameInvalidFormat
 			}
 			if cmd.Password == "weakpassword" {
-				return &common.AuthResult{}, appError.ErrWeakPassword
+				return nil, erruser.WeakPassword
 			}
-			return &common.AuthResult{Token: "testtoken"}, nil
+			return auth.NewResult(uuid.New(), cmd.Username, "testtoken"), nil
 		},
 	}
 	mockLoginQueryHandler := &mockUserLoginQueryHandler{
-		handleFunc: func(query *authQuery.UserLoginQuery) (*common.AuthResult, error) {
+		handleFunc: func(query *loginqry.Query) (*auth.Result, error) {
 			if query.Username == "nonexistentuser" {
-				return &common.AuthResult{}, appError.ErrInvalidUsernameOrPassword
+				return nil, appError.InvalidCredential("user does not exist")
 			}
 			if query.Password != "correctpassword" {
-				return &common.AuthResult{}, appError.ErrInvalidUsernameOrPassword
+				return nil, appError.InvalidCredential("incorrect passoword")
 			}
-			return &common.AuthResult{Token: "testtoken"}, nil
+			return auth.NewResult(uuid.New(), query.Username, "testtoken"), nil
 		},
 	}
 
-	h := NewHandler(mockRepo, mockRegisterCommandHandler, mockLoginQueryHandler)
+	config := Config{
+		UserRepository:  mockRepo,
+		RegisterHandler: mockRegisterCommandHandler,
+		LoginHandler:    mockLoginQueryHandler,
+	}
+	h := NewHandler(config)
 
 	router := mux.NewRouter()
 	h.RegisterPublicRoutes(router)
@@ -124,35 +128,35 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "existinguser", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusConflict,
-			expectedError:  appError.ErrUsernameConflict.Message,
+			expectedError:  fmt.Sprintf("failed to create new user: %v", erruser.UsernameConflict),
 		},
 		{
 			name:           "Weak Password",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "newuser", Password: "weakpassword"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  appError.ErrWeakPassword.Message,
+			expectedError:  fmt.Sprintf("failed to create new user: %v", erruser.WeakPassword),
 		},
 		{
 			name:           "Username Too Long",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "toolongusername", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  appError.ErrUsernameTooLong.Message,
+			expectedError:  fmt.Sprintf("failed to create new user: %v", erruser.UsernameTooLong),
 		},
 		{
 			name:           "Username Too Short",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "short", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  appError.ErrUsernameTooShort.Message,
+			expectedError:  fmt.Sprintf("failed to create new user: %v", erruser.UsernameTooShort),
 		},
 		{
 			name:           "Username Invalid Format",
 			url:            "/users/register",
 			requestBody:    dto.RegisterRequest{Username: "invalidformat!", Password: "StrongPassword!123"},
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  appError.ErrUsernameInvalidFormat.Message,
+			expectedError:  fmt.Sprintf("failed to create new user: %v", erruser.UsernameInvalidFormat),
 		},
 		{
 			name:           "Invalid Register Request Body",
@@ -216,3 +220,4 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 		})
 	}
 }
+
