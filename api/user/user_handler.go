@@ -1,7 +1,6 @@
 package user
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/beka-birhanu/finance-go/api"
@@ -14,7 +13,6 @@ import (
 	icmd "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
 	iquery "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
 	irepository "github.com/beka-birhanu/finance-go/application/common/interface/repository"
-	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
 
@@ -56,17 +54,9 @@ func (h *Handler) RegisterProtectedRoutes(router *mux.Router) {}
 func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 	var registerRequest dto.RegisterRequest
 
-	if err := httputil.ParseJSON(r, &registerRequest); err != nil {
+	// populate registerRequest from request body
+	if err := h.ValidatedBody(r, &registerRequest); err != nil {
 		httputil.RespondError(w, err.(errapi.Error))
-		return
-	}
-
-	if err := httputil.Validate.Struct(registerRequest); err != nil {
-		errors := err.(validator.ValidationErrors)
-
-		errResponse := errapi.NewBadRequest(fmt.Sprintf("invalid payload: %v", errors))
-		httputil.RespondError(w, errResponse)
-		return
 	}
 
 	registerCommand, err := registercmd.NewCommand(registerRequest.Username, registerRequest.Password)
@@ -100,15 +90,8 @@ func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var loginRequest dto.LoginUserRequest
 
-	if err := httputil.ParseJSON(r, &loginRequest); err != nil {
+	if err := h.ValidatedBody(r, &loginRequest); err != nil {
 		httputil.RespondError(w, err.(errapi.Error))
-		return
-	}
-
-	if err := httputil.Validate.Struct(loginRequest); err != nil {
-		errors := err.(validator.ValidationErrors)
-		err := errapi.NewBadRequest(fmt.Sprintf("invalid payload: %v", errors))
-		httputil.RespondError(w, err)
 		return
 	}
 
