@@ -4,80 +4,82 @@ import (
 	"fmt"
 	"net/http"
 
-	apiError "github.com/beka-birhanu/finance-go/api/error"
+	"github.com/beka-birhanu/finance-go/api"
+	errapi "github.com/beka-birhanu/finance-go/api/error"
+	httputil "github.com/beka-birhanu/finance-go/api/http_util"
 	"github.com/beka-birhanu/finance-go/api/user/dto"
-	"github.com/beka-birhanu/finance-go/api/util"
-	"github.com/beka-birhanu/finance-go/application/authentication/command"
-	authCommand "github.com/beka-birhanu/finance-go/application/authentication/command"
-	"github.com/beka-birhanu/finance-go/application/authentication/common"
-	"github.com/beka-birhanu/finance-go/application/authentication/query"
-	authQuery "github.com/beka-birhanu/finance-go/application/authentication/query"
-	handlerInterface "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
-	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	registercmd "github.com/beka-birhanu/finance-go/application/authentication/command"
+	auth "github.com/beka-birhanu/finance-go/application/authentication/common"
+	loginqry "github.com/beka-birhanu/finance-go/application/authentication/query"
+	icmd "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
+	iquery "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
+	irepository "github.com/beka-birhanu/finance-go/application/common/interface/repository"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
 
-type UsersHandler struct {
-	userRepository             repository.IUserRepository
-	userRegisterCommandHandler handlerInterface.ICommandHandler[*authCommand.UserRegisterCommand, *common.AuthResult]
-	userLoginQueryHandler      handlerInterface.ICommandHandler[*authQuery.UserLoginQuery, *common.AuthResult]
+type Handler struct {
+	api.BaseHandler
+	repository      irepository.IUserRepository
+	registerHandler icmd.IHandler[*registercmd.Command, *auth.Result]
+	loginHandler    iquery.IHandler[*loginqry.Query, *auth.Result]
 }
 
-func NewHandler(
-	userRepository repository.IUserRepository,
-	userRegisterCommandHandler handlerInterface.ICommandHandler[*authCommand.UserRegisterCommand,
-		*common.AuthResult],
-	userLoginQueryHandler handlerInterface.ICommandHandler[*authQuery.UserLoginQuery, *common.AuthResult],
-) *UsersHandler {
-	return &UsersHandler{
-		userRepository:             userRepository,
-		userRegisterCommandHandler: userRegisterCommandHandler,
-		userLoginQueryHandler:      userLoginQueryHandler,
+type Config struct {
+	UserRepository  irepository.IUserRepository
+	RegisterHandler icmd.IHandler[*registercmd.Command, *auth.Result]
+	LoginHandler    icmd.IHandler[*loginqry.Query, *auth.Result]
+}
+
+func NewHandler(config Config) *Handler {
+	return &Handler{
+		repository:      config.UserRepository,
+		registerHandler: config.RegisterHandler,
+		loginHandler:    config.LoginHandler,
 	}
 }
 
-func (h *UsersHandler) RegisterPublicRoutes(router *mux.Router) {
+func (h *Handler) RegisterPublicRoutes(router *mux.Router) {
 	router.HandleFunc(
 		"/users/register",
-		h.handleUserRegistration,
+		h.handleRegistration,
 	).Methods(http.MethodPost)
 
 	router.HandleFunc(
 		"/users/login",
-		h.handleUserLogin,
+		h.handleLogin,
 	).Methods(http.MethodPost)
 }
 
-func (h *UsersHandler) RegisterProtectedRoutes(router *mux.Router) {}
+func (h *Handler) RegisterProtectedRoutes(router *mux.Router) {}
 
-func (h *UsersHandler) handleUserRegistration(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 	var registerRequest dto.RegisterRequest
 
-	if err := util.ParseJSON(r, &registerRequest); err != nil {
-		apiErr := apiError.NewErrBadRequest(err.Error())
-		util.WriteError(w, apiErr)
+	if err := httputil.ParseJSON(r, &registerRequest); err != nil {
+		httputil.RespondError(w, err.(errapi.Error))
 		return
 	}
 
-	if err := util.Validate.Struct(registerRequest); err != nil {
+	if err := httputil.Validate.Struct(registerRequest); err != nil {
 		errors := err.(validator.ValidationErrors)
-		apiErr := apiError.NewErrValidation(fmt.Sprintf("invalid payload: %v", errors))
-		util.WriteError(w, apiErr)
+
+		errResponse := errapi.NewBadRequest(fmt.Sprintf("invalid payload: %v", errors))
+		httputil.RespondError(w, errResponse)
 		return
 	}
 
-	registerCommand, err := command.NewUserRegisterCommand(registerRequest.Username, registerRequest.Password)
+	registerCommand, err := registercmd.NewCommand(registerRequest.Username, registerRequest.Password)
 	if err != nil {
-		apiErr := apiError.NewErrServer(err.Error())
-		util.WriteError(w, apiErr)
+		apiErr := errapi.NewServerError("unexpected server error")
+		httputil.RespondError(w, apiErr)
 		return
 	}
 
-	authResult, err := h.userRegisterCommandHandler.Handle(registerCommand)
+	authResult, err := h.registerHandler.Handle(registerCommand)
 	if err != nil {
-		err := apiError.ErrToAPIError(err)
-		util.WriteError(w, err)
+		err := errapi.NewBadRequest(err.Error())
+		httputil.RespondError(w, err)
 		return
 	}
 
@@ -92,31 +94,30 @@ func (h *UsersHandler) handleUserRegistration(w http.ResponseWriter, r *http.Req
 		SameSite: http.SameSiteStrictMode,
 	}
 
-	util.WriteJSONWithCookie(w, http.StatusOK, registerResponse, []*http.Cookie{&cookie})
+	httputil.RespondWithCookies(w, http.StatusOK, registerResponse, []*http.Cookie{&cookie})
 }
 
-func (h *UsersHandler) handleUserLogin(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var loginRequest dto.LoginUserRequest
 
-	if err := util.ParseJSON(r, &loginRequest); err != nil {
-		apiErr := apiError.ErrToAPIError(err)
-		util.WriteError(w, apiErr)
+	if err := httputil.ParseJSON(r, &loginRequest); err != nil {
+		httputil.RespondError(w, err.(errapi.Error))
 		return
 	}
 
-	if err := util.Validate.Struct(loginRequest); err != nil {
+	if err := httputil.Validate.Struct(loginRequest); err != nil {
 		errors := err.(validator.ValidationErrors)
-		apiErr := apiError.NewErrValidation(fmt.Sprintf("invalid payload: %v", errors))
-		util.WriteError(w, apiErr)
+		err := errapi.NewBadRequest(fmt.Sprintf("invalid payload: %v", errors))
+		httputil.RespondError(w, err)
 		return
 	}
 
-	loginQuery := query.NewUserLoginQuery(loginRequest.Username, loginRequest.Password)
+	loginQuery := loginqry.NewQuery(loginRequest.Username, loginRequest.Password)
 
-	authResult, err := h.userLoginQueryHandler.Handle(loginQuery)
+	authResult, err := h.loginHandler.Handle(loginQuery)
 	if err != nil {
-		apiErr := apiError.ErrToAPIError(err)
-		util.WriteError(w, apiErr)
+		apiErr := errapi.NewBadRequest(err.Error())
+		httputil.RespondError(w, apiErr)
 		return
 	}
 
@@ -132,6 +133,5 @@ func (h *UsersHandler) handleUserLogin(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	util.WriteJSONWithCookie(w, http.StatusOK, loginResponse, []*http.Cookie{&cookie})
+	httputil.RespondWithCookies(w, http.StatusOK, loginResponse, []*http.Cookie{&cookie})
 }
-
