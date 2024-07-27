@@ -20,7 +20,12 @@ func ParseJSON(r *http.Request, v any) error {
 	if r.Body == nil {
 		return apiError.NewBadRequest("Request body is missing")
 	}
-	return json.NewDecoder(r.Body).Decode(v)
+
+	err := json.NewDecoder(r.Body).Decode(v)
+	if err != nil {
+		return apiError.NewBadRequest("Invalid request body")
+	}
+	return nil
 }
 
 // RespondError writes an error response to the HTTP response writer only from apiError.
