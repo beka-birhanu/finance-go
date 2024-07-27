@@ -1,9 +1,11 @@
 package registercmd
 
 import (
+	"errors"
 	"testing"
 	"time"
 
+	errdmn "github.com/beka-birhanu/finance-go/domain/error/common"
 	erruser "github.com/beka-birhanu/finance-go/domain/error/user"
 	usermodel "github.com/beka-birhanu/finance-go/domain/model/user"
 
@@ -110,7 +112,7 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 		{
 			name:          "weak password register",
 			command:       weakPasswordCommand,
-			expectedError: erruser.UsernameConflict,
+			expectedError: erruser.WeakPassword,
 		},
 	}
 
@@ -124,10 +126,13 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 			if err == nil && tt.expectedError != nil {
 				t.Errorf("expected error: %v, got nil", tt.expectedError)
 			}
-			if err != nil && tt.expectedError != nil && err.Error() != tt.expectedError.Error() {
-				t.Errorf("expected error: %v, got: %v", tt.expectedError, err)
+
+			if err != nil && tt.expectedError != nil {
+				var unwrappedErr = errors.Unwrap(err).(*errdmn.Error)
+				if unwrappedErr != nil && unwrappedErr != tt.expectedError {
+					t.Errorf("expected error: %v, got: %v", tt.expectedError, err)
+				}
 			}
 		})
 	}
 }
-
