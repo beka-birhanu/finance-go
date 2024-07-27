@@ -9,21 +9,24 @@ import (
 	"github.com/beka-birhanu/finance-go/api/middleware"
 	registercmd "github.com/beka-birhanu/finance-go/application/authentication/command"
 	loginqry "github.com/beka-birhanu/finance-go/application/authentication/query"
-
-	// expenseQuery "github.com/beka-birhanu/finance-go/application/expense/query"
+	expensecmd "github.com/beka-birhanu/finance-go/application/expense/command"
 	"github.com/beka-birhanu/finance-go/config"
 	"github.com/beka-birhanu/finance-go/infrastructure/db"
 	"github.com/beka-birhanu/finance-go/infrastructure/hash"
 	"github.com/beka-birhanu/finance-go/infrastructure/jwt"
-	"github.com/beka-birhanu/finance-go/infrastructure/repository"
+	expenserepo "github.com/beka-birhanu/finance-go/infrastructure/repository/expense"
+	userrepo "github.com/beka-birhanu/finance-go/infrastructure/repository/user"
 	timeservice "github.com/beka-birhanu/finance-go/infrastructure/time_service"
 )
 
-var dbUser = config.Envs.DBUser
-var dbPassword = config.Envs.DBPassword
-var dbName = config.Envs.DBName
-var dbHost = config.Envs.DBHost
-var dbPort = config.Envs.DBPort
+// Global variables to hold database configuration
+var (
+	dbUser     = config.Envs.DBUser
+	dbPassword = config.Envs.DBPassword
+	dbName     = config.Envs.DBName
+	dbHost     = config.Envs.DBHost
+	dbPort     = config.Envs.DBPort
+)
 
 func main() {
 	// Connect to the database
@@ -35,49 +38,71 @@ func main() {
 		DbPort:     dbPort,
 	})
 
-	// Initialize dependencies
+	// Initialize services and repositories
 	timeService := timeservice.New()
+	userRepository := userrepo.New(database)
+	expenseRepository := expenserepo.New(database)
+	jwtService := initializeJWTService(timeService)
+	hashService := hash.SingletonService()
+	authorizationMiddleware := middleware.Authorization(jwtService)
 
-	userRepository := repository.NewUserRepository(database)
+	// Initialize command and query handlers
+	userRegisterCommandHandler := initializeUserRegisterHandler(userRepository, jwtService, hashService, timeService)
+	userLoginQueryHandler := initializeUserLoginQueryHandler(userRepository, jwtService, hashService)
+	addExpenseHandler := initializeAddExpenseHandler(userRepository, timeService, expenseRepository)
 
-	jwtService := jwt.New(
+	// Create and run the server
+	server := api.NewAPIServer(api.Config{
+		Addr:                     fmt.Sprintf(":%s", config.Envs.ServerPort),
+		UserRepository:           userRepository,
+		UserRegisterHandler:      userRegisterCommandHandler,
+		UserLoginQueryHandler:    userLoginQueryHandler,
+		AuthorizationMiddleware:  authorizationMiddleware,
+		AddExpenseCommandHandler: addExpenseHandler,
+		TimeService:              timeService,
+	})
+
+	if err := server.Run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// initializeJWTService initializes and returns a new JWT service instance.
+func initializeJWTService(timeService *timeservice.Service) *jwt.Service {
+	return jwt.New(
 		jwt.Config{
 			SecretKey:   config.Envs.JWTSecret,
 			Issuer:      config.Envs.ServerHost,
 			ExpTime:     time.Duration(config.Envs.JWTExpirationInSeconds) * time.Second,
 			TimeService: timeService,
 		})
-	hashService := hash.SingletonService()
+}
 
-	authorizationMiddleware := middleware.Authorization(jwtService)
-
-	// Initialize command and query handlers
-	userRegisterCommandHandler := registercmd.NewHandler(registercmd.Config{
-		UserRepository: userRepository,
+// initializeUserRegisterHandler initializes and returns a new user register command handler.
+func initializeUserRegisterHandler(userRepo *userrepo.Repository, jwtService *jwt.Service, hashService *hash.Service, timeService *timeservice.Service) *registercmd.Handler {
+	return registercmd.NewHandler(registercmd.Config{
+		UserRepository: userRepo,
 		JwtService:     jwtService,
 		HashService:    hashService,
 		TimeService:    timeService,
 	})
+}
 
-	userLoginQueryHandler := loginqry.NewHandler(loginqry.Config{
-		UserRepository: userRepository,
+// initializeUserLoginQueryHandler initializes and returns a new user login query handler.
+func initializeUserLoginQueryHandler(userRepo *userrepo.Repository, jwtService *jwt.Service, hashService *hash.Service) *loginqry.Handler {
+	return loginqry.NewHandler(loginqry.Config{
+		UserRepository: userRepo,
 		JwtService:     jwtService,
 		HashService:    hashService,
 	})
-
-	// addExpenseHandler := expense.NewHandler(userRepository, timeService)
-
-	// Create and run the server
-	server := api.NewAPIServer(
-		fmt.Sprintf(":%s", config.Envs.ServerPort),
-		userRepository,
-		userRegisterCommandHandler,
-		userLoginQueryHandler,
-		authorizationMiddleware,
-		// addExpenseHandler,
-	)
-
-	if err := server.Run(); err != nil {
-		log.Fatal(err)
-	}
 }
+
+// initializeAddExpenseHandler initializes and returns a new add expense command handler.
+func initializeAddExpenseHandler(userRepo *userrepo.Repository, timeService *timeservice.Service, expenseRepo *expenserepo.Repository) *expensecmd.AddHandler {
+	return expensecmd.NewAddHandler(expensecmd.Config{
+		UserRepository:    userRepo,
+		TimeService:       timeService,
+		ExpenseRepository: expenseRepo,
+	})
+}
+
