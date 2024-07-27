@@ -1,6 +1,8 @@
 package user
 
 import (
+	"errors"
+	"log"
 	"net/http"
 
 	baseapi "github.com/beka-birhanu/finance-go/api/base_handler"
@@ -13,6 +15,7 @@ import (
 	icmd "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
 	iquery "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
 	irepository "github.com/beka-birhanu/finance-go/application/common/interface/repository"
+	errdmn "github.com/beka-birhanu/finance-go/domain/error/common"
 	"github.com/gorilla/mux"
 )
 
@@ -74,8 +77,18 @@ func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 
 	authResult, err := h.registerHandler.Handle(registerCommand)
 	if err != nil {
-		err := errapi.NewBadRequest(err.Error())
-		h.Problem(w, err)
+		var unwrappedErr = errors.Unwrap(err).(*errdmn.Error)
+
+		// Decide appropriate error based on type
+		switch unwrappedErr.Type() {
+		case errdmn.Conflict:
+			h.Problem(w, errapi.NewConflict(unwrappedErr.Error()))
+		case errdmn.Validation:
+			h.Problem(w, errapi.NewBadRequest(unwrappedErr.Error()))
+		default:
+			log.Println(err)
+			h.Problem(w, errapi.NewServerError(unwrappedErr.Error()))
+		}
 		return
 	}
 
@@ -125,4 +138,3 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	httputil.RespondWithCookies(w, http.StatusOK, loginResponse, []*http.Cookie{&cookie})
 }
-
