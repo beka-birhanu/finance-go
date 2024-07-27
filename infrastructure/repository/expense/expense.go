@@ -1,4 +1,4 @@
-package repository
+package expenserepo
 
 import (
 	"database/sql"
@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type ExpenseRepository struct {
+type Repository struct {
 	db *sql.DB
 }
 
@@ -21,16 +21,16 @@ type primaryKey struct {
 
 var Expenses = map[primaryKey]expensemodel.Expense{}
 
-var _ irepository.IExpenseRepository = &ExpenseRepository{}
+var _ irepository.IExpenseRepository = &Repository{}
 
-func NewExpenseRepository(db *sql.DB) *ExpenseRepository {
-	return &ExpenseRepository{
+func New(db *sql.DB) *Repository {
+	return &Repository{
 		db: db,
 	}
 }
 
 // Add implements irepository.IExpenseRepository.
-func (e *ExpenseRepository) Add(expense *expensemodel.Expense) error {
+func (e *Repository) Add(expense *expensemodel.Expense) error {
 	key := primaryKey{
 		Id:     expense.ID(),
 		UserId: expense.UserID(),
@@ -45,7 +45,7 @@ func (e *ExpenseRepository) Add(expense *expensemodel.Expense) error {
 }
 
 // ById implements irepository.IExpenseRepository.
-func (e *ExpenseRepository) ById(id uuid.UUID, userId uuid.UUID) (*expensemodel.Expense, error) {
+func (e *Repository) ById(id uuid.UUID, userId uuid.UUID) (*expensemodel.Expense, error) {
 	key := primaryKey{
 		Id:     id,
 		UserId: userId,
@@ -60,7 +60,7 @@ func (e *ExpenseRepository) ById(id uuid.UUID, userId uuid.UUID) (*expensemodel.
 }
 
 // Update implements irepository.IExpenseRepository.
-func (e *ExpenseRepository) Update(expense *expensemodel.Expense) error {
+func (e *Repository) Update(expense *expensemodel.Expense) error {
 	key := primaryKey{
 		Id:     expense.ID(),
 		UserId: expense.UserID(),
