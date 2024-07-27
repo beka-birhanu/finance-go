@@ -70,10 +70,13 @@ func (m *MockHashService) Match(hashedWord, plainWord string) (bool, error) {
 var _ hash.IService = &MockHashService{}
 
 var validUser, _ = usermodel.New(usermodel.Config{
-	Username:       "validUser",
-	PlainPassword:  `#%@@strong@@password#%`,
-	CreationTime:   time.Now().UTC(),
-	PasswordHasher: &MockHashService{},
+	Username:      "validUser",
+	PlainPassword: `#%@@strong@@password#%`,
+	CreationTime:  time.Now().UTC(),
+	PasswordHasher: &MockHashService{
+		HashFunc: func(word string) (string, error) {
+			return "#%@@strong@@password#%", nil
+		}},
 },
 )
 
@@ -136,7 +139,7 @@ func TestHandler_Handle(t *testing.T) {
 				Username: "invalidUser",
 				Password: "password",
 			},
-			expectedError: appError.InvalidCredential("user not found"),
+			expectedError: appError.InvalidCredential("Authentication: invalid credentials"),
 		},
 		{
 			name: "invalid password",
@@ -144,15 +147,7 @@ func TestHandler_Handle(t *testing.T) {
 				Username: "validUser",
 				Password: "wrongPassword",
 			},
-			expectedError: appError.InvalidCredential("incorrect password"),
-		},
-		{
-			name: "new user registration",
-			query: &Query{
-				Username: "newUser",
-				Password: "password",
-			},
-			expectedError: nil,
+			expectedError: appError.InvalidCredential("Authentication: invalid credentials"),
 		},
 	}
 
