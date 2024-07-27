@@ -56,20 +56,20 @@ func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 
 	// populate registerRequest from request body
 	if err := h.ValidatedBody(r, &registerRequest); err != nil {
-		httputil.RespondError(w, err.(errapi.Error))
+		h.Problem(w, err.(errapi.Error))
 	}
 
 	registerCommand, err := registercmd.NewCommand(registerRequest.Username, registerRequest.Password)
 	if err != nil {
-		apiErr := errapi.NewServerError("unexpected server error")
-		httputil.RespondError(w, apiErr)
+		apiErr := errapi.NewServerError(err.Error())
+		h.Problem(w, apiErr)
 		return
 	}
 
 	authResult, err := h.registerHandler.Handle(registerCommand)
 	if err != nil {
 		err := errapi.NewBadRequest(err.Error())
-		httputil.RespondError(w, err)
+		h.Problem(w, err)
 		return
 	}
 
@@ -90,8 +90,9 @@ func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var loginRequest dto.LoginUserRequest
 
+	// populate loginRequest from request body
 	if err := h.ValidatedBody(r, &loginRequest); err != nil {
-		httputil.RespondError(w, err.(errapi.Error))
+		h.Problem(w, err.(errapi.Error))
 		return
 	}
 
@@ -99,8 +100,8 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	authResult, err := h.loginHandler.Handle(loginQuery)
 	if err != nil {
-		apiErr := errapi.NewBadRequest(err.Error())
-		httputil.RespondError(w, apiErr)
+		apiErr := errapi.NewAuthentication(err.Error())
+		h.Problem(w, apiErr)
 		return
 	}
 
