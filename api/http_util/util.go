@@ -43,6 +43,12 @@ func RespondWithCookies(w http.ResponseWriter, status int, v any, cookies []*htt
 	Respond(w, status, v)
 }
 
+// RespondWithLocation writes a response with a Location header to the HTTP response writer.
+func ResondWithLocation(w http.ResponseWriter, status int, v any, resourceLocation string) {
+	w.Header().Set("Location", resourceLocation)
+	Respond(w, status, v)
+}
+
 // Respond writes a JSON response to the HTTP response writer.
 // It sets the Content-Type header to application/json and writes the provided status code and value.
 func Respond(w http.ResponseWriter, status int, v any) {
