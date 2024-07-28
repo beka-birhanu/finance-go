@@ -79,7 +79,8 @@ func (h *ExpensesHandler) handleAdd(w http.ResponseWriter, r *http.Request) {
 
 	// Construct the resource location URL
 	resourceLocation := fmt.Sprintf("%s%s/%s", baseURL, r.URL.Path, expense.ID().String())
-	httputil.ResondWithLocation(w, http.StatusCreated, nil, resourceLocation)
+	response := dto.FromExpenseModel(expense)
+	httputil.ResondWithLocation(w, http.StatusCreated, response, resourceLocation)
 }
 
 func (h *ExpensesHandler) handleById(w http.ResponseWriter, r *http.Request) {
