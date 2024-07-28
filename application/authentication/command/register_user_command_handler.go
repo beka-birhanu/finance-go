@@ -57,7 +57,7 @@ func (h *Handler) Handle(cmd *Command) (*auth.Result, error) {
 		return nil, fmt.Errorf("failed to create new user: %w", err)
 	}
 
-	err = h.userRepository.Add(user)
+	err = h.userRepository.Save(user)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add new user to repository: %w", err)
 	}

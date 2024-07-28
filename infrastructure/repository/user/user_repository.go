@@ -26,10 +26,19 @@ func New(db *sql.DB) *Repository {
 	}
 }
 
-// Add inserts a new user into the repository.
+// Save inserts or updates a user in the repository.
+// If the user already exists, it updates the existing record.
+// If the user does not exist, it adds a new record.
+//
 // Returns:
-//   - error: An error if the user already exists, otherwise nil.
-func (u *Repository) Add(user *usermodel.User) error {
+//   - error: An error if a conflict occurs, otherwise nil.
+func (u *Repository) Save(user *usermodel.User) error {
+	_, found := users[user.ID()]
+	if found {
+		users[user.ID()] = *user
+		return nil
+	}
+
 	for _, existingUser := range users {
 		if existingUser.Username() == user.Username() {
 			return erruser.UsernameConflict
@@ -66,18 +75,4 @@ func (u *Repository) ByUsername(username string) (*usermodel.User, error) {
 		}
 	}
 	return nil, erruser.NotFound
-}
-
-// Update modifies an existing user in the repository.
-//
-// Returns:
-//   - error: An error if the user is not found, otherwise nil.
-func (u *Repository) Update(user *usermodel.User) error {
-	_, err := u.ById(user.ID())
-	if err != nil {
-		return err
-	}
-
-	users[user.ID()] = *user
-	return nil
 }

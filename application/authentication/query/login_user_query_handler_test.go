@@ -22,12 +22,8 @@ type MockUserRepository struct {
 	AddFunc        func(user *usermodel.User) error
 }
 
-func (m *MockUserRepository) Add(user *usermodel.User) error {
+func (m *MockUserRepository) Save(user *usermodel.User) error {
 	return m.AddFunc(user)
-}
-
-func (m *MockUserRepository) Update(user *usermodel.User) error {
-	return nil
 }
 
 func (m *MockUserRepository) ById(id uuid.UUID) (*usermodel.User, error) {

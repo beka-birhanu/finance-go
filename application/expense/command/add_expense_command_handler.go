@@ -49,7 +49,7 @@ func (h *AddHandler) Handle(command *AddCommand) (*expensemodel.Expense, error) 
 	}
 
 	// TODO: make this in one transaction
-	if err := h.userRepository.Update(user); err != nil {
+	if err := h.userRepository.Save(user); err != nil {
 		return nil, fmt.Errorf("unable to update user: %w", err)
 	}
 
