@@ -13,12 +13,13 @@ type Repository struct {
 	db *sql.DB
 }
 
-type primaryKey struct {
+type PrimaryKey struct {
 	Id     uuid.UUID
 	UserId uuid.UUID
 }
 
-var Expenses = map[primaryKey]expensemodel.Expense{}
+// used by both expense and user repo
+var Expenses = map[PrimaryKey]expensemodel.Expense{}
 
 var _ irepository.IExpenseRepository = &Repository{}
 
@@ -35,7 +36,7 @@ func New(db *sql.DB) *Repository {
 // Returns:
 //   - error: An error if any occurs, otherwise nil.
 func (e *Repository) Save(expense *expensemodel.Expense) error {
-	key := primaryKey{
+	key := PrimaryKey{
 		Id:     expense.ID(),
 		UserId: expense.UserID(),
 	}
@@ -50,7 +51,7 @@ func (e *Repository) Save(expense *expensemodel.Expense) error {
 //   - *expensemodel.Expense: A pointer to the retrieved expense model.
 //   - error: An error if the expense is not found, otherwise nil.
 func (e *Repository) ById(id uuid.UUID, userId uuid.UUID) (*expensemodel.Expense, error) {
-	key := primaryKey{
+	key := PrimaryKey{
 		Id:     id,
 		UserId: userId,
 	}

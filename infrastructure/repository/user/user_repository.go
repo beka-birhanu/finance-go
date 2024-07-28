@@ -6,6 +6,7 @@ import (
 	"github.com/beka-birhanu/finance-go/application/common/interface/repository"
 	erruser "github.com/beka-birhanu/finance-go/domain/error/user"
 	"github.com/beka-birhanu/finance-go/domain/model/user"
+	expenserepo "github.com/beka-birhanu/finance-go/infrastructure/repository/expense"
 	"github.com/google/uuid"
 )
 
@@ -34,18 +35,22 @@ func New(db *sql.DB) *Repository {
 //   - error: An error if a conflict occurs, otherwise nil.
 func (u *Repository) Save(user *usermodel.User) error {
 	_, found := users[user.ID()]
-	if found {
-		users[user.ID()] = *user
-		return nil
-	}
-
-	for _, existingUser := range users {
-		if existingUser.Username() == user.Username() {
-			return erruser.UsernameConflict
+	if !found {
+		for _, existingUser := range users {
+			if existingUser.Username() == user.Username() {
+				return erruser.UsernameConflict
+			}
 		}
 	}
 
 	users[user.ID()] = *user
+	for _, expense := range user.Expenses() {
+		key := expenserepo.PrimaryKey{
+			Id:     expense.ID(),
+			UserId: user.ID(),
+		}
+		expenserepo.Expenses[key] = expense
+	}
 	return nil
 }
 
