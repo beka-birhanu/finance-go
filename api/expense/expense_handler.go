@@ -2,7 +2,6 @@ package expense
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	baseapi "github.com/beka-birhanu/finance-go/api/base_handler"
@@ -10,23 +9,26 @@ import (
 	"github.com/beka-birhanu/finance-go/api/expense/dto"
 	httputil "github.com/beka-birhanu/finance-go/api/http_util"
 	icmd "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
-	itimeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
+	iquery "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
 	expensecmd "github.com/beka-birhanu/finance-go/application/expense/command"
+	expensqry "github.com/beka-birhanu/finance-go/application/expense/query"
 	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
 	"github.com/gorilla/mux"
 )
 
 type ExpensesHandler struct {
 	baseapi.BaseHandler
-	addHandler icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
+	addHandler        icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
+	getExpenseHandler iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense]
 }
 
 func NewHandler(
 	addHandler icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense],
-	timeServie itimeservice.IService,
+	getExpenseHandler iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense],
 ) *ExpensesHandler {
 	return &ExpensesHandler{
-		addHandler: addHandler,
+		addHandler:        addHandler,
+		getExpenseHandler: getExpenseHandler,
 	}
 }
 
@@ -93,5 +95,11 @@ func (h *ExpensesHandler) handleById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(userId, expenseId)
+	expense, err := h.getExpenseHandler.Handle(&expensqry.GetQuery{UserId: userId, ExpenseId: expenseId})
+	if err != nil {
+		h.Problem(w, errapi.NewBadRequest(err.Error()))
+		return
+	}
+	response := dto.FromExpenseModel(expense)
+	httputil.Respond(w, http.StatusOK, response)
 }
