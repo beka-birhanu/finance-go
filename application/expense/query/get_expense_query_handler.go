@@ -7,13 +7,15 @@ import (
 )
 
 type GetHandler struct {
-	ExpenseRepository irepository.IUserRepository
+	expenseRepository irepository.IExpenseRepository
 }
 
 var _ iquery.IHandler[*GetQuery, *expensemodel.Expense] = &GetHandler{}
 
-func NewGetHandler(expenseRepository irepository.IUserRepository) {
+func NewGetHandler(expenseRepository irepository.IExpenseRepository) *GetHandler {
+	return &GetHandler{expenseRepository: expenseRepository}
 }
+
 func (h *GetHandler) Handle(query *GetQuery) (*expensemodel.Expense, error) {
-	return nil, nil
+	return h.expenseRepository.ById(query.ExpenseId, query.UserId)
 }
