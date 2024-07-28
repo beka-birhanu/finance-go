@@ -53,7 +53,7 @@ func (h *AddHandler) Handle(command *AddCommand) (*expensemodel.Expense, error) 
 		return nil, fmt.Errorf("unable to update user: %w", err)
 	}
 
-	if err := h.expenseRepository.Add(newExpense); err != nil {
+	if err := h.expenseRepository.Save(newExpense); err != nil {
 		return nil, fmt.Errorf("unable to save expense: %w", err)
 	}
 
