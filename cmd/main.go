@@ -10,6 +10,7 @@ import (
 	registercmd "github.com/beka-birhanu/finance-go/application/authentication/command"
 	loginqry "github.com/beka-birhanu/finance-go/application/authentication/query"
 	expensecmd "github.com/beka-birhanu/finance-go/application/expense/command"
+	expensqry "github.com/beka-birhanu/finance-go/application/expense/query"
 	"github.com/beka-birhanu/finance-go/config"
 	"github.com/beka-birhanu/finance-go/infrastructure/db"
 	"github.com/beka-birhanu/finance-go/infrastructure/hash"
@@ -49,7 +50,8 @@ func main() {
 	// Initialize command and query handlers
 	userRegisterCommandHandler := initializeUserRegisterHandler(userRepository, jwtService, hashService, timeService)
 	userLoginQueryHandler := initializeUserLoginQueryHandler(userRepository, jwtService, hashService)
-	addExpenseHandler := initializeAddExpenseHandler(userRepository, timeService, expenseRepository)
+	addExpenseHandler := initializeAddExpenseHandler(userRepository, timeService)
+	getExpenseHandler := initializeGetExpenseHandler(expenseRepository)
 
 	// Create and run the server
 	server := api.NewAPIServer(api.Config{
@@ -60,11 +62,16 @@ func main() {
 		AuthorizationMiddleware:  authorizationMiddleware,
 		AddExpenseCommandHandler: addExpenseHandler,
 		TimeService:              timeService,
+		GetExpenseHandler:        getExpenseHandler,
 	})
 
 	if err := server.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func initializeGetExpenseHandler(expenseRepository *expenserepo.Repository) *expensqry.GetHandler {
+	return expensqry.NewGetHandler(expenseRepository)
 }
 
 // initializeJWTService initializes and returns a new JWT service instance.
@@ -98,11 +105,9 @@ func initializeUserLoginQueryHandler(userRepo *userrepo.Repository, jwtService *
 }
 
 // initializeAddExpenseHandler initializes and returns a new add expense command handler.
-func initializeAddExpenseHandler(userRepo *userrepo.Repository, timeService *timeservice.Service, expenseRepo *expenserepo.Repository) *expensecmd.AddHandler {
+func initializeAddExpenseHandler(userRepo *userrepo.Repository, timeService *timeservice.Service) *expensecmd.AddHandler {
 	return expensecmd.NewAddHandler(expensecmd.Config{
-		UserRepository:    userRepo,
-		TimeService:       timeService,
-		ExpenseRepository: expenseRepo,
+		UserRepository: userRepo,
+		TimeService:    timeService,
 	})
 }
-

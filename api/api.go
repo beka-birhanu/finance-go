@@ -14,6 +14,7 @@ import (
 	irepository "github.com/beka-birhanu/finance-go/application/common/interface/repository"
 	itimeservice "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
 	expensecmd "github.com/beka-birhanu/finance-go/application/expense/command"
+	expensqry "github.com/beka-birhanu/finance-go/application/expense/query"
 	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
 	"github.com/gorilla/mux"
 )
@@ -27,6 +28,7 @@ type APIServer struct {
 	authorizationMiddleware  func(http.Handler) http.Handler
 	addExpenseCommandHandler icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
 	timeService              itimeservice.IService
+	getExpenseHandler        iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense]
 }
 
 // Config is the struct for configuring the APIServer.
@@ -38,6 +40,7 @@ type Config struct {
 	AuthorizationMiddleware  func(http.Handler) http.Handler
 	AddExpenseCommandHandler icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
 	TimeService              itimeservice.IService
+	GetExpenseHandler        iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense]
 }
 
 // NewAPIServer creates a new instance of APIServer with the given configuration.
@@ -50,6 +53,7 @@ func NewAPIServer(config Config) *APIServer {
 		authorizationMiddleware:  config.AuthorizationMiddleware,
 		addExpenseCommandHandler: config.AddExpenseCommandHandler,
 		timeService:              config.TimeService,
+		getExpenseHandler:        config.GetExpenseHandler,
 	}
 }
 
@@ -74,11 +78,10 @@ func (s *APIServer) Run() error {
 	userHandler.RegisterProtectedRoutes(protectedRouter)
 
 	// Expense routes
-	expenseHandler := expense.NewHandler(s.addExpenseCommandHandler, s.timeService)
+	expenseHandler := expense.NewHandler(s.addExpenseCommandHandler, s.getExpenseHandler)
 	expenseHandler.RegisterPublicRoutes(publicRouter)
 	expenseHandler.RegisterProtectedRoutes(protectedRouter)
 
 	log.Println("Listening on", s.addr)
 	return http.ListenAndServe(s.addr, router)
 }
-
