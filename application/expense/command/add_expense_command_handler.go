@@ -11,24 +11,21 @@ import (
 )
 
 type AddHandler struct {
-	expenseRepository irepository.IExpenseRepository
-	userRepository    irepository.IUserRepository
-	timeService       itimeservice.IService
+	userRepository irepository.IUserRepository
+	timeService    itimeservice.IService
 }
 
 var _ icmd.IHandler[*AddCommand, *expensemodel.Expense] = &AddHandler{}
 
 type Config struct {
-	UserRepository    irepository.IUserRepository
-	TimeService       itimeservice.IService
-	ExpenseRepository irepository.IExpenseRepository
+	UserRepository irepository.IUserRepository
+	TimeService    itimeservice.IService
 }
 
 func NewAddHandler(config Config) *AddHandler {
 	return &AddHandler{
-		userRepository:    config.UserRepository,
-		timeService:       config.TimeService,
-		expenseRepository: config.ExpenseRepository,
+		userRepository: config.UserRepository,
+		timeService:    config.TimeService,
 	}
 }
 
@@ -51,10 +48,6 @@ func (h *AddHandler) Handle(command *AddCommand) (*expensemodel.Expense, error) 
 	// TODO: make this in one transaction
 	if err := h.userRepository.Save(user); err != nil {
 		return nil, fmt.Errorf("unable to update user: %w", err)
-	}
-
-	if err := h.expenseRepository.Save(newExpense); err != nil {
-		return nil, fmt.Errorf("unable to save expense: %w", err)
 	}
 
 	return newExpense, nil
