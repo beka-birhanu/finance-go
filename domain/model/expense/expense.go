@@ -132,3 +132,31 @@ func (e *Expense) UpdatedAt() time.Time {
 	return e.updatedAt
 }
 
+// UpdateDescription updates the description of the expense.
+// Returns an error if the new description is invalid.
+func (e *Expense) UpdateDescription(newDescription string) error {
+	newDescription = strings.TrimSpace(newDescription)
+	if err := validateDescription(newDescription); err != nil {
+		return err
+	}
+	e.description = newDescription
+	e.updatedAt = time.Now()
+	return nil
+}
+
+// UpdateAmount updates the amount of the expense.
+// Returns an error if the new amount is not positive.
+func (e *Expense) UpdateAmount(newAmount float32) error {
+	if newAmount < 0 {
+		return errexpense.NegativeAmount
+	}
+	e.amount = newAmount
+	e.updatedAt = time.Now()
+	return nil
+}
+
+// UpdateDate updates the date of the expense.
+func (e *Expense) UpdateDate(newDate time.Time) {
+	e.date = newDate
+	e.updatedAt = time.Now()
+}
