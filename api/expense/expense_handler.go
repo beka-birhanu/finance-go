@@ -25,17 +25,19 @@ type ExpensesHandler struct {
 	patchHandler       iquery.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
 }
 
-func NewHandler(
-	addHandler icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense],
-	getHandler iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense],
-	patchHandler iquery.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense],
-	getMultipleHandler iquery.IHandler[*expensqry.GetMultipleQuery, []*expensemodel.Expense],
-) *ExpensesHandler {
+type Config struct {
+	AddHandler         icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
+	GetHandler         iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense]
+	PatchHandler       iquery.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
+	GetMultipleHandler iquery.IHandler[*expensqry.GetMultipleQuery, []*expensemodel.Expense]
+}
+
+func NewHandler(config Config) *ExpensesHandler {
 	return &ExpensesHandler{
-		addHandler:         addHandler,
-		getHandler:         getHandler,
-		patchHandler:       patchHandler,
-		getMultipleHandler: getMultipleHandler,
+		addHandler:         config.AddHandler,
+		getHandler:         config.GetHandler,
+		patchHandler:       config.PatchHandler,
+		getMultipleHandler: config.GetMultipleHandler,
 	}
 }
 

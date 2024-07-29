@@ -84,7 +84,12 @@ func (s *APIServer) Run() error {
 	userHandler.RegisterProtectedRoutes(protectedRouter)
 
 	// Expense routes
-	expenseHandler := expense.NewHandler(s.addExpenseCommandHandler, s.getExpenseHandler, s.patchExpenseHandler, s.getExpensesHandler)
+	expenseHandler := expense.NewHandler(expense.Config{
+		AddHandler:         s.addExpenseCommandHandler,
+		GetHandler:         s.getExpenseHandler,
+		PatchHandler:       s.patchExpenseHandler,
+		GetMultipleHandler: s.getExpensesHandler,
+	})
 	expenseHandler.RegisterPublicRoutes(publicRouter)
 	expenseHandler.RegisterProtectedRoutes(protectedRouter)
 
