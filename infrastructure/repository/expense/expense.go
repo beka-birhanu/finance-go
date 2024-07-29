@@ -64,3 +64,13 @@ func (e *Repository) ById(id uuid.UUID, userId uuid.UUID) (*expensemodel.Expense
 	return &expense, nil
 }
 
+func (e *Repository) List(userId uuid.UUID) ([]*expensemodel.Expense, error) {
+	expenesList := make([]*expensemodel.Expense, 2)
+	for key, expense := range Expenses {
+		if key.UserId == userId {
+			expenesList = append(expenesList, &expense)
+		}
+	}
+
+	return expenesList, nil
+}
