@@ -12,7 +12,7 @@ import (
 
 type BaseHandler struct{}
 
-// ValidatedBody validates the body of an HTTP request.
+// ValidatedBody validates the body of an HTTP request and populate the given interface.
 func (h *BaseHandler) ValidatedBody(r *http.Request, s interface{}) error {
 	// Parse JSON body
 	if err := httputil.ParseJSON(r, s); err != nil {
