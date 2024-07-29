@@ -18,5 +18,7 @@ type IExpenseRepository interface {
 
 	// ById retrieves an expense by its unique identifier and user ID.
 	ById(id uuid.UUID, userId uuid.UUID) (*expensemodel.Expense, error)
-}
 
+	// List retrieves expenses by user ID.
+	List(userId uuid.UUID) ([]*expensemodel.Expense, error)
+}
