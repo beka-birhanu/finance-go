@@ -12,23 +12,27 @@ import (
 	iquery "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
 	expensecmd "github.com/beka-birhanu/finance-go/application/expense/command"
 	expensqry "github.com/beka-birhanu/finance-go/application/expense/query"
+	errdmn "github.com/beka-birhanu/finance-go/domain/error/common"
 	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
 	"github.com/gorilla/mux"
 )
 
 type ExpensesHandler struct {
 	baseapi.BaseHandler
-	addHandler        icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
-	getExpenseHandler iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense]
+	addHandler   icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
+	getHandler   iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense]
+	patchHandler iquery.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
 }
 
 func NewHandler(
 	addHandler icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense],
-	getExpenseHandler iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense],
+	getHandler iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense],
+	patchHandler iquery.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense],
 ) *ExpensesHandler {
 	return &ExpensesHandler{
-		addHandler:        addHandler,
-		getExpenseHandler: getExpenseHandler,
+		addHandler:   addHandler,
+		getHandler:   getHandler,
+		patchHandler: patchHandler,
 	}
 }
 
@@ -44,6 +48,11 @@ func (h *ExpensesHandler) RegisterProtectedRoutes(router *mux.Router) {
 		"/users/{userId}/expenses/{expenseId}",
 		h.handleById,
 	).Methods(http.MethodGet)
+
+	router.HandleFunc(
+		"/users/{userId}/expenses/{expenseId}",
+		h.handlePatch,
+	).Methods(http.MethodPatch)
 }
 
 func (h *ExpensesHandler) handleAdd(w http.ResponseWriter, r *http.Request) {
@@ -61,6 +70,7 @@ func (h *ExpensesHandler) handleAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: match the id in the ctx
 	addExpenseCommand := &expensecmd.AddCommand{
 		UserId:      userId,
 		Description: addExpenseRequest.Description,
@@ -96,9 +106,52 @@ func (h *ExpensesHandler) handleById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expense, err := h.getExpenseHandler.Handle(&expensqry.GetQuery{UserId: userId, ExpenseId: expenseId})
+	expense, err := h.getHandler.Handle(&expensqry.GetQuery{UserId: userId, ExpenseId: expenseId})
 	if err != nil {
 		h.Problem(w, errapi.NewBadRequest(err.Error()))
+		return
+	}
+	response := dto.FromExpenseModel(expense)
+	httputil.Respond(w, http.StatusOK, response)
+}
+
+func (h *ExpensesHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
+	var patchRequest dto.PatchRequest
+	userId, err := httputil.UUIDParam(r, "userId")
+	if err != nil {
+		h.Problem(w, err.(errapi.Error))
+		return
+	}
+	// TODO: match the id in the ctx
+	expenseId, err := httputil.UUIDParam(r, "expenseId")
+	if err != nil {
+		h.Problem(w, err.(errapi.Error))
+		return
+	}
+
+	err = h.BaseHandler.ValidatedBody(r, &patchRequest)
+	if err != nil {
+		h.Problem(w, err.(errapi.Error))
+		return
+	}
+
+	expense, err := h.patchHandler.Handle(&expensecmd.PatchCommand{
+		Description: patchRequest.Description,
+		Amount:      patchRequest.Amount,
+		Date:        patchRequest.Date,
+		Id:          expenseId,
+		UserId:      userId,
+	})
+
+	if err != nil {
+		switch err.(*errdmn.Error).Type() {
+		case errdmn.NotFound:
+			h.Problem(w, errapi.NewNotFound(err.Error()))
+		case errdmn.Validation:
+			h.Problem(w, errapi.NewBadRequest(err.Error()))
+		default:
+			h.Problem(w, errapi.NewServerError("unknown error occured while patching expense"))
+		}
 		return
 	}
 	response := dto.FromExpenseModel(expense)
