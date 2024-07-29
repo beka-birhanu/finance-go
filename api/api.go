@@ -29,6 +29,7 @@ type APIServer struct {
 	addExpenseCommandHandler icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
 	timeService              itimeservice.IService
 	getExpenseHandler        iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense]
+	patchExpenseHandler      icmd.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
 }
 
 // Config is the struct for configuring the APIServer.
@@ -41,6 +42,7 @@ type Config struct {
 	AddExpenseCommandHandler icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
 	TimeService              itimeservice.IService
 	GetExpenseHandler        iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense]
+	PatchExpenseHandler      icmd.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
 }
 
 // NewAPIServer creates a new instance of APIServer with the given configuration.
@@ -54,6 +56,7 @@ func NewAPIServer(config Config) *APIServer {
 		addExpenseCommandHandler: config.AddExpenseCommandHandler,
 		timeService:              config.TimeService,
 		getExpenseHandler:        config.GetExpenseHandler,
+		patchExpenseHandler:      config.PatchExpenseHandler,
 	}
 }
 
@@ -78,7 +81,7 @@ func (s *APIServer) Run() error {
 	userHandler.RegisterProtectedRoutes(protectedRouter)
 
 	// Expense routes
-	expenseHandler := expense.NewHandler(s.addExpenseCommandHandler, s.getExpenseHandler)
+	expenseHandler := expense.NewHandler(s.addExpenseCommandHandler, s.getExpenseHandler, s.patchExpenseHandler)
 	expenseHandler.RegisterPublicRoutes(publicRouter)
 	expenseHandler.RegisterProtectedRoutes(protectedRouter)
 

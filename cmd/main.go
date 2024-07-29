@@ -52,6 +52,7 @@ func main() {
 	userLoginQueryHandler := initializeUserLoginQueryHandler(userRepository, jwtService, hashService)
 	addExpenseHandler := initializeAddExpenseHandler(userRepository, timeService)
 	getExpenseHandler := initializeGetExpenseHandler(expenseRepository)
+	patchExpenseHandler := initializePatchExpenseHandler(expenseRepository)
 
 	// Create and run the server
 	server := api.NewAPIServer(api.Config{
@@ -63,11 +64,16 @@ func main() {
 		AddExpenseCommandHandler: addExpenseHandler,
 		TimeService:              timeService,
 		GetExpenseHandler:        getExpenseHandler,
+		PatchExpenseHandler:      patchExpenseHandler,
 	})
 
 	if err := server.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func initializePatchExpenseHandler(expenseRepository *expenserepo.Repository) *expensecmd.PatchHandler {
+	return expensecmd.NewPatchHandler(expenseRepository)
 }
 
 func initializeGetExpenseHandler(expenseRepository *expenserepo.Repository) *expensqry.GetHandler {
