@@ -52,6 +52,7 @@ func main() {
 	userLoginQueryHandler := initializeUserLoginQueryHandler(userRepository, jwtService, hashService)
 	addExpenseHandler := initializeAddExpenseHandler(userRepository, timeService)
 	getExpenseHandler := initializeGetExpenseHandler(expenseRepository)
+	getExpensesHandler := initializeGetExpensesHandler(expenseRepository)
 	patchExpenseHandler := initializePatchExpenseHandler(expenseRepository)
 
 	// Create and run the server
@@ -64,6 +65,7 @@ func main() {
 		AddExpenseCommandHandler: addExpenseHandler,
 		TimeService:              timeService,
 		GetExpenseHandler:        getExpenseHandler,
+		GetExpensesHandler:       getExpensesHandler,
 		PatchExpenseHandler:      patchExpenseHandler,
 	})
 
@@ -78,6 +80,10 @@ func initializePatchExpenseHandler(expenseRepository *expenserepo.Repository) *e
 
 func initializeGetExpenseHandler(expenseRepository *expenserepo.Repository) *expensqry.GetHandler {
 	return expensqry.NewGetHandler(expenseRepository)
+}
+
+func initializeGetExpensesHandler(expenseRepository *expenserepo.Repository) *expensqry.GetMultipleHandler {
+	return expensqry.NewGetMultipleHandler(expenseRepository)
 }
 
 // initializeJWTService initializes and returns a new JWT service instance.
