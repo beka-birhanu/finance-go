@@ -19,20 +19,23 @@ import (
 
 type ExpensesHandler struct {
 	baseapi.BaseHandler
-	addHandler   icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
-	getHandler   iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense]
-	patchHandler iquery.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
+	addHandler         icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
+	getHandler         iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense]
+	getMultipleHandler iquery.IHandler[*expensqry.GetMultipleQuery, []*expensemodel.Expense]
+	patchHandler       iquery.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
 }
 
 func NewHandler(
 	addHandler icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense],
 	getHandler iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense],
 	patchHandler iquery.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense],
+	getMultipleHandler iquery.IHandler[*expensqry.GetMultipleQuery, []*expensemodel.Expense],
 ) *ExpensesHandler {
 	return &ExpensesHandler{
-		addHandler:   addHandler,
-		getHandler:   getHandler,
-		patchHandler: patchHandler,
+		addHandler:         addHandler,
+		getHandler:         getHandler,
+		patchHandler:       patchHandler,
+		getMultipleHandler: getMultipleHandler,
 	}
 }
 
@@ -47,6 +50,11 @@ func (h *ExpensesHandler) RegisterProtectedRoutes(router *mux.Router) {
 	router.HandleFunc(
 		"/users/{userId}/expenses/{expenseId}",
 		h.handleById,
+	).Methods(http.MethodGet)
+
+	router.HandleFunc(
+		"/users/{userId}/expenses",
+		h.handleByUserId,
 	).Methods(http.MethodGet)
 
 	router.HandleFunc(
@@ -155,5 +163,24 @@ func (h *ExpensesHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response := dto.FromExpenseModel(expense)
+	httputil.Respond(w, http.StatusOK, response)
+}
+
+func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request) {
+	userId, err := httputil.UUIDParam(r, "userId")
+	if err != nil {
+		h.Problem(w, err.(errapi.Error))
+		return
+	}
+	// TODO: match the id in the ctx
+	expenses, _ := h.getMultipleHandler.Handle(&expensqry.GetMultipleQuery{UserId: userId})
+
+	response := make([]*dto.GetExpenseResponse, 0)
+	for _, expense := range expenses {
+		if expense != nil {
+			response = append(response, dto.FromExpenseModel(expense))
+		}
+	}
+
 	httputil.Respond(w, http.StatusOK, response)
 }
