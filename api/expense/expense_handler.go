@@ -7,7 +7,6 @@ import (
 	baseapi "github.com/beka-birhanu/finance-go/api/base_handler"
 	errapi "github.com/beka-birhanu/finance-go/api/error"
 	"github.com/beka-birhanu/finance-go/api/expense/dto"
-	httputil "github.com/beka-birhanu/finance-go/api/http_util"
 	icmd "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
 	iquery "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
 	expensecmd "github.com/beka-birhanu/finance-go/application/expense/command"
@@ -74,7 +73,7 @@ func (h *ExpensesHandler) handleAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := httputil.UUIDParam(r, "userId")
+	userId, err := h.UUIDParam(r, "userId")
 	if err != nil {
 		h.Problem(w, err.(errapi.Error))
 		return
@@ -95,22 +94,22 @@ func (h *ExpensesHandler) handleAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	baseURL := httputil.BaseURL(r)
+	baseURL := h.BaseURL(r)
 
 	// Construct the resource location URL
 	resourceLocation := fmt.Sprintf("%s%s/%s", baseURL, r.URL.Path, expense.ID().String())
 	response := dto.FromExpenseModel(expense)
-	httputil.ResondWithLocation(w, http.StatusCreated, response, resourceLocation)
+	h.RespondWithLocation(w, http.StatusCreated, response, resourceLocation)
 }
 
 func (h *ExpensesHandler) handleById(w http.ResponseWriter, r *http.Request) {
-	userId, err := httputil.UUIDParam(r, "userId")
+	userId, err := h.UUIDParam(r, "userId")
 	if err != nil {
 		h.Problem(w, err.(errapi.Error))
 		return
 	}
 
-	expenseId, err := httputil.UUIDParam(r, "expenseId")
+	expenseId, err := h.UUIDParam(r, "expenseId")
 	if err != nil {
 		h.Problem(w, err.(errapi.Error))
 		return
@@ -122,17 +121,18 @@ func (h *ExpensesHandler) handleById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response := dto.FromExpenseModel(expense)
-	httputil.Respond(w, http.StatusOK, response)
+	h.Respond(w, http.StatusOK, response)
 }
 
 func (h *ExpensesHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
 	var patchRequest dto.PatchRequest
-	userId, err := httputil.UUIDParam(r, "userId")
+	userId, err := h.UUIDParam(r, "userId")
 	if err != nil {
 		h.Problem(w, err.(errapi.Error))
 		return
 	}
-	expenseId, err := httputil.UUIDParam(r, "expenseId")
+
+	expenseId, err := h.UUIDParam(r, "expenseId")
 	if err != nil {
 		h.Problem(w, err.(errapi.Error))
 		return
@@ -171,11 +171,11 @@ func (h *ExpensesHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response := dto.FromExpenseModel(expense)
-	httputil.Respond(w, http.StatusOK, response)
+	h.Respond(w, http.StatusOK, response)
 }
 
 func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request) {
-	userId, err := httputil.UUIDParam(r, "userId")
+	userId, err := h.UUIDParam(r, "userId")
 	if err != nil {
 		h.Problem(w, err.(errapi.Error))
 		return
@@ -197,5 +197,5 @@ func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	httputil.Respond(w, http.StatusOK, response)
+	h.Respond(w, http.StatusOK, response)
 }

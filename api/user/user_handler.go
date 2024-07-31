@@ -7,7 +7,6 @@ import (
 
 	baseapi "github.com/beka-birhanu/finance-go/api/base_handler"
 	errapi "github.com/beka-birhanu/finance-go/api/error"
-	httputil "github.com/beka-birhanu/finance-go/api/http_util"
 	"github.com/beka-birhanu/finance-go/api/user/dto"
 	registercmd "github.com/beka-birhanu/finance-go/application/authentication/command"
 	auth "github.com/beka-birhanu/finance-go/application/authentication/common"
@@ -103,7 +102,7 @@ func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteStrictMode,
 	}
 
-	httputil.RespondWithCookies(w, http.StatusOK, registerResponse, []*http.Cookie{&cookie})
+	h.RespondWithCookies(w, http.StatusOK, registerResponse, []*http.Cookie{&cookie})
 }
 
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -136,5 +135,5 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	httputil.RespondWithCookies(w, http.StatusOK, loginResponse, []*http.Cookie{&cookie})
+	h.RespondWithCookies(w, http.StatusOK, loginResponse, []*http.Cookie{&cookie})
 }
