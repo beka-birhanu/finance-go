@@ -10,6 +10,7 @@ const (
 	Conflict       = 409 // Conflict
 	ServerError    = 500 // Internal Server Error
 	Authentication = 401 // Unauthorized
+	Forbidden      = 403 // Forbidden
 	NotFound       = 404 // Not Found
 )
 
@@ -47,6 +48,12 @@ func NewAuthentication(message string) Error {
 // and the message provided.
 func NewNotFound(message string) Error {
 	return Error{statusCode: NotFound, message: message}
+}
+
+// NewForbidden creates a new Error with a 403 Forbidden status code
+// and the message provided.
+func NewForbidden(message string) Error {
+	return Error{statusCode: Forbidden, message: message}
 }
 
 // Error returns the error message.
