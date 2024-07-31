@@ -132,11 +132,17 @@ func (h *ExpensesHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
 		h.Problem(w, err.(errapi.Error))
 		return
 	}
-	// TODO: match the id in the ctx
 	expenseId, err := httputil.UUIDParam(r, "expenseId")
 	if err != nil {
 		h.Problem(w, err.(errapi.Error))
 		return
+	}
+
+	// Extract userId for context and match with the userId form URL.
+	ctx := r.Context()
+	ctxUserId := ctx.Value("user_id")
+	if ctxUserId != userId {
+		h.Problem(w, errapi.NewForbidden("The response does not belong to the user requesting."))
 	}
 
 	err = h.BaseHandler.ValidatedBody(r, &patchRequest)
@@ -174,7 +180,14 @@ func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request)
 		h.Problem(w, err.(errapi.Error))
 		return
 	}
-	// TODO: match the id in the ctx
+
+	// Extract userId for context and match with the userId form URL.
+	ctx := r.Context()
+	ctxUserId := ctx.Value("user_id")
+	if ctxUserId != userId {
+		h.Problem(w, errapi.NewForbidden("The response does not belong to the user requesting."))
+	}
+
 	expenses, _ := h.getMultipleHandler.Handle(&expensqry.GetMultipleQuery{UserId: userId})
 
 	response := make([]*dto.GetExpenseResponse, 0)
