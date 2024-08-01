@@ -19,6 +19,22 @@ services:
     networks:
       - finance-network
 
+  test_db:
+    image: postgres:13
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TEST_DB_USER} -d ${TEST_DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - test_db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${TEST_DB_USER}
+      POSTGRES_PASSWORD: ${TEST_DB_PASSWORD}
+      POSTGRES_DB: ${TEST_DB_NAME}
+    networks:
+      - finance-network
+
   api:
     build:
       context: .
@@ -26,9 +42,8 @@ services:
       target: dev-stage # Specify the target stage for development
     restart: on-failure
     volumes:
-      # - .:/go/src/api
       - .:/app
-      - /app/tmp # Necessary to ensure air works correctly
+      - /app/tmp # Necessary to ensure live-reload tools like air work correctly
     ports:
       - "8080:8080"
     environment:
@@ -36,10 +51,11 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
-    links:
-      - db
+      # Add environment variables for test database if needed
     depends_on:
       db:
+        condition: service_healthy
+      test_db:
         condition: service_healthy
     networks:
       - finance-network
@@ -49,3 +65,4 @@ networks:
 
 volumes:
   db_data:
+  test_db_data:
