@@ -4,10 +4,10 @@ and includes methods for creating and managing users. It handles user creation,
 validation of usernames and passwords, and association with expenses.
 
 Key Components:
-- User: Represents a user with details such as username, password hash, and associated
-expenses.
-- Config: Holds the mandatory parameters required to create a new User.
-- New: Creates a new User instance based on the provided configuration.
+  - User: Represents a user with details such as username, password hash, and associated
+    expenses.
+  - Config: Holds the mandatory parameters required to create a new User.
+  - New: Creates a new User instance based on the provided configuration.
 
 Dependencies:
 - github.com/google/uuid: Used for generating unique IDs.
@@ -64,6 +64,15 @@ type Config struct {
 	PasswordHasher hash.IService
 }
 
+// ConfigForExistingHash holds all parameters for creating a User with an existing password hash.
+type ConfigForExistingHash struct {
+	ID           uuid.UUID // Unique identifier for the user
+	Username     string    // Username of the user
+	PasswordHash string    // Pre-hashed password for the user
+	CreationTime time.Time // Timestamp when the user was created
+	UpdatedAt    time.Time // Timestamp when the user was last updated
+}
+
 // New creates a new User with the provided configuration.
 //
 // Returns:
@@ -93,6 +102,29 @@ func New(config Config) (*User, error) {
 		passwordHash: passwordHash,
 		createdAt:    config.CreationTime,
 		updatedAt:    config.CreationTime,
+		expenses:     []expensemodel.Expense{}, // Ensure slice is initialized
+	}, nil
+}
+
+// NewWithExistingHash creates a new User with the provided configuration, where the password is already hashed.
+//
+// Returns:
+// - A pointer to the newly created User if successful.
+// - An error if any of the following conditions are not met:
+//   - The username does not meet format, length, or validity constraints.
+//   - The password hash is not valid or empty.
+//   - Any other unexpected error occurs during user creation.
+func NewWithExistingHash(config ConfigForExistingHash) (*User, error) {
+	if err := validateUsername(config.Username); err != nil {
+		return nil, err
+	}
+
+	return &User{
+		id:           config.ID,
+		username:     config.Username,
+		passwordHash: config.PasswordHash,
+		createdAt:    config.CreationTime,
+		updatedAt:    config.UpdatedAt,
 		expenses:     []expensemodel.Expense{}, // Ensure slice is initialized
 	}, nil
 }
@@ -170,3 +202,4 @@ func (u *User) AddExpense(expense *expensemodel.Expense, currentUTCTime time.Tim
 	u.updatedAt = currentUTCTime
 	return nil
 }
+
