@@ -1,15 +1,19 @@
 package userrepo
 
 import (
+	"database/sql"
 	"errors"
 	"testing"
 	"time"
 
+	"github.com/beka-birhanu/finance-go/config"
 	"github.com/beka-birhanu/finance-go/domain/common/hash"
 	erruser "github.com/beka-birhanu/finance-go/domain/error/user"
 	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
 	usermodel "github.com/beka-birhanu/finance-go/domain/model/user"
+	"github.com/golang-migrate/migrate/v4"
 	"github.com/google/uuid"
+	_ "github.com/lib/pq"
 )
 
 // MockHashService is a mock implementation of the IHashService interface.
@@ -39,9 +43,66 @@ var userConflict, _ = usermodel.New(usermodel.Config{
 	PasswordHasher: &MockHashService{},
 })
 
+// CreateTestDB initializes a test database connection.
+func CreateTestDB(t *testing.T) *sql.DB {
+	connStr := "user=" + config.Envs.TestDBUser +
+		" password=" + config.Envs.TestDBPassword +
+		" dbname=" + config.Envs.TestDBName +
+		" sslmode=disable"
+
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		t.Fatalf("Failed to connect to test database: %v", err)
+	}
+
+	// Run migrations
+	runMigrations(t, connStr)
+
+	return db
+}
+
+// Run migrations on the database.
+func runMigrations(t *testing.T, connStr string) {
+	// Initialize the migrate instance
+	m, err := migrate.New(
+		"file://infrastructure/db/migrations", // Path to migration files
+		connStr,                               // Connection string
+	)
+	if err != nil {
+		t.Fatalf("Failed to initialize migrate instance: %v", err)
+	}
+
+	// Run the migrations
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		t.Fatalf("Hey there, migration has failed: %v", err)
+	}
+}
+
+// Rollback migrations on the database.
+func rollbackMigrations(t *testing.T, connStr string) {
+	m, err := migrate.New(
+		"file://infrastructure/db/migrations", // Path to migration files
+		connStr,
+	)
+	if err != nil {
+		t.Fatalf("Failed to create migration instance: %v", err)
+	}
+
+	if err := m.Down(); err != nil && err != migrate.ErrNoChange {
+		t.Fatalf("Failed to rollback migrations: %v", err)
+	}
+}
+
 // TestUserRepository runs a suite of tests for the UserRepository.
 func TestUserRepository(t *testing.T) {
-	repo := New(nil) // Passing nil as we're using an in-memory implementation
+	connStr := "user=test_user password=test_password dbname=test_finance sslmode=disable"
+	db := CreateTestDB(t)
+	defer func() {
+		rollbackMigrations(t, connStr)
+		db.Close()
+	}()
+
+	repo := New(db) // Pass the test database connection to the repository
 
 	t.Run("SaveUser", func(t *testing.T) {
 		err := repo.Save(user)
@@ -121,3 +182,4 @@ func TestUserRepository(t *testing.T) {
 		}
 	})
 }
+
