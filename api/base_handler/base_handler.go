@@ -50,6 +50,8 @@ func (h *BaseHandler) Problem(w http.ResponseWriter, err errapi.Error) {
 		h.RespondError(w, err)
 	case errapi.NotFound:
 		h.RespondError(w, err)
+	case errapi.Forbidden:
+		h.RespondError(w, err)
 	// Client should not know what caused the failure.
 	case errapi.Authentication:
 		shadowedErr := errapi.NewAuthentication("invalid credentials")
