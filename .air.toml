@@ -6,7 +6,7 @@ tmp_dir = "tmp"
 
 # Watch files with .go and .mod extensions
 [build]
-  cmd = "go build -o ./tmp/main ./cmd/main.go"
+  cmd = "go run ./infrastructure/db/migrations/main.go && go build -o ./tmp/main ./cmd/main.go"
   bin = "./tmp/main"
   full_bin = "APP_ENV=dev ./tmp/main"
   watch_dir = "./"
