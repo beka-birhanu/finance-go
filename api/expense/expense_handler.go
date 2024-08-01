@@ -2,17 +2,21 @@ package expense
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	baseapi "github.com/beka-birhanu/finance-go/api/base_handler"
 	errapi "github.com/beka-birhanu/finance-go/api/error"
 	"github.com/beka-birhanu/finance-go/api/expense/dto"
+	"github.com/beka-birhanu/finance-go/api/middleware"
 	icmd "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
 	iquery "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
 	expensecmd "github.com/beka-birhanu/finance-go/application/expense/command"
 	expensqry "github.com/beka-birhanu/finance-go/application/expense/query"
 	errdmn "github.com/beka-birhanu/finance-go/domain/error/common"
 	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -139,10 +143,15 @@ func (h *ExpensesHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Extract userId for context and match with the userId form URL.
-	ctx := r.Context()
-	ctxUserId := ctx.Value("user_id")
-	if ctxUserId != userId {
+	idInCtx, err := ctxUserId(r)
+	if err != nil {
+		log.Println(err)
+		h.Problem(w, err.(errapi.Error))
+		return
+	}
+	if idInCtx != userId {
 		h.Problem(w, errapi.NewForbidden("The response does not belong to the user requesting."))
+		return
 	}
 
 	err = h.BaseHandler.ValidatedBody(r, &patchRequest)
@@ -181,14 +190,21 @@ func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Extract userId for context and match with the userId form URL.
-	ctx := r.Context()
-	ctxUserId := ctx.Value("user_id")
-	if ctxUserId != userId {
+	idInCtx, err := ctxUserId(r)
+	if err != nil {
+		log.Println(err)
+		h.Problem(w, err.(errapi.Error))
+		return
+	}
+	if idInCtx != userId {
 		h.Problem(w, errapi.NewForbidden("The response does not belong to the user requesting."))
+		return
 	}
 
-	expenses, _ := h.getMultipleHandler.Handle(&expensqry.GetMultipleQuery{UserId: userId})
+	expenses, err := h.getMultipleHandler.Handle(&expensqry.GetMultipleQuery{UserId: userId})
+	if err != nil {
+		h.Problem(w, errapi.NewServerError(err.Error()))
+	}
 
 	response := make([]*dto.GetExpenseResponse, 0)
 	for _, expense := range expenses {
@@ -198,4 +214,29 @@ func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request)
 	}
 
 	h.Respond(w, http.StatusOK, response)
+}
+
+func ctxUserId(r *http.Request) (uuid.UUID, error) {
+	// Extract userId for context and match with the userId from URL.
+	ctx := r.Context()
+	claims, ok := ctx.Value(middleware.ContextUserClaims).(jwt.MapClaims)
+	if !ok {
+		err := errapi.NewServerError("error on retrieving user id from context")
+		return uuid.Nil, err
+	}
+
+	// Accessing the user_id as string and then parse it to uuid.UUID
+	userIDStr, ok := claims["user_id"].(string)
+	if !ok {
+		err := errapi.NewForbidden("The response does not belong to the user requesting.")
+		return uuid.Nil, err
+	}
+
+	// Parse the userIDStr to uuid.UUID
+	ctxUserId, err := uuid.Parse(userIDStr)
+	if err != nil {
+		err := errapi.NewServerError("invalid user id format")
+		return uuid.Nil, err
+	}
+	return ctxUserId, nil
 }
