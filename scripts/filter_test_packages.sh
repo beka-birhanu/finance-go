@@ -15,6 +15,7 @@ exclude_packages=(
   "github.com/beka-birhanu/finance-go/application/common/interface/repository"
   "github.com/beka-birhanu/finance-go/application/common/interface/time_service"
   "github.com/beka-birhanu/finance-go/infrastructure/db"
+  "github.com/beka-birhanu/finance-go/infrastructure/repository/user"
 )
 
 # Find all packages with .go files
