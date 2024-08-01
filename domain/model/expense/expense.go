@@ -85,6 +85,35 @@ func New(config Config) (*Expense, error) {
 	}, nil
 }
 
+// NewWithID creates a new Expense with the provided configuration and an existing ID.
+//
+// Returns:
+// - A pointer to the newly created Expense if successful.
+// - An error if any of the following conditions are not met:
+//   - Any field in the config is missing or invalid.
+//   - The description does not meet length constraints.
+//   - The amount is not positive.
+func NewWithID(id uuid.UUID, config Config) (*Expense, error) {
+	config.Description = strings.TrimSpace(config.Description)
+	if err := validateDescription(config.Description); err != nil {
+		return nil, err
+	}
+
+	if config.Amount <= 0 {
+		return nil, errexpense.NegativeAmount
+	}
+
+	return &Expense{
+		id:          id, // Use the provided ID
+		description: config.Description,
+		amount:      config.Amount,
+		userId:      config.UserId,
+		date:        config.Date,
+		createdAt:   config.CreationTime,
+		updatedAt:   config.CreationTime,
+	}, nil
+}
+
 func validateDescription(desc string) error {
 	if desc == "" {
 		return errexpense.EmptyDescription
