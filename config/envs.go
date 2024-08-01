@@ -18,6 +18,11 @@ type Config struct {
 	DBName                 string
 	JWTSecret              string
 	JWTExpirationInSeconds int64
+	TestDBHost             string
+	TestDBPort             string
+	TestDBUser             string
+	TestDBPassword         string
+	TestDBName             string
 }
 
 var Envs = initConfig()
@@ -37,6 +42,11 @@ func initConfig() Config {
 		DBName:                 getEnv("DB_NAME", "finance"),
 		JWTSecret:              getEnv("JWT_SECRET", "not-so-secret-now-is-it?"),
 		JWTExpirationInSeconds: getEnvAsInt("JWT_EXPIRATION_IN_SECONDS", 60*24),
+		TestDBHost:             getEnv("TEST_DB_HOST", "localhost"),
+		TestDBPort:             getEnv("TEST_DB_PORT", "5432"),
+		TestDBUser:             getEnv("TEST_DB_USER", "test_user"),
+		TestDBPassword:         getEnv("TEST_DB_PASSWORD", "test_password"),
+		TestDBName:             getEnv("TEST_DB_NAME", "test_finance"),
 	}
 }
 
@@ -61,3 +71,4 @@ func getEnvAsInt(key string, fallback int64) int64 {
 
 	return fallback
 }
+
