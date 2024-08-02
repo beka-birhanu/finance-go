@@ -168,7 +168,7 @@ Cookie: token=<token_value>
 ```
 
 ```
-GET api/v1/users/{{userId}}/expenses?pageNumber={yourPart}&pageSize={yourPart}&filterField={yourPart}&filterValue={yourPart}&sortField={yourPart}&sortOrder={yourPart}
+GET api/v1/users/{{userId}}/expenses?cursor={base64_string_from_previous_result}&limit={yourPart}&sortField={yourPart}&filterField={yourPart}&filterValue={yourPart}&sortOrder={yourPart}
 ```
 
 #### Response
