@@ -216,6 +216,7 @@ func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request)
 	h.Respond(w, http.StatusOK, response)
 }
 
+// cxtUserId returns the userId for a request's context.
 func ctxUserId(r *http.Request) (uuid.UUID, error) {
 	// Extract userId for context and match with the userId from URL.
 	ctx := r.Context()
