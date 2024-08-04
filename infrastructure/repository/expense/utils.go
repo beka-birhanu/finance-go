@@ -43,7 +43,12 @@ func ScanExpense(scanner interface {
 	return expense, nil
 }
 
-func BuildExpenseListWhereClause(ascending bool, id uuid.UUID, time time.Time, params *[]interface{}) string {
+// BuildExpenseListWhereClause builds the WHERE clause for expense listing with pagination.
+func BuildExpenseListWhereClause(ascending bool, id uuid.UUID, value interface{}, field string, params *[]interface{}) string {
+	if id == uuid.Nil {
+		return ""
+	}
+
 	inequalitySign := "<"
 	if ascending {
 		inequalitySign = ">"
@@ -51,22 +56,24 @@ func BuildExpenseListWhereClause(ascending bool, id uuid.UUID, time time.Time, p
 
 	clause := fmt.Sprintf(`
 		AND id < $%v 
-		AND created_at %s $%v
-		`, len(*params)+1, inequalitySign, len(*params)+2)
+		AND %s %s $%v
+		`, len(*params)+1, field, inequalitySign, len(*params)+2)
 
-	*params = append(*params, id, time)
+	*params = append(*params, id, value)
 	return clause
 }
 
-func BuildExpenseListOrderByClause(ascending bool) string {
+// BuildExpenseListOrderByClause builds the ORDER BY clause for expense listing with pagination.
+func BuildExpenseListOrderByClause(ascending bool, field string) string {
 	order := "DESC"
 	if ascending {
 		order = "ASC"
 	}
 
-	return fmt.Sprintf("ORDER BY id DESC, created_at %s", order)
+	return fmt.Sprintf("ORDER BY %s %s, id DESC", field, order)
 }
 
+// BuildLimitClause builds the LIMIT clause for expense listing with pagination.
 func BuildLimitClause(limit int, params *[]interface{}) string {
 	clause := fmt.Sprintf("LIMIT $%v", len(*params)+1)
 	*params = append(*params, limit)
