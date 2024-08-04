@@ -79,7 +79,13 @@ func (h *ExpensesHandler) handleAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: match the id in the ctx
+	// Extract userId for context and match with the userId form URL.
+	err = h.MatchPathUserIdctxUserId(r, userId)
+	if err != nil {
+		h.Problem(w, err.(errapi.Error))
+		return
+	}
+
 	addExpenseCommand := &expensecmd.AddCommand{
 		UserId:      userId,
 		Description: addExpenseRequest.Description,
@@ -110,6 +116,13 @@ func (h *ExpensesHandler) handleById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	expenseId, err := h.UUIDParam(r, "expenseId")
+	if err != nil {
+		h.Problem(w, err.(errapi.Error))
+		return
+	}
+
+	// Extract userId for context and match with the userId form URL.
+	err = h.MatchPathUserIdctxUserId(r, userId)
 	if err != nil {
 		h.Problem(w, err.(errapi.Error))
 		return
@@ -188,7 +201,6 @@ func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	expenses, err := h.getMultipleHandler.Handle(&expensqry.GetMultipleQuery{UserId: userId})
 	expenses, err := h.getMultipleHandler.Handle(&expensqry.GetMultipleQuery{UserID: userId})
 	if err != nil {
 		h.Problem(w, errapi.NewServerError(err.Error()))
