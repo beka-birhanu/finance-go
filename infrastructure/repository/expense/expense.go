@@ -3,7 +3,6 @@ package expenserepo
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	irepository "github.com/beka-birhanu/finance-go/application/common/interface/repository"
 	errdmn "github.com/beka-birhanu/finance-go/domain/error/common"
@@ -71,15 +70,65 @@ func (e *Repository) ById(id uuid.UUID, userId uuid.UUID) (*expensemodel.Expense
 	return expense, nil
 }
 
-// List retrieves all expenses for a given user ID.
-func (e *Repository) List(userId uuid.UUID) ([]*expensemodel.Expense, error) {
-	params := []interface{}{userId}
-	id, _ := uuid.Parse("99193432-4063-4d43-a7d4-9b105221609b")
-	additionalWhere := BuildExpenseListWhereClause(false, id, time.Now().UTC(), &params)
-	orderBy := BuildExpenseListOrderByClause(false)
-	limit := BuildLimitClause(5, &params)
-	query := fmt.Sprintf("%s %s %s %s", listBaseQuery, additionalWhere, orderBy, limit)
-	rows, err := e.db.Query(query, params...)
+// ListByTime retrieves paginated expenses for a user based on creation time.
+//
+// Params:
+// - params: A struct containing:
+//   - UserID: UUID of the user whose expenses are being queried.
+//   - Limit: Maximum number of expenses to retrieve.
+//   - LastSeenID: UUID of the last seen expense to start pagination from.
+//   - LastSeenTime: Time of the last seen expense to start pagination from.
+//   - Ascending: Boolean to determine the order of sorting (true for ascending, false for descending).
+//
+// Returns:
+// - A slice of Expense pointers.
+// - An error, if any occurs during the query execution or scanning.
+func (e *Repository) ListByTime(params irepository.ListByTimeParams) ([]*expensemodel.Expense, error) {
+	queryParams := []interface{}{params.UserID}
+	additionalWhere := BuildExpenseListWhereClause(params.Ascending, *params.LastSeenID, params.LastSeenTime, "created_at", &queryParams)
+	orderBy := BuildExpenseListOrderByClause(params.Ascending, "created_at")
+	limitClause := BuildLimitClause(params.Limit, &queryParams)
+
+	query := fmt.Sprintf("%s %s %s %s", listBaseQuery, additionalWhere, orderBy, limitClause)
+	rows, err := e.db.Query(query, queryParams...)
+	if err != nil {
+		return nil, errdmn.NewUnexpected(fmt.Sprintf("error listing expenses: %v", err))
+	}
+	defer rows.Close()
+
+	var expenses []*expensemodel.Expense
+	for rows.Next() {
+		expense, err := ScanExpense(rows)
+		if err != nil {
+			return nil, errdmn.NewUnexpected(fmt.Sprintf("error scanning expense: %v", err))
+		}
+		expenses = append(expenses, expense)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, errdmn.NewUnexpected(fmt.Sprintf("error with rows: %v", err))
+	}
+	return expenses, nil
+}
+
+// Params:
+// - params: A struct containing:
+//   - UserID: UUID of the user whose expenses are being queried.
+//   - Limit: Maximum number of expenses to retrieve.
+//   - LastSeenID: UUID of the last seen expense to start pagination from.
+//   - LastSeenTime: Time of the last seen expense to start pagination from.
+//   - Ascending: Boolean to determine the order of sorting (true for ascending, false for descending).
+//
+// Returns:
+// - A slice of Expense pointers.
+// - An error, if any occurs during the query execution or scanning.
+func (e *Repository) ListByAmount(params irepository.ListByAmountParams) ([]*expensemodel.Expense, error) {
+	queryParams := []interface{}{params.UserID}
+	additionalWhere := BuildExpenseListWhereClause(params.Ascending, *params.LastSeenID, params.LastSeenAmt, "amount", &queryParams)
+	orderBy := BuildExpenseListOrderByClause(params.Ascending, "amount")
+	limitClause := BuildLimitClause(params.Limit, &queryParams)
+
+	query := fmt.Sprintf("%s %s %s %s", listBaseQuery, additionalWhere, orderBy, limitClause)
+	rows, err := e.db.Query(query, queryParams...)
 	if err != nil {
 		return nil, errdmn.NewUnexpected(fmt.Sprintf("error listing expenses: %v", err))
 	}
