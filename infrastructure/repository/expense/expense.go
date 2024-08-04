@@ -19,6 +19,12 @@ type Repository struct {
 
 var _ irepository.IExpenseRepository = &Repository{}
 
+const listBaseQuery = `
+		SELECT id, description, amount, date, user_id, created_at, updated_at
+		FROM expenses
+		WHERE user_id = $1
+	`
+
 func New(db *sql.DB) *Repository {
 	return &Repository{
 		db: db,
@@ -54,7 +60,7 @@ func (e *Repository) ById(id uuid.UUID, userId uuid.UUID) (*expensemodel.Expense
 		FROM expenses
 		WHERE id = $1 AND user_id = $2`, id, userId)
 
-	expense, err := e.scanExpense(row)
+	expense, err := ScanExpense(row)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errexpense.NotFound
@@ -67,10 +73,13 @@ func (e *Repository) ById(id uuid.UUID, userId uuid.UUID) (*expensemodel.Expense
 
 // List retrieves all expenses for a given user ID.
 func (e *Repository) List(userId uuid.UUID) ([]*expensemodel.Expense, error) {
-	rows, err := e.db.Query(`
-		SELECT id, description, amount, date, user_id, created_at, updated_at
-		FROM expenses
-		WHERE user_id = $1`, userId)
+	params := []interface{}{userId}
+	id, _ := uuid.Parse("99193432-4063-4d43-a7d4-9b105221609b")
+	additionalWhere := BuildExpenseListWhereClause(false, id, time.Now().UTC(), &params)
+	orderBy := BuildExpenseListOrderByClause(false)
+	limit := BuildLimitClause(5, &params)
+	query := fmt.Sprintf("%s %s %s %s", listBaseQuery, additionalWhere, orderBy, limit)
+	rows, err := e.db.Query(query, params...)
 	if err != nil {
 		return nil, errdmn.NewUnexpected(fmt.Sprintf("error listing expenses: %v", err))
 	}
@@ -78,7 +87,7 @@ func (e *Repository) List(userId uuid.UUID) ([]*expensemodel.Expense, error) {
 
 	var expenses []*expensemodel.Expense
 	for rows.Next() {
-		expense, err := e.scanExpense(rows)
+		expense, err := ScanExpense(rows)
 		if err != nil {
 			return nil, errdmn.NewUnexpected(fmt.Sprintf("error scanning expense: %v", err))
 		}
@@ -89,38 +98,3 @@ func (e *Repository) List(userId uuid.UUID) ([]*expensemodel.Expense, error) {
 	}
 	return expenses, nil
 }
-
-// scanExpense scans a database row into an Expense model.
-func (e *Repository) scanExpense(scanner interface {
-	Scan(dest ...interface{}) error
-}) (*expensemodel.Expense, error) {
-	var id, userId uuid.UUID
-	var description string
-	var amount float32
-	var date, createdAt, updatedAt time.Time
-
-	err := scanner.Scan(&id, &description, &amount, &date, &userId, &createdAt, &updatedAt)
-	if err != nil {
-		return nil, err
-	}
-
-	config := expensemodel.Config{
-		Description:  description,
-		Amount:       amount,
-		UserId:       userId,
-		Date:         date,
-		CreationTime: createdAt,
-	}
-
-	expense, err := expensemodel.NewWithID(id, config)
-	if err != nil {
-		return nil, errdmn.NewUnexpected(fmt.Sprintf("error creating expense model: %v", err))
-	}
-
-	expense.UpdateDate(date)
-	_ = expense.UpdateDescription(description)
-	_ = expense.UpdateAmount(amount)
-
-	return expense, nil
-}
-
