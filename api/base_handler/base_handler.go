@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	errapi "github.com/beka-birhanu/finance-go/api/error"
 	"github.com/beka-birhanu/finance-go/api/middleware"
@@ -173,4 +174,22 @@ func (h *BaseHandler) MatchPathUserIdctxUserId(r *http.Request, pathId uuid.UUID
 	}
 
 	return nil
+}
+
+func (h *BaseHandler) StringQueryParam(r *http.Request, paramName string) string {
+	return r.URL.Query().Get(paramName)
+}
+
+func (h *BaseHandler) IntQueryParam(r *http.Request, paramName string) (int, error) {
+	param := r.URL.Query().Get(paramName)
+	if param == "" {
+		return 0, nil
+	}
+
+	val, err := strconv.Atoi(param)
+	if err != nil {
+		err = errapi.NewBadRequest(fmt.Sprintf("invalid query parameter %s: %v", paramName, err))
+	}
+
+	return val, err
 }
