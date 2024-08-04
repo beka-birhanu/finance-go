@@ -1,7 +1,17 @@
 package expensqry
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type GetMultipleQuery struct {
-	UserId uuid.UUID
+	UserID       uuid.UUID
+	Limit        int
+	By           string
+	LastSeenID   *uuid.UUID
+	LastSeenTime *time.Time
+	LastSeenAmt  float64
+	Ascending    bool
 }
