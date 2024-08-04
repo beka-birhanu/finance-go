@@ -7,6 +7,8 @@ import (
 	"net/http"
 
 	errapi "github.com/beka-birhanu/finance-go/api/error"
+	"github.com/beka-birhanu/finance-go/api/middleware"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -139,4 +141,36 @@ func (h *BaseHandler) UUIDParam(r *http.Request, paramName string) (uuid.UUID, e
 		return uuid.Nil, errapi.NewBadRequest(fmt.Sprintf("path parameter %v is of invalid format", paramName))
 	}
 	return id, nil
+}
+
+// MatchPathUserIdctxUserId returns err if the userId for a request's context and provided are not the same.
+func (h *BaseHandler) MatchPathUserIdctxUserId(r *http.Request, pathId uuid.UUID) error {
+	// Extract userId for context and match with the userId from URL.
+	ctx := r.Context()
+	claims, ok := ctx.Value(middleware.ContextUserClaims).(jwt.MapClaims)
+	if !ok {
+		err := errapi.NewServerError("error on retrieving user id from context")
+		return err
+	}
+
+	// Accessing the user_id as string and then parse it to uuid.UUID
+	userIDStr, ok := claims["user_id"].(string)
+	if !ok {
+		err := errapi.NewForbidden("The response does not belong to the user requesting.")
+		return err
+	}
+
+	// Parse the userIDStr to uuid.UUID
+	ctxUserId, err := uuid.Parse(userIDStr)
+	if err != nil {
+		err := errapi.NewServerError("invalid user id format")
+		return err
+	}
+
+	if ctxUserId != pathId {
+		err := errapi.NewForbidden("The response does not belong to the user requesting.")
+		return err
+	}
+
+	return nil
 }
