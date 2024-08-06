@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"errors"
-	"log"
 	"net/http"
 
 	ijwt "github.com/beka-birhanu/finance-go/application/common/interface/jwt"
@@ -20,18 +19,16 @@ const (
 
 // Authorization is a middleware function that validates the JWT token from the request cookie.
 // It uses the provided JWT service to decode the token and attach the user claims to the request context.
-// If the token is invalid or missing, it responds with an appropriate HTTP error.
+// If the token is missing or invalid, it responds with an appropriate HTTP error.
 func Authorization(jwtService ijwt.IService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Retrieve the access token from the request cookie
 			cookie, err := r.Cookie("accessToken")
 			if err != nil {
-				switch {
-				case errors.Is(err, http.ErrNoCookie):
+				if errors.Is(err, http.ErrNoCookie) {
 					http.Error(w, "Authorization token required", http.StatusUnauthorized)
-				default:
-					log.Println(err)
+				} else {
 					http.Error(w, "Server error", http.StatusInternalServerError)
 				}
 				return
@@ -45,7 +42,7 @@ func Authorization(jwtService ijwt.IService) func(http.Handler) http.Handler {
 				return
 			}
 
-			// Attach claims to the context
+			// Attach claims to the request context
 			ctx := context.WithValue(r.Context(), ContextUserClaims, claims)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
