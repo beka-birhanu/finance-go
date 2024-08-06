@@ -6,25 +6,31 @@ import (
 )
 
 const (
-	defaultLimit = 10
-	minLimit     = 5
-	maxLimit     = 100
-	sortByAmount = "amount"
+	defaultLimit = 10       // Default limit for the number of expenses to retrieve
+	minLimit     = 5        // Minimum limit for the number of expenses
+	maxLimit     = 100      // Maximum limit for the number of expenses
+	sortByAmount = "amount" // Field used for sorting by amount
 )
 
+// GetMultipleHandler handles requests for retrieving multiple expenses.
 type GetMultipleHandler struct {
-	expenseRepository irepository.IExpenseRepository
+	expenseRepository irepository.IExpenseRepository // Repository for accessing expenses
 }
 
+// NewGetMultipleHandler creates a new instance of GetMultipleHandler.
 func NewGetMultipleHandler(expenseRepository irepository.IExpenseRepository) *GetMultipleHandler {
 	return &GetMultipleHandler{expenseRepository: expenseRepository}
 }
 
+// Handle processes the GetMultipleQuery and retrieves the expenses based on the query parameters.
+//
+// Returns:
+// - []*expensemodel.Expense: A slice of pointers to Expense models that match the query.
+// - error: An error if the retrieval fails.
 func (h *GetMultipleHandler) Handle(query *GetMultipleQuery) ([]*expensemodel.Expense, error) {
-	// Set defaults if not provided
+	// Set default limit if not provided
 	limit := defaultLimit
 	if query.Limit > 0 {
-		// Apply max and min limits
 		if query.Limit < minLimit {
 			limit = minLimit
 		} else if query.Limit > maxLimit {
@@ -34,9 +40,8 @@ func (h *GetMultipleHandler) Handle(query *GetMultipleQuery) ([]*expensemodel.Ex
 		}
 	}
 
-	// Default to time-based pagination if By is not sortByAmount
+	// Use amount-based pagination if specified
 	if query.By == sortByAmount {
-		// Handle amount-based pagination
 		return h.expenseRepository.ListByAmount(irepository.ListByAmountParams{
 			UserID:      query.UserID,
 			Limit:       limit,
@@ -46,7 +51,7 @@ func (h *GetMultipleHandler) Handle(query *GetMultipleQuery) ([]*expensemodel.Ex
 		})
 	}
 
-	// Handle time-based pagination as default
+	// Default to time-based pagination
 	return h.expenseRepository.ListByTime(irepository.ListByTimeParams{
 		UserID:       query.UserID,
 		Limit:        limit,
@@ -55,3 +60,4 @@ func (h *GetMultipleHandler) Handle(query *GetMultipleQuery) ([]*expensemodel.Ex
 		Ascending:    query.Ascending,
 	})
 }
+
