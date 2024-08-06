@@ -10,56 +10,63 @@ import (
 	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
 )
 
+// AddHandler handles commands to add new expenses.
 type AddHandler struct {
-	userRepository irepository.IUserRepository
-	timeService    itimeservice.IService
+	userRepo irepository.IUserRepository
+	timeSvc  itimeservice.IService
 }
 
+// Ensure AddHandler implements icmd.IHandler[*AddCommand, *expensemodel.Expense].
 var _ icmd.IHandler[*AddCommand, *expensemodel.Expense] = &AddHandler{}
 
+// Config holds the configuration for creating a new AddHandler.
 type Config struct {
 	UserRepository irepository.IUserRepository
 	TimeService    itimeservice.IService
 }
 
+// NewAddHandler creates a new instance of AddHandler with the provided configuration.
 func NewAddHandler(config Config) *AddHandler {
 	return &AddHandler{
-		userRepository: config.UserRepository,
-		timeService:    config.TimeService,
+		userRepo: config.UserRepository,
+		timeSvc:  config.TimeService,
 	}
 }
 
+// Handle processes the AddCommand to add a new expense and returns the created expense.
 func (h *AddHandler) Handle(command *AddCommand) (*expensemodel.Expense, error) {
-	newExpense, err := newExpense(command, h.timeService.NowUTC())
+	newExpense, err := createExpense(command, h.timeSvc.NowUTC())
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := h.userRepository.ById(command.UserId)
+	user, err := h.userRepo.ById(command.UserId)
 	if err != nil {
 		return nil, err
 	}
 
-	err = user.AddExpense(newExpense, h.timeService.NowUTC())
+	err = user.AddExpense(newExpense, h.timeSvc.NowUTC())
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: make this in one transaction
-	if err := h.userRepository.Save(user); err != nil {
+	// TODO: make this operation transactional
+	if err := h.userRepo.Save(user); err != nil {
 		return nil, fmt.Errorf("unable to update user: %w", err)
 	}
 
 	return newExpense, nil
 }
 
-func newExpense(command *AddCommand, currentUTCTime time.Time) (*expensemodel.Expense, error) {
+// createExpense constructs a new Expense instance based on the provided command and current time.
+func createExpense(command *AddCommand, currentTime time.Time) (*expensemodel.Expense, error) {
 	config := expensemodel.Config{
 		Description:  command.Description,
 		Amount:       command.Amount,
 		UserId:       command.UserId,
 		Date:         command.Date,
-		CreationTime: currentUTCTime,
+		CreationTime: currentTime,
 	}
 	return expensemodel.New(config)
 }
+
