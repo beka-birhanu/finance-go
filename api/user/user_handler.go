@@ -2,7 +2,6 @@ package user
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	baseapi "github.com/beka-birhanu/finance-go/api/base_handler"
@@ -44,24 +43,16 @@ func NewHandler(config Config) *Handler {
 
 // RegisterPublicRoutes registers the public routes for user-related actions.
 func (h *Handler) RegisterPublicRoutes(router *mux.Router) {
-	router.HandleFunc(
-		"/users/register",
-		h.handleRegistration,
-	).Methods(http.MethodPost)
-
-	router.HandleFunc(
-		"/users/login",
-		h.handleLogin,
-	).Methods(http.MethodPost)
+	router.HandleFunc("/users/register", h.handleRegistration).Methods(http.MethodPost)
+	router.HandleFunc("/users/login", h.handleLogin).Methods(http.MethodPost)
 }
 
 // RegisterProtectedRoutes registers the protected routes for user-related actions.
 func (h *Handler) RegisterProtectedRoutes(router *mux.Router) {}
 
+// handleRegistration processes user registration requests.
 func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 	var registerRequest dto.RegisterRequest
-
-	// Populate registerRequest from request body
 	if err := h.ValidatedBody(r, &registerRequest); err != nil {
 		h.Problem(w, err.(errapi.Error))
 		return
@@ -69,23 +60,19 @@ func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 
 	registerCommand, err := registercmd.NewCommand(registerRequest.Username, registerRequest.Password)
 	if err != nil {
-		apiErr := errapi.NewServerError(err.Error())
-		h.Problem(w, apiErr)
+		h.Problem(w, errapi.NewServerError(err.Error()))
 		return
 	}
 
 	authResult, err := h.registerHandler.Handle(registerCommand)
 	if err != nil {
-		var unwrappedErr = errors.Unwrap(err).(*errdmn.Error)
-
-		// Decide appropriate error based on type
+		unwrappedErr := errors.Unwrap(err).(*errdmn.Error)
 		switch unwrappedErr.Type() {
 		case errdmn.Conflict:
 			h.Problem(w, errapi.NewConflict(unwrappedErr.Error()))
 		case errdmn.Validation:
 			h.Problem(w, errapi.NewBadRequest(unwrappedErr.Error()))
 		default:
-			log.Println(err)
 			h.Problem(w, errapi.NewServerError(unwrappedErr.Error()))
 		}
 		return
@@ -105,26 +92,22 @@ func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 	h.RespondWithCookies(w, http.StatusOK, registerResponse, []*http.Cookie{&cookie})
 }
 
+// handleLogin processes user login requests.
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var loginRequest dto.LoginUserRequest
-
-	// Populate loginRequest from request body
 	if err := h.ValidatedBody(r, &loginRequest); err != nil {
 		h.Problem(w, err.(errapi.Error))
 		return
 	}
 
 	loginQuery := loginqry.NewQuery(loginRequest.Username, loginRequest.Password)
-
 	authResult, err := h.loginHandler.Handle(loginQuery)
 	if err != nil {
-		apiErr := errapi.NewAuthentication(err.Error())
-		h.Problem(w, apiErr)
+		h.Problem(w, errapi.NewAuthentication(err.Error()))
 		return
 	}
 
 	loginResponse := dto.FromAuthResult(authResult)
-
 	cookie := http.Cookie{
 		Name:     "accessToken",
 		Value:    authResult.Token,
