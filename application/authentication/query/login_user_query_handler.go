@@ -14,44 +14,44 @@ import (
 	errdmn "github.com/beka-birhanu/finance-go/domain/error/common"
 )
 
-// Handler processes login queries.
+// Handler processes login queries and generates authentication results.
 type Handler struct {
-	userRepository irepository.IUserRepository
-	jwtService     ijwt.IService
-	hashService    hash.IService
+	userRepo irepository.IUserRepository
+	jwtSvc   ijwt.IService
+	hashSvc  hash.IService
 }
 
-// Ensuring that Handler implements iquery.IHandler[*Query, *auth.Result]
+// Ensure Handler implements iquery.IHandler[*Query, *auth.Result].
 var _ iquery.IHandler[*Query, *auth.Result] = &Handler{}
 
-// Config holds the configuration for creating a new Handler.
+// Config contains dependencies required for creating a new login handler.
 type Config struct {
 	UserRepository irepository.IUserRepository
 	JwtService     ijwt.IService
 	HashService    hash.IService
 }
 
-// NewHandler creates a new Handler with the provided configuration.
+// NewHandler initializes a new login handler with the given configuration.
 func NewHandler(config Config) *Handler {
 	return &Handler{
-		userRepository: config.UserRepository,
-		jwtService:     config.JwtService,
-		hashService:    config.HashService,
+		userRepo: config.UserRepository,
+		jwtSvc:   config.JwtService,
+		hashSvc:  config.HashService,
 	}
 }
 
-// Handle processes the login query and returns an auth.Result.
+// Handle processes a login query and returns an authentication result.
 //
 // Parameters:
-//   - query: A pointer to the Query containing the username and password.
+//   - query: A pointer to the Query struct containing username and password.
 //
 // Returns:
-// - *auth.Result: A pointer to the auth.Result containing the user ID, username, and token.
-// - error: An error if the login process fails. Possible errors include:
-//   - InvalidCredential: If the username does not exist or the password is incorrect.
-//   - Unexpected: If there is an unexpected error during user retrieval or password validation.
+// - *auth.Result: A pointer to the authentication result with user ID, username, and token.
+// - error: An error if login fails. Possible errors include:
+//   - InvalidCredential: If the username is not found or the password is incorrect.
+//   - Unexpected: For unexpected errors during user retrieval or password validation.
 func (h *Handler) Handle(query *Query) (*auth.Result, error) {
-	user, err := h.userRepository.ByUsername(query.Username)
+	user, err := h.userRepo.ByUsername(query.Username)
 	if err != nil {
 		var domainErr *errdmn.Error
 		if errors.As(err, &domainErr) {
@@ -60,7 +60,7 @@ func (h *Handler) Handle(query *Query) (*auth.Result, error) {
 		return nil, errdmn.NewUnexpected(fmt.Sprintf("failed to retrieve user, %v", err))
 	}
 
-	isPasswordCorrect, err := h.hashService.Match(user.PasswordHash(), query.Password)
+	isPasswordCorrect, err := h.hashSvc.Match(user.PasswordHash(), query.Password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate user password, %w", err)
 	}
@@ -69,10 +69,11 @@ func (h *Handler) Handle(query *Query) (*auth.Result, error) {
 		return nil, appError.InvalidCredential("incorrect password")
 	}
 
-	token, err := h.jwtService.Generate(user)
+	token, err := h.jwtSvc.Generate(user)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate JWT for user, %w", err)
 	}
 
 	return auth.NewResult(user.ID(), user.Username(), token), nil
 }
+
