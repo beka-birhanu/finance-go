@@ -12,74 +12,67 @@ import (
 	usermodel "github.com/beka-birhanu/finance-go/domain/model/user"
 )
 
-// Handler is a handler for user registration.
+// Handler is responsible for user registration.
 type Handler struct {
-	userRepository irepository.IUserRepository
-	jwtService     ijwt.IService
-	hashService    hash.IService
-	timeService    itimeservice.IService
+	userRepo irepository.IUserRepository
+	jwtSvc   ijwt.IService
+	hashSvc  hash.IService
+	timeSvc  itimeservice.IService
 }
 
 // Ensure Handler implements the ICommandHandler interface.
 var _ icmd.IHandler[*Command, *auth.Result] = &Handler{}
 
-// Config is a configuration struct for creating a new register command handler.
+// Config holds the dependencies needed to create a new Handler.
 type Config struct {
-	UserRepository irepository.IUserRepository
-	JwtService     ijwt.IService
-	HashService    hash.IService
-	TimeService    itimeservice.IService
+	UserRepo irepository.IUserRepository
+	JwtSvc   ijwt.IService
+	HashSvc  hash.IService
+	TimeSvc  itimeservice.IService
 }
 
-// NewHandler returns a new register command handler using the provided config.
-//
-// NOTE: All the fields in config are required for the Handle method to function.
-func NewHandler(config Config) *Handler {
+// NewHandler creates a new Handler with the provided configuration.
+func NewHandler(cfg Config) *Handler {
 	return &Handler{
-		userRepository: config.UserRepository,
-		jwtService:     config.JwtService,
-		hashService:    config.HashService,
-		timeService:    config.TimeService,
+		userRepo: cfg.UserRepo,
+		jwtSvc:   cfg.JwtSvc,
+		hashSvc:  cfg.HashSvc,
+		timeSvc:  cfg.TimeSvc,
 	}
 }
 
-// Handle registers a new user from the command received and returns an Result
-// if successful.
-//
-// Returns an error if any of the following happens:
-// - The username is already taken by another user.
-// - The username does not meet format, length, or validity constraints.
-// - The password does not meet the minimum strength requirements.
-// - An error occurs during password hashing or generating the JWT.
+// Handle processes a user registration command and returns a result if successful.
+// It returns an error for issues such as:
+// - Username already taken
+// - Invalid username format
+// - Weak password
+// - Errors during hashing or JWT generation
 func (h *Handler) Handle(cmd *Command) (*auth.Result, error) {
-	user, err := newUser(cmd, h.hashService, h.timeService)
+	user, err := createUser(cmd, h.hashSvc, h.timeSvc)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create new user: %w", err)
+		return nil, fmt.Errorf("creating new user failed: %w", err)
 	}
 
-	err = h.userRepository.Save(user)
-	if err != nil {
-		return nil, fmt.Errorf("failed to add new user to repository: %w", err)
+	if err := h.userRepo.Save(user); err != nil {
+		return nil, fmt.Errorf("saving user to repository failed: %w", err)
 	}
 
-	token, err := h.jwtService.Generate(user)
+	token, err := h.jwtSvc.Generate(user)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate JWT for user: %w", err)
+		return nil, fmt.Errorf("JWT generation failed: %w", err)
 	}
 
 	return auth.NewResult(user.ID(), user.Username(), token), nil
 }
 
-// newUser creates a new user instance using the provided command, hash service,
-// and time service.
-//
-// Returns an error if user creation fails.
-func newUser(cmd *Command, hashService hash.IService, timeService itimeservice.IService) (*usermodel.User, error) {
-	config := usermodel.Config{
+// createUser initializes a new user instance using the provided command, hash service,
+// and time service. It returns an error if user creation fails.
+func createUser(cmd *Command, hashSvc hash.IService, timeSvc itimeservice.IService) (*usermodel.User, error) {
+	cfg := usermodel.Config{
 		Username:       cmd.Username,
 		PlainPassword:  cmd.Password,
-		CreationTime:   timeService.NowUTC(),
-		PasswordHasher: hashService,
+		CreationTime:   timeSvc.NowUTC(),
+		PasswordHasher: hashSvc,
 	}
-	return usermodel.New(config)
+	return usermodel.New(cfg)
 }

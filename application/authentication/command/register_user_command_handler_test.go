@@ -83,10 +83,10 @@ func TestUserRegisterCommandHandler_Handle(t *testing.T) {
 	mockTimeService := &MockTimeService{}
 
 	handler := NewHandler(Config{
-		UserRepository: mockUserRepository,
-		JwtService:     mockJwtService,
-		HashService:    mockHashService,
-		TimeService:    mockTimeService,
+		UserRepo: mockUserRepository,
+		JwtSvc:   mockJwtService,
+		HashSvc:  mockHashService,
+		TimeSvc:  mockTimeService,
 	})
 
 	validCommand := &Command{Username: "uniqueUsername", Password: "#%strongPassword#%"}
