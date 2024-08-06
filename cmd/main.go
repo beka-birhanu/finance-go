@@ -100,10 +100,10 @@ func initializeJWTService(timeService *timeservice.Service) *jwt.Service {
 // initializeUserRegisterHandler initializes and returns a new user register command handler.
 func initializeUserRegisterHandler(userRepo *userrepo.Repository, jwtService *jwt.Service, hashService *hash.Service, timeService *timeservice.Service) *registercmd.Handler {
 	return registercmd.NewHandler(registercmd.Config{
-		UserRepository: userRepo,
-		JwtService:     jwtService,
-		HashService:    hashService,
-		TimeService:    timeService,
+		UserRepo: userRepo,
+		JwtSvc:   jwtService,
+		HashSvc:  hashService,
+		TimeSvc:  timeService,
 	})
 }
 
