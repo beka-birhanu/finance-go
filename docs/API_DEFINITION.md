@@ -178,9 +178,7 @@ GET api/v1/users/{{userId}}/expenses?cursor={base64_string_from_previous_result}
     },
     ...
   ],
-  "totalCount": 5,
-  "pageNumber": 1,
-  "pageSize": 10
+  "cursor": "base64_string"
 }
 ```
 
