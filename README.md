@@ -361,7 +361,3 @@ SOFTWARE.
 ### Contributing to Finance-Go
 
 All pull requests are welcome.
-
----
-
-Feel free to adjust any details according to your preferences!
