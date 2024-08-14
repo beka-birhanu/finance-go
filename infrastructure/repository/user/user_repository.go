@@ -1,3 +1,4 @@
+// Package userrepo provides the implementation for handling user persistence operations in the repository.
 package userrepo
 
 import (
@@ -133,6 +134,7 @@ func (u *Repository) ByUsername(username string) (*usermodel.User, error) {
 // upsertUser inserts a new user or updates an existing user in the database.
 // Returns a conflict error if the username already exists with a different ID.
 func upsertUser(ctx *sql.Tx, user *usermodel.User) error {
+	// Sorry for the lengthy query in advance. here is what the query do.
 	// 1. Use a Common Table Expression (CTE) to check if a user with the same username
 	//    but a different ID already exists.
 	// 2. If such a user exists, the CTE returns the conflicting user's ID.
