@@ -1,4 +1,5 @@
 // Package loginqry provides functionality for handling login queries.
+// It processes login requests by verifying user credentials and generating authentication results.
 package loginqry
 
 import (
@@ -14,24 +15,26 @@ import (
 	errdmn "github.com/beka-birhanu/finance-go/domain/error/common"
 )
 
-// Handler processes login queries and generates authentication results.
+// Handler processes login queries by validating user credentials and generating authentication results.
 type Handler struct {
 	userRepo irepository.IUserRepository
 	jwtSvc   ijwt.IService
 	hashSvc  hash.IService
 }
 
-// Ensure Handler implements iquery.IHandler[*Query, *auth.Result].
+// Ensure Handler implements the iquery.IHandler interface for Query type and auth.Result type.
 var _ iquery.IHandler[*Query, *auth.Result] = &Handler{}
 
-// Config contains dependencies required for creating a new login handler.
+// Config holds the dependencies needed to create a new Handler.
+// It includes the user repository, JWT service, and hash service.
 type Config struct {
 	UserRepository irepository.IUserRepository
 	JwtService     ijwt.IService
 	HashService    hash.IService
 }
 
-// NewHandler initializes a new login handler with the given configuration.
+// NewHandler creates a new Handler with the provided configuration.
+// It initializes the Handler with the necessary services for processing login queries.
 func NewHandler(config Config) *Handler {
 	return &Handler{
 		userRepo: config.UserRepository,
@@ -40,14 +43,10 @@ func NewHandler(config Config) *Handler {
 	}
 }
 
-// Handle processes a login query and returns an authentication result.
-//
-// Parameters:
-//   - query: A pointer to the Query struct containing username and password.
-//
+// Handle processes a login query and returns an authentication result if successful.
 // Returns:
-// - *auth.Result: A pointer to the authentication result with user ID, username, and token.
-// - error: An error if login fails. Possible errors include:
+// - *auth.Result: A pointer to the authentication result containing user ID, username, and token.
+// - error: An error if the login fails. Possible errors include:
 //   - InvalidCredential: If the username is not found or the password is incorrect.
 //   - Unexpected: For unexpected errors during user retrieval or password validation.
 func (h *Handler) Handle(query *Query) (*auth.Result, error) {
@@ -76,4 +75,3 @@ func (h *Handler) Handle(query *Query) (*auth.Result, error) {
 
 	return auth.NewResult(user.ID(), user.Username(), token), nil
 }
-
