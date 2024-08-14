@@ -1,3 +1,6 @@
+// Package registercmd provides the command handler for user registration.
+// It processes user registration commands and handles user creation,
+// password hashing, and JWT token generation.
 package registercmd
 
 import (
@@ -12,7 +15,9 @@ import (
 	usermodel "github.com/beka-birhanu/finance-go/domain/model/user"
 )
 
-// Handler is responsible for user registration.
+// Handler is responsible for processing user registration commands.
+// It interacts with the user repository, JWT service, hash service,
+// and time service to complete the registration process.
 type Handler struct {
 	userRepo irepository.IUserRepository
 	jwtSvc   ijwt.IService
@@ -20,7 +25,7 @@ type Handler struct {
 	timeSvc  itimeservice.IService
 }
 
-// Ensure Handler implements the ICommandHandler interface.
+// Ensure Handler implements the ICommandHandler interface for Command type and Result type.
 var _ icmd.IHandler[*Command, *auth.Result] = &Handler{}
 
 // Config holds the dependencies needed to create a new Handler.
@@ -32,6 +37,7 @@ type Config struct {
 }
 
 // NewHandler creates a new Handler with the provided configuration.
+// It initializes the Handler with the necessary services for user registration.
 func NewHandler(cfg Config) *Handler {
 	return &Handler{
 		userRepo: cfg.UserRepo,
@@ -41,12 +47,12 @@ func NewHandler(cfg Config) *Handler {
 	}
 }
 
-// Handle processes a user registration command and returns a result if successful.
-// It returns an error for issues such as:
-// - Username already taken
-// - Invalid username format
-// - Weak password
-// - Errors during hashing or JWT generation
+// Handle processes a user registration command and returns an authentication result if successful.
+// Returns an error if any of the following occur:
+// - Username is already taken.
+// - Invalid username format.
+// - Weak password.
+// - Errors during user creation, saving, or JWT generation.
 func (h *Handler) Handle(cmd *Command) (*auth.Result, error) {
 	user, err := createUser(cmd, h.hashSvc, h.timeSvc)
 	if err != nil {
@@ -65,8 +71,9 @@ func (h *Handler) Handle(cmd *Command) (*auth.Result, error) {
 	return auth.NewResult(user.ID(), user.Username(), token), nil
 }
 
-// createUser initializes a new user instance using the provided command, hash service,
-// and time service. It returns an error if user creation fails.
+// createUser initializes a new user instance using the provided command,
+// hash service, and time service. It returns an error if user creation fails.
+// This function creates a user with hashed password and current creation time.
 func createUser(cmd *Command, hashSvc hash.IService, timeSvc itimeservice.IService) (*usermodel.User, error) {
 	cfg := usermodel.Config{
 		Username:       cmd.Username,
