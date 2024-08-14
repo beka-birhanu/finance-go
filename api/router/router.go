@@ -4,7 +4,6 @@
 // It configures and initializes routes with varying access requirements:
 // - Public routes: Accessible without authentication.
 // - Protected routes: Require authentication.
-// - Privileged routes: Require both authentication and admin privileges.
 package router
 
 import (
@@ -48,7 +47,6 @@ func NewRouter(config Config) *Router {
 // Routes are grouped and managed under the base URL, with the following access levels:
 // - Public routes: No authentication required.
 // - Protected routes: Authentication required.
-// - Privileged routes: Authentication and admin privileges required.
 func (r *Router) Run() error {
 	router := mux.NewRouter()
 
