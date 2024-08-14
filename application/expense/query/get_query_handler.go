@@ -1,3 +1,4 @@
+// Package expensqry provides functionality for handling queries related to expenses.
 package expensqry
 
 import (
