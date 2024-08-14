@@ -1,3 +1,4 @@
+// Package expenserepo provides the implementation of the IExpenseRepository interface for managing expenses in a PostgreSQL database.
 package expenserepo
 
 import (
@@ -12,6 +13,7 @@ import (
 	"github.com/lib/pq"
 )
 
+// Repository implements the IExpenseRepository interface for interacting with the expenses table in the database.
 type Repository struct {
 	db *sql.DB
 }
@@ -19,11 +21,12 @@ type Repository struct {
 var _ irepository.IExpenseRepository = &Repository{}
 
 const listBaseQuery = `
-		SELECT id, description, amount, date, user_id, created_at, updated_at
-		FROM expenses
-		WHERE user_id = $1
-	`
+	SELECT id, description, amount, date, user_id, created_at, updated_at
+	FROM expenses
+	WHERE user_id = $1
+`
 
+// New creates a new instance of Repository with the given database connection.
 func New(db *sql.DB) *Repository {
 	return &Repository{
 		db: db,
@@ -31,16 +34,15 @@ func New(db *sql.DB) *Repository {
 }
 
 // Save inserts or updates an expense in the database.
-// If the expense already exists, it updates the existing record.
 func (e *Repository) Save(expense *expensemodel.Expense) error {
 	_, err := e.db.Exec(`
 		INSERT INTO expenses (id, description, amount, date, user_id, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (id, user_id) DO UPDATE
 		SET description = EXCLUDED.description,
-				amount = EXCLUDED.amount,
-				date = EXCLUDED.date,
-				updated_at = EXCLUDED.updated_at`,
+			amount = EXCLUDED.amount,
+			date = EXCLUDED.date,
+			updated_at = EXCLUDED.updated_at`,
 		expense.ID(), expense.Description(), expense.Amount(), expense.Date(), expense.UserID(), expense.CreatedAt(), expense.UpdatedAt())
 
 	if err != nil {
@@ -71,18 +73,6 @@ func (e *Repository) ById(id uuid.UUID, userId uuid.UUID) (*expensemodel.Expense
 }
 
 // ListByTime retrieves paginated expenses for a user based on creation time.
-//
-// Params:
-// - params: A struct containing:
-//   - UserID: UUID of the user whose expenses are being queried.
-//   - Limit: Maximum number of expenses to retrieve.
-//   - LastSeenID: UUID of the last seen expense to start pagination from.
-//   - LastSeenTime: Time of the last seen expense to start pagination from.
-//   - Ascending: Boolean to determine the order of sorting (true for ascending, false for descending).
-//
-// Returns:
-// - A slice of Expense pointers.
-// - An error, if any occurs during the query execution or scanning.
 func (e *Repository) ListByTime(params irepository.ListByTimeParams) ([]*expensemodel.Expense, error) {
 	queryParams := []interface{}{params.UserID}
 	additionalWhere := BuildExpenseListWhereClause(params.Ascending, *params.LastSeenID, params.LastSeenTime, "created_at", &queryParams)
@@ -110,17 +100,7 @@ func (e *Repository) ListByTime(params irepository.ListByTimeParams) ([]*expense
 	return expenses, nil
 }
 
-// Params:
-// - params: A struct containing:
-//   - UserID: UUID of the user whose expenses are being queried.
-//   - Limit: Maximum number of expenses to retrieve.
-//   - LastSeenID: UUID of the last seen expense to start pagination from.
-//   - LastSeenTime: Time of the last seen expense to start pagination from.
-//   - Ascending: Boolean to determine the order of sorting (true for ascending, false for descending).
-//
-// Returns:
-// - A slice of Expense pointers.
-// - An error, if any occurs during the query execution or scanning.
+// ListByAmount retrieves paginated expenses for a user based on amount.
 func (e *Repository) ListByAmount(params irepository.ListByAmountParams) ([]*expensemodel.Expense, error) {
 	queryParams := []interface{}{params.UserID}
 	additionalWhere := BuildExpenseListWhereClause(params.Ascending, *params.LastSeenID, params.LastSeenAmt, "amount", &queryParams)
