@@ -1,3 +1,5 @@
+// Package user provides HTTP handlers for user-related actions such as registration and login.
+// It handles public and protected routes related to user authentication and manages user data.
 package user
 
 import (
@@ -17,7 +19,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// Handler manages user-related HTTP requests.
+// Handler manages HTTP requests related to user actions such as registration and login.
 type Handler struct {
 	baseapi.BaseHandler
 	repository      irepository.IUserRepository
@@ -41,16 +43,21 @@ func NewHandler(config Config) *Handler {
 	}
 }
 
-// RegisterPublicRoutes registers the public routes for user-related actions.
+// RegisterPublicRoutes registers public routes for user registration and login.
+// These routes are accessible without authentication.
 func (h *Handler) RegisterPublic(router *mux.Router) {
 	router.HandleFunc("/users/register", h.handleRegistration).Methods(http.MethodPost)
 	router.HandleFunc("/users/login", h.handleLogin).Methods(http.MethodPost)
 }
 
-// RegisterProtectedRoutes registers the protected routes for user-related actions.
+// RegisterProtectedRoutes registers routes that require authentication.
+// This method is a placeholder and currently does not register any routes.
 func (h *Handler) RegisterProtected(router *mux.Router) {}
 
 // handleRegistration processes user registration requests.
+// It validates the registration request, creates a registration command,
+// and uses the registerHandler to handle the registration logic. On success,
+// it sends a response with the authentication result and sets a cookie with the access token.
 func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 	var registerRequest dto.RegisterRequest
 	if err := h.ValidatedBody(r, &registerRequest); err != nil {
@@ -93,6 +100,9 @@ func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleLogin processes user login requests.
+// It validates the login request, creates a login query, and uses the loginHandler
+// to handle the login logic. On success, it sends a response with the authentication result
+// and sets a cookie with the access token.
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var loginRequest dto.LoginUserRequest
 	if err := h.ValidatedBody(r, &loginRequest); err != nil {
