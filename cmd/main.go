@@ -6,7 +6,10 @@ import (
 	"time"
 
 	"github.com/beka-birhanu/finance-go/api"
+	"github.com/beka-birhanu/finance-go/api/expense"
 	"github.com/beka-birhanu/finance-go/api/middleware"
+	"github.com/beka-birhanu/finance-go/api/router"
+	"github.com/beka-birhanu/finance-go/api/user"
 	registercmd "github.com/beka-birhanu/finance-go/application/authentication/command"
 	loginqry "github.com/beka-birhanu/finance-go/application/authentication/query"
 	expensecmd "github.com/beka-birhanu/finance-go/application/expense/command"
@@ -55,18 +58,25 @@ func main() {
 	getExpensesHandler := initializeGetExpensesHandler(expenseRepository)
 	patchExpenseHandler := initializePatchExpenseHandler(expenseRepository)
 
+	userHandler := user.NewHandler(user.Config{
+		UserRepository:  userRepository,
+		RegisterHandler: userRegisterCommandHandler,
+		LoginHandler:    userLoginQueryHandler,
+	})
+
+	// Expense routes
+	expenseHandler := expense.NewHandler(expense.Config{
+		AddHandler:         addExpenseHandler,
+		GetHandler:         getExpenseHandler,
+		PatchHandler:       patchExpenseHandler,
+		GetMultipleHandler: getExpensesHandler,
+	})
+
 	// Create and run the server
-	server := api.NewAPIServer(api.Config{
-		Addr:                     fmt.Sprintf(":%s", config.Envs.ServerPort),
-		UserRepository:           userRepository,
-		UserRegisterHandler:      userRegisterCommandHandler,
-		UserLoginQueryHandler:    userLoginQueryHandler,
-		AuthorizationMiddleware:  authorizationMiddleware,
-		AddExpenseCommandHandler: addExpenseHandler,
-		TimeService:              timeService,
-		GetExpenseHandler:        getExpenseHandler,
-		GetExpensesHandler:       getExpensesHandler,
-		PatchExpenseHandler:      patchExpenseHandler,
+	server := router.NewRouter(router.Config{
+		Addr:                    fmt.Sprintf(":%s", config.Envs.ServerPort),
+		Controllers:             []api.IController{userHandler, expenseHandler},
+		AuthorizationMiddleware: authorizationMiddleware,
 	})
 
 	if err := server.Run(); err != nil {

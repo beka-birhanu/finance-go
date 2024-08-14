@@ -42,13 +42,13 @@ func NewHandler(config Config) *Handler {
 }
 
 // RegisterPublicRoutes registers the public routes for user-related actions.
-func (h *Handler) RegisterPublicRoutes(router *mux.Router) {
+func (h *Handler) RegisterPublic(router *mux.Router) {
 	router.HandleFunc("/users/register", h.handleRegistration).Methods(http.MethodPost)
 	router.HandleFunc("/users/login", h.handleLogin).Methods(http.MethodPost)
 }
 
 // RegisterProtectedRoutes registers the protected routes for user-related actions.
-func (h *Handler) RegisterProtectedRoutes(router *mux.Router) {}
+func (h *Handler) RegisterProtected(router *mux.Router) {}
 
 // handleRegistration processes user registration requests.
 func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {

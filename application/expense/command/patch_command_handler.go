@@ -31,13 +31,11 @@ func (h *PatchHandler) Handle(cmd *PatchCommand) (*expensemodel.Expense, error) 
 			return nil, err
 		}
 	}
-
 	if cmd.Description != nil {
 		if err := expense.UpdateDescription(*cmd.Description); err != nil {
 			return nil, err
 		}
 	}
-
 	if cmd.Date != nil {
 		expense.UpdateDate(*cmd.Date)
 	}

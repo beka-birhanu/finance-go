@@ -104,7 +104,7 @@ func TestHandler_UserRegistrationAndLogin(t *testing.T) {
 	h := NewHandler(config)
 
 	router := mux.NewRouter()
-	h.RegisterPublicRoutes(router)
+	h.RegisterPublic(router)
 
 	tests := []struct {
 		name           string

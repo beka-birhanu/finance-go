@@ -1,6 +1,6 @@
 package registercmd
 
-// UserRegisterCommand hold feilds required for registering users.
+// Command hold feilds required for registering users.
 type Command struct {
 	// Username is username of the user to be registerd
 	Username string

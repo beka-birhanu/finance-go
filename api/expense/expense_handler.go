@@ -45,9 +45,9 @@ func NewHandler(config Config) *ExpensesHandler {
 	}
 }
 
-func (h *ExpensesHandler) RegisterPublicRoutes(router *mux.Router) {}
+func (h *ExpensesHandler) RegisterPublic(router *mux.Router) {}
 
-func (h *ExpensesHandler) RegisterProtectedRoutes(router *mux.Router) {
+func (h *ExpensesHandler) RegisterProtected(router *mux.Router) {
 	router.HandleFunc(
 		"/users/{userId}/expenses",
 		h.handleAdd,
@@ -244,30 +244,25 @@ func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request)
 	h.Respond(w, http.StatusOK, response)
 }
 
-// extractAndValidateParams extracts and validates the query parameters from the request.
-// It parses the 'cursor', 'limit', and 'sortBy' query parameters, ensuring they meet the expected format and values.
+// extractAndValidateParams extracts and validates the query parameters from the request
 func (h *ExpensesHandler) extractAndValidateParams(r *http.Request) (string, int, string, string, error) {
-	// Extract the 'cursor' parameter for pagination.
 	cursor := h.StringQueryParam(r, "cursor")
 
-	// Extract the 'limit' parameter, which should be a positive integer.
 	limit, err := h.IntQueryParam(r, "limit")
 	if err != nil {
 		return "", 0, "", "", err
 	}
 
-	// Extract and split the 'sortBy' parameter to determine field and order for sorting.
 	sortBy := h.StringQueryParam(r, "sortBy")
-	sortField, sortOrder := "createdAt", "desc" // Default values
-
+	sortField := "createdAt"
+	sortOrder := "desc"
 	if sortBy != "" {
 		parts := strings.Split(sortBy, ".")
 		if len(parts) != 2 {
 			return "", 0, "", "", errapi.NewBadRequest("invalid sortBy format")
 		}
-		sortField, sortOrder = parts[0], parts[1]
-
-		// Validate the sort field and order.
+		sortField = parts[0]
+		sortOrder = parts[1]
 		if sortField != "createdAt" && sortField != "amount" {
 			return "", 0, "", "", errapi.NewBadRequest(fmt.Sprintf("invalid sortBy field: %s", sortField))
 		}
