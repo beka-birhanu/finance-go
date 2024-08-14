@@ -1,3 +1,7 @@
+// Package expense provides HTTP handlers for managing user expenses,
+// including adding, retrieving, and updating expense records.
+// It includes implementations for registering handlers, validating requests,
+// and constructing responses.
 package expense
 
 import (
@@ -21,6 +25,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// ExpensesHandler handles HTTP requests for managing expenses. It includes methods for
+// adding a new expense, retrieving expenses by user ID or expense ID, and updating existing expenses.
 type ExpensesHandler struct {
 	baseapi.BaseHandler
 	addHandler         icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
@@ -29,13 +35,16 @@ type ExpensesHandler struct {
 	patchHandler       iquery.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
 }
 
+// Config contains the configuration for setting up the ExpensesHandler,
+// including handlers for the commands and queries needed to manage expenses.
 type Config struct {
 	AddHandler         icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
 	GetHandler         iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense]
-	PatchHandler       iquery.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
 	GetMultipleHandler iquery.IHandler[*expensqry.GetMultipleQuery, []*expensemodel.Expense]
+	PatchHandler       icmd.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
 }
 
+// NewHandler initializes and returns a new ExpensesHandler with the provided configuration.
 func NewHandler(config Config) *ExpensesHandler {
 	return &ExpensesHandler{
 		addHandler:         config.AddHandler,
@@ -45,8 +54,12 @@ func NewHandler(config Config) *ExpensesHandler {
 	}
 }
 
+// RegisterPublic registers public routes for the ExpensesHandler.
+// Currently, no public routes are defined.
 func (h *ExpensesHandler) RegisterPublic(router *mux.Router) {}
 
+// RegisterProtected registers protected routes for the ExpensesHandler,
+// including routes for adding, retrieving, and updating expenses.
 func (h *ExpensesHandler) RegisterProtected(router *mux.Router) {
 	router.HandleFunc(
 		"/users/{userId}/expenses",
@@ -69,6 +82,9 @@ func (h *ExpensesHandler) RegisterProtected(router *mux.Router) {
 	).Methods(http.MethodPatch)
 }
 
+// handleAdd handles the request to add a new expense for a user.
+// It validates the request body, constructs the appropriate command,
+// and returns the created expense along with its resource location.
 func (h *ExpensesHandler) handleAdd(w http.ResponseWriter, r *http.Request) {
 	var addExpenseRequest dto.AddExpenseRequest
 
@@ -113,6 +129,8 @@ func (h *ExpensesHandler) handleAdd(w http.ResponseWriter, r *http.Request) {
 	h.RespondWithLocation(w, http.StatusCreated, response, resourceLocation)
 }
 
+// handleById handles the request to retrieve a specific expense by its ID.
+// It validates the provided user ID and expense ID and returns the corresponding expense data.
 func (h *ExpensesHandler) handleById(w http.ResponseWriter, r *http.Request) {
 	userId, err := h.UUIDParam(r, "userId")
 	if err != nil {
@@ -142,6 +160,8 @@ func (h *ExpensesHandler) handleById(w http.ResponseWriter, r *http.Request) {
 	h.Respond(w, http.StatusOK, response)
 }
 
+// handlePatch handles the request to update an existing expense.
+// It validates the request, constructs a PatchCommand, and updates the expense data.
 func (h *ExpensesHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
 	var patchRequest dto.PatchRequest
 	userId, err := h.UUIDParam(r, "userId")
@@ -184,7 +204,7 @@ func (h *ExpensesHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
 		case errdmn.Validation:
 			h.Problem(w, errapi.NewBadRequest(err.Error()))
 		default:
-			h.Problem(w, errapi.NewServerError("unknown error occured while patching expense"))
+			h.Problem(w, errapi.NewServerError("unknown error occurred while patching expense"))
 		}
 		return
 	}
@@ -192,7 +212,8 @@ func (h *ExpensesHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
 	h.Respond(w, http.StatusOK, response)
 }
 
-// handleByUserId handles the request to get expenses by user ID
+// handleByUserId handles the request to retrieve multiple expenses for a user.
+// It extracts and validates the query parameters and returns a list of expenses along with pagination data.
 func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request) {
 	userId, err := h.UUIDParam(r, "userId")
 	if err != nil {
@@ -244,7 +265,8 @@ func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request)
 	h.Respond(w, http.StatusOK, response)
 }
 
-// extractAndValidateParams extracts and validates the query parameters from the request
+// extractAndValidateParams extracts and validates the query parameters from the request,
+// including cursor, limit, sort field, and sort order. It returns these parameters or an error.
 func (h *ExpensesHandler) extractAndValidateParams(r *http.Request) (string, int, string, string, error) {
 	cursor := h.StringQueryParam(r, "cursor")
 
@@ -274,7 +296,8 @@ func (h *ExpensesHandler) extractAndValidateParams(r *http.Request) (string, int
 	return cursor, limit, sortField, sortOrder, nil
 }
 
-// constructQueryParams constructs the appropriate query parameters struct
+// constructQueryParams constructs the query parameters for retrieving multiple expenses,
+// based on the user ID, cursor, limit, sort field, and sort order.
 func (h *ExpensesHandler) constructQueryParams(userId uuid.UUID, cursor string, limit int, sortField string, sortOrder string) (*expensqry.GetMultipleQuery, error) {
 	var lastSeenID uuid.UUID
 	var lastSeenTime time.Time
@@ -325,7 +348,7 @@ func (h *ExpensesHandler) constructQueryParams(userId uuid.UUID, cursor string, 
 	}, nil
 }
 
-// respondWithExpenses constructs and sends the response with the expenses and the next cursor
+// buildCursor constructs a cursor string for pagination, based on the last expense and the sort field.
 func (h *ExpensesHandler) buildCursor(lastExpense *expensemodel.Expense, field string) string {
 	nextCursor := ""
 	if lastExpense != nil {
