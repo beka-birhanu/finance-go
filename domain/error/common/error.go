@@ -1,3 +1,6 @@
+// Package errdmn provides custom error types for the domain layer.
+// These error types help in distinguishing between different error scenarios
+// such as validation errors, conflicts, unexpected server errors, and not found errors.
 package errdmn
 
 import (
@@ -6,22 +9,24 @@ import (
 	ierr "github.com/beka-birhanu/finance-go/domain/common/error"
 )
 
+// Constants representing different error types.
 const (
-	Validation = "Validation"  // Validation error
-	Conflict   = "Conflict"    // Conflict error
-	Unexpected = "ServerError" // Unexpected server error
-	NotFound   = "NotFound"    // Resource not found error
+	Validation = "Validation"  // Validation error type
+	Conflict   = "Conflict"    // Conflict error type
+	Unexpected = "ServerError" // Unexpected server error type
+	NotFound   = "NotFound"    // Resource not found error type
 )
 
-// Error represents a custom domain error with a type and message.
+// Error represents a custom domain error with a specific type and message.
 type Error struct {
-	kind    string
-	Message string
+	kind    string // The type of the error (e.g., Validation, Conflict)
+	Message string // The detailed error message
 }
 
-var _ ierr.IErr = Error{} // Making sure Error implements Error
+// Ensure that Error implements the ierr.IErr interface.
+var _ ierr.IErr = Error{}
 
-// New creates a new Error with the given type and message.
+// new creates a new Error instance with the given type and message.
 func new(errType string, message string) *Error {
 	return &Error{kind: errType, Message: message}
 }
@@ -31,7 +36,7 @@ func (e Error) Error() string {
 	return fmt.Sprintf("%s: %s", e.kind, e.Message)
 }
 
-// Type retuns the string of the Error.
+// Type returns the type of the Error.
 func (e Error) Type() string {
 	return e.kind
 }
@@ -55,4 +60,3 @@ func NewUnexpected(message string) *Error {
 func NewNotFound(message string) *Error {
 	return new(NotFound, message)
 }
-
