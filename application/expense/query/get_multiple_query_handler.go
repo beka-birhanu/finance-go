@@ -1,3 +1,4 @@
+// Package expensqry provides functionality for handling queries related to retrieving expenses.
 package expensqry
 
 import (
@@ -12,21 +13,21 @@ const (
 	sortByAmount = "amount" // Field used for sorting by amount
 )
 
-// GetMultipleHandler handles requests for retrieving multiple expenses.
+// GetMultipleHandler handles queries for retrieving multiple expenses.
 type GetMultipleHandler struct {
-	expenseRepository irepository.IExpenseRepository // Repository for accessing expenses
+	expenseRepository irepository.IExpenseRepository // Repository for accessing expense data
 }
 
-// NewGetMultipleHandler creates a new instance of GetMultipleHandler.
+// NewGetMultipleHandler creates a new instance of GetMultipleHandler with the given repository.
 func NewGetMultipleHandler(expenseRepository irepository.IExpenseRepository) *GetMultipleHandler {
 	return &GetMultipleHandler{expenseRepository: expenseRepository}
 }
 
-// Handle processes the GetMultipleQuery and retrieves the expenses based on the query parameters.
+// Handle processes a GetMultipleQuery to retrieve multiple expenses based on the provided query parameters.
 //
 // Returns:
 // - []*expensemodel.Expense: A slice of pointers to Expense models that match the query.
-// - error: An error if the retrieval fails.
+// - error: An error if the retrieval fails, such as issues with accessing the repository.
 func (h *GetMultipleHandler) Handle(query *GetMultipleQuery) ([]*expensemodel.Expense, error) {
 	// Set default limit if not provided
 	limit := defaultLimit
@@ -60,4 +61,3 @@ func (h *GetMultipleHandler) Handle(query *GetMultipleQuery) ([]*expensemodel.Ex
 		Ascending:    query.Ascending,
 	})
 }
-
