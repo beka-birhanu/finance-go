@@ -1,3 +1,4 @@
+// Package irepository provides interfaces for accessing and managing expense data.
 package irepository
 
 import (
@@ -7,22 +8,22 @@ import (
 	"github.com/google/uuid"
 )
 
-// ListByTimeParams holds parameters for ListByTime function
+// ListByTimeParams defines parameters for retrieving expenses by time.
 type ListByTimeParams struct {
-	UserID       uuid.UUID
-	Limit        int
-	LastSeenID   *uuid.UUID
-	LastSeenTime *time.Time
-	Ascending    bool
+	UserID       uuid.UUID  // ID of the user
+	Limit        int        // Max number of expenses to return
+	LastSeenID   *uuid.UUID // Pagination: ID of the last seen expense
+	LastSeenTime *time.Time // Pagination: Time of the last seen expense
+	Ascending    bool       // Sort order: true for ascending
 }
 
-// ListByAmountParams holds parameters for ListByAmount function
+// ListByAmountParams defines parameters for retrieving expenses by amount.
 type ListByAmountParams struct {
-	UserID      uuid.UUID
-	Limit       int
-	LastSeenID  *uuid.UUID
-	LastSeenAmt float64
-	Ascending   bool
+	UserID      uuid.UUID  // ID of the user
+	Limit       int        // Max number of expenses to return
+	LastSeenID  *uuid.UUID // Pagination: ID of the last seen expense
+	LastSeenAmt float64    // Pagination: Amount of the last seen expense
+	Ascending   bool       // Sort order: true for ascending
 }
 
 // IExpenseRepository defines methods for accessing and managing expense data.
