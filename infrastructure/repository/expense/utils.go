@@ -1,3 +1,4 @@
+// Package expenserepo provides utilities for working with expense models and building SQL queries.
 package expenserepo
 
 import (
@@ -9,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// ScanExpense scans a database row into an Expense model.
+// ScanExpense converts a database row into an Expense model.
 func ScanExpense(scanner interface {
 	Scan(dest ...interface{}) error
 }) (*expensemodel.Expense, error) {
@@ -43,7 +44,7 @@ func ScanExpense(scanner interface {
 	return expense, nil
 }
 
-// BuildExpenseListWhereClause builds the WHERE clause for expense listing with pagination.
+// BuildExpenseListWhereClause creates the WHERE clause for expense pagination queries.
 func BuildExpenseListWhereClause(ascending bool, id uuid.UUID, value interface{}, field string, params *[]interface{}) string {
 	if id == uuid.Nil {
 		return ""
@@ -63,7 +64,7 @@ func BuildExpenseListWhereClause(ascending bool, id uuid.UUID, value interface{}
 	return clause
 }
 
-// BuildExpenseListOrderByClause builds the ORDER BY clause for expense listing with pagination.
+// BuildExpenseListOrderByClause creates the ORDER BY clause for expense pagination queries.
 func BuildExpenseListOrderByClause(ascending bool, field string) string {
 	order := "DESC"
 	if ascending {
@@ -73,7 +74,7 @@ func BuildExpenseListOrderByClause(ascending bool, field string) string {
 	return fmt.Sprintf("ORDER BY %s %s, id DESC", field, order)
 }
 
-// BuildLimitClause builds the LIMIT clause for expense listing with pagination.
+// BuildLimitClause creates the LIMIT clause for expense pagination queries.
 func BuildLimitClause(limit int, params *[]interface{}) string {
 	clause := fmt.Sprintf("LIMIT $%v", len(*params)+1)
 	*params = append(*params, limit)
