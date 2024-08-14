@@ -1,3 +1,4 @@
+// Package jwt provides JWT generation and validation services.
 package jwt
 
 import (
@@ -29,12 +30,6 @@ type Config struct {
 }
 
 // New creates a new JWT Service with the given configuration.
-//
-// Parameters:
-//   - config: The configuration containing the secret key, issuer, expiration time, and time service.
-//
-// Returns:
-//   - *Service: A new instance of the JWT Service.
 func New(config Config) *Service {
 	return &Service{
 		secretKey:   config.SecretKey,
@@ -45,15 +40,6 @@ func New(config Config) *Service {
 }
 
 // Generate creates a new JWT token for the given user.
-//
-// The token contains the user ID in the claims.
-//
-// Parameters:
-//   - user: The user for whom the token is being generated.
-//
-// Returns:
-//   - string: The signed JWT token.
-//   - error: An error if the token could not be generated.
 func (s *Service) Generate(user *usermodel.User) (string, error) {
 	expirationTime := s.timeService.NowUTC().Add(s.expTime).Unix()
 	claims := jwt.MapClaims{
@@ -67,15 +53,6 @@ func (s *Service) Generate(user *usermodel.User) (string, error) {
 }
 
 // Decode parses and validates a JWT token, returning its claims if valid.
-//
-// If the token is expired or signed with a different method or secret key, an error is returned.
-//
-// Parameters:
-//   - tokenString: The JWT token as a string.
-//
-// Returns:
-//   - jwt.MapClaims: The claims extracted from the token.
-//   - error: An error if the token is invalid or cannot be parsed.
 func (s *Service) Decode(tokenString string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, s.getSigningKey)
 	if err != nil {
@@ -96,4 +73,3 @@ func (s *Service) getSigningKey(token *jwt.Token) (interface{}, error) {
 	}
 	return []byte(s.secretKey), nil
 }
-
