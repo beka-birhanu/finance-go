@@ -1,3 +1,4 @@
+// Package expensecmd provides functionality for handling commands related to expenses.
 package expensecmd
 
 import (
@@ -10,22 +11,22 @@ import (
 	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
 )
 
-// AddHandler handles commands to add new expenses.
+// AddHandler handles commands for adding new expenses.
 type AddHandler struct {
-	userRepo irepository.IUserRepository
-	timeSvc  itimeservice.IService
+	userRepo irepository.IUserRepository // Repository for user data
+	timeSvc  itimeservice.IService       // Service for time-related operations
 }
 
 // Ensure AddHandler implements icmd.IHandler[*AddCommand, *expensemodel.Expense].
 var _ icmd.IHandler[*AddCommand, *expensemodel.Expense] = &AddHandler{}
 
-// Config holds the configuration for creating a new AddHandler.
+// Config holds dependencies required for creating an AddHandler.
 type Config struct {
-	UserRepository irepository.IUserRepository
-	TimeService    itimeservice.IService
+	UserRepository irepository.IUserRepository // Repository for user data
+	TimeService    itimeservice.IService       // Service for time-related operations
 }
 
-// NewAddHandler creates a new instance of AddHandler with the provided configuration.
+// NewAddHandler creates a new AddHandler with the specified configuration.
 func NewAddHandler(config Config) *AddHandler {
 	return &AddHandler{
 		userRepo: config.UserRepository,
@@ -33,7 +34,7 @@ func NewAddHandler(config Config) *AddHandler {
 	}
 }
 
-// Handle processes the AddCommand to add a new expense and returns the created expense.
+// Handle processes an AddCommand to create a new expense and returns the expense.
 func (h *AddHandler) Handle(command *AddCommand) (*expensemodel.Expense, error) {
 	newExpense, err := createExpense(command, h.timeSvc.NowUTC())
 	if err != nil {
@@ -45,12 +46,10 @@ func (h *AddHandler) Handle(command *AddCommand) (*expensemodel.Expense, error) 
 		return nil, err
 	}
 
-	err = user.AddExpense(newExpense, h.timeSvc.NowUTC())
-	if err != nil {
+	if err := user.AddExpense(newExpense, h.timeSvc.NowUTC()); err != nil {
 		return nil, err
 	}
 
-	// TODO: make this operation transactional
 	if err := h.userRepo.Save(user); err != nil {
 		return nil, fmt.Errorf("unable to update user: %w", err)
 	}
@@ -58,7 +57,7 @@ func (h *AddHandler) Handle(command *AddCommand) (*expensemodel.Expense, error) 
 	return newExpense, nil
 }
 
-// createExpense constructs a new Expense instance based on the provided command and current time.
+// createExpense constructs an Expense instance using the command and current time.
 func createExpense(command *AddCommand, currentTime time.Time) (*expensemodel.Expense, error) {
 	config := expensemodel.Config{
 		Description:  command.Description,
@@ -69,4 +68,3 @@ func createExpense(command *AddCommand, currentTime time.Time) (*expensemodel.Ex
 	}
 	return expensemodel.New(config)
 }
-
