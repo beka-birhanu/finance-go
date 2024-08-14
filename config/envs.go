@@ -1,3 +1,4 @@
+// Package config provides functionality to load and manage application configuration from environment variables.
 package config
 
 import (
@@ -8,25 +9,29 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Config holds the application's configuration values.
 type Config struct {
-	ServerHost             string
-	ServerPort             string
-	DBHost                 string
-	DBPort                 string
-	DBUser                 string
-	DBPassword             string
-	DBName                 string
-	JWTSecret              string
-	JWTExpirationInSeconds int64
-	TestDBHost             string
-	TestDBPort             string
-	TestDBUser             string
-	TestDBPassword         string
-	TestDBName             string
+	ServerHost             string // Hostname or IP address for the server
+	ServerPort             string // Port number for the server
+	DBHost                 string // Hostname or IP address for the database
+	DBPort                 string // Port number for the database
+	DBUser                 string // Username for the database
+	DBPassword             string // Password for the database
+	DBName                 string // Name of the database
+	JWTSecret              string // Secret key for JWT signing
+	JWTExpirationInSeconds int64  // JWT expiration time in seconds
+	TestDBHost             string // Hostname or IP address for the test database
+	TestDBPort             string // Port number for the test database
+	TestDBUser             string // Username for the test database
+	TestDBPassword         string // Password for the test database
+	TestDBName             string // Name of the test database
 }
 
+// Envs holds the application's configuration loaded from environment variables.
 var Envs = initConfig()
 
+// initConfig initializes and returns the application configuration.
+// It loads environment variables from a .env file and sets default values if needed.
 func initConfig() Config {
 	if err := godotenv.Load(); err != nil {
 		log.Panicln(err)
@@ -50,25 +55,22 @@ func initConfig() Config {
 	}
 }
 
-// Gets the env by key or fallbacks
+// getEnv retrieves the value of an environment variable or returns a fallback value if the variable is not set.
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return value
 	}
-
 	return fallback
 }
 
+// getEnvAsInt retrieves the value of an environment variable as an integer or returns a fallback value if the variable is not set or cannot be parsed.
 func getEnvAsInt(key string, fallback int64) int64 {
 	if value, ok := os.LookupEnv(key); ok {
 		i, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			return fallback
 		}
-
 		return i
 	}
-
 	return fallback
 }
-
