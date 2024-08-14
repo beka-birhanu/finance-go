@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	instance *sql.DB
-	once     sync.Once
+	instance *sql.DB   // Singleton instance of the database connection
+	once     sync.Once // Ensures that the database connection is created only once
 )
 
 // Config holds the database connection configuration.
@@ -23,11 +23,20 @@ type Config struct {
 	DbPort     string // Port on which the database server is listening
 }
 
-// Connect initializes and returns a singleton database connection
+// Connect initializes and returns a singleton database connection.
 func Connect(config Config) *sql.DB {
 	once.Do(func() {
 		var err error
-		connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", config.DbUser, config.DbPassword, config.DbHost, config.DbPort, config.DbName)
+		// Format the connection string using the provided configuration.
+		connStr := fmt.Sprintf(
+			"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+			config.DbUser,
+			config.DbPassword,
+			config.DbHost,
+			config.DbPort,
+			config.DbName,
+		)
+
 		instance, err = sql.Open("postgres", connStr)
 		if err != nil {
 			log.Fatalf("Could not connect to the database: %v", err)
