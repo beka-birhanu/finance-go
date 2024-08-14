@@ -1,3 +1,5 @@
+// Package errapi provides a structured way to handle and represent API errors,
+// including common HTTP status codes and corresponding error messages.
 package errapi
 
 // HTTP status codes used in the Error type.
@@ -10,7 +12,7 @@ const (
 	NotFound       = 404 // Not Found
 )
 
-// Error represents an API error with a status code and message.
+// Error represents an API error with an associated HTTP status code and message.
 type Error struct {
 	statusCode int    // HTTP status code for the error
 	message    string // Detailed error message
@@ -52,12 +54,12 @@ func NewForbidden(message string) Error {
 	return Error{statusCode: Forbidden, message: message}
 }
 
-// Error returns the error message.
+// Error returns the error message as a string.
 func (e Error) Error() string {
 	return e.message
 }
 
-// StatusCode returns the HTTP status code for the error.
+// StatusCode returns the HTTP status code associated with the error.
 func (e Error) StatusCode() int {
 	return e.statusCode
 }
