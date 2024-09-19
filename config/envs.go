@@ -13,6 +13,8 @@ import (
 type Config struct {
 	ServerHost             string // Hostname or IP address for the server
 	ServerPort             string // Port number for the server
+	APIRate                int    // Rate/Sec for public routes
+	RateBurst              int    // Rate/Sec for Protected routes
 	DBHost                 string // Hostname or IP address for the database
 	DBPort                 string // Port number for the database
 	DBUser                 string // Username for the database
@@ -40,6 +42,8 @@ func initConfig() Config {
 	return Config{
 		ServerHost:             getEnv("PUBLIC_HOST", "http://localhost"),
 		ServerPort:             getEnv("PORT", "8080"),
+		APIRate:                int(getEnvAsInt("RATE_PER_SEC", 60)),
+		RateBurst:              int(getEnvAsInt("RATE_BURST", 2)),
 		DBHost:                 getEnv("DB_HOST", "romareo"),
 		DBPort:                 getEnv("DB_PORT", "5432"),
 		DBUser:                 getEnv("DB_USER", "romareo"),
