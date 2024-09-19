@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 
 	ratelimiter "github.com/beka-birhanu/finance-go/api/rate_limiter"
@@ -13,7 +12,6 @@ func RateLimitMiddleware(limiter ratelimiter.IRateLimiter) func(http.Handler) ht
 			ip := r.RemoteAddr
 
 			ratelimiter := limiter.GetLimiter(ip)
-			log.Println("serving", ip, ratelimiter.Allow(), ratelimiter.Limit())
 
 			if !ratelimiter.Allow() {
 				http.Error(w, "Too many requests", http.StatusTooManyRequests)

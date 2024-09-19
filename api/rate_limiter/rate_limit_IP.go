@@ -1,7 +1,6 @@
 package ratelimiter
 
 import (
-	"log"
 	"sync"
 	"time"
 
@@ -60,7 +59,6 @@ func (i *IPRateLimiter) GetLimiter(ip string) *rate.Limiter {
 	i.mu.RUnlock()
 
 	if !exists {
-		log.Printf("doesnot exist for ip %s", ip)
 		return i.AddLimiter(ip)
 	}
 
@@ -78,7 +76,6 @@ func (i *IPRateLimiter) cleanupExpiredEntries() {
 		time.Sleep(expTime)
 		i.mu.Lock()
 
-		log.Println("cleaning")
 		for ip, entry := range i.limiters {
 			if time.Since(entry.lastAccess) > expTime {
 				delete(i.limiters, ip)
