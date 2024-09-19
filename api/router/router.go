@@ -21,6 +21,7 @@ type Router struct {
 	baseURL                 string
 	controllers             []api.IController
 	authorizationMiddleware func(http.Handler) http.Handler
+	rateLimitMiddleware     func(http.Handler) http.Handler
 }
 
 // Config holds configuration settings for creating a new Router instance.
@@ -29,6 +30,7 @@ type Config struct {
 	BaseURL                 string            // Base URL for API routes
 	Controllers             []api.IController // List of controllers
 	AuthorizationMiddleware func(http.Handler) http.Handler
+	RateLimitMiddleware     func(http.Handler) http.Handler
 }
 
 // NewRouter creates a new Router instance with the given configuration.
@@ -39,6 +41,7 @@ func NewRouter(config Config) *Router {
 		baseURL:                 config.BaseURL,
 		controllers:             config.Controllers,
 		authorizationMiddleware: config.AuthorizationMiddleware,
+		rateLimitMiddleware:     config.RateLimitMiddleware,
 	}
 }
 
@@ -49,6 +52,7 @@ func NewRouter(config Config) *Router {
 // - Protected routes: Authentication required.
 func (r *Router) Run() error {
 	router := mux.NewRouter()
+	router.Use((r.rateLimitMiddleware))
 
 	// Setting up routes under baseURL
 	api := router.PathPrefix("/api").Subrouter()

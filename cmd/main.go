@@ -8,6 +8,7 @@ import (
 	"github.com/beka-birhanu/finance-go/api"
 	"github.com/beka-birhanu/finance-go/api/expense"
 	"github.com/beka-birhanu/finance-go/api/middleware"
+	ratelimiter "github.com/beka-birhanu/finance-go/api/rate_limiter"
 	"github.com/beka-birhanu/finance-go/api/router"
 	"github.com/beka-birhanu/finance-go/api/user"
 	registercmd "github.com/beka-birhanu/finance-go/application/authentication/command"
@@ -21,10 +22,14 @@ import (
 	expenserepo "github.com/beka-birhanu/finance-go/infrastructure/repository/expense"
 	userrepo "github.com/beka-birhanu/finance-go/infrastructure/repository/user"
 	timeservice "github.com/beka-birhanu/finance-go/infrastructure/time_service"
+	"golang.org/x/time/rate"
 )
 
 // Global variables to hold database configuration
 var (
+	serverPort = config.Envs.ServerPort
+	rateLimit  = config.Envs.APIRate
+	rateBurst  = config.Envs.RateBurst
 	dbUser     = config.Envs.DBUser
 	dbPassword = config.Envs.DBPassword
 	dbName     = config.Envs.DBName
@@ -48,7 +53,11 @@ func main() {
 	expenseRepository := expenserepo.New(database)
 	jwtService := initializeJWTService(timeService)
 	hashService := hash.SingletonService()
+	ipRateLimiter := ratelimiter.NewIPRateLimiter(rate.Limit(rateLimit), rateBurst, timeService)
+
+	// Initialize middlewares
 	authorizationMiddleware := middleware.Authorization(jwtService)
+	rateLimitingMiddleware := middleware.RateLimitMiddleware(ipRateLimiter)
 
 	// Initialize command and query handlers
 	userRegisterCommandHandler := initializeUserRegisterHandler(userRepository, jwtService, hashService, timeService)
@@ -74,9 +83,10 @@ func main() {
 
 	// Create and run the server
 	server := router.NewRouter(router.Config{
-		Addr:                    fmt.Sprintf(":%s", config.Envs.ServerPort),
+		Addr:                    fmt.Sprintf(":%s", serverPort),
 		Controllers:             []api.IController{userHandler, expenseHandler},
 		AuthorizationMiddleware: authorizationMiddleware,
+		RateLimitMiddleware:     rateLimitingMiddleware,
 	})
 
 	if err := server.Run(); err != nil {
