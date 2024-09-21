@@ -63,7 +63,7 @@ func TestAuthorizationMiddleware(t *testing.T) {
 				DecodeTokenFunc: tt.mockDecodeTokenFunc,
 			}
 
-			mw := Authorization(mockJwtService)
+			mw := Authorization(mockJwtService, true)
 
 			// Create a handler to be wrapped by the middleware
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
