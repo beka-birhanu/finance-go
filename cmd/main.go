@@ -5,12 +5,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/beka-birhanu/finance-go/api"
-	"github.com/beka-birhanu/finance-go/api/expense"
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/beka-birhanu/finance-go/api/graph"
 	"github.com/beka-birhanu/finance-go/api/middleware"
 	ratelimiter "github.com/beka-birhanu/finance-go/api/rate_limiter"
+	api "github.com/beka-birhanu/finance-go/api/rest"
+	"github.com/beka-birhanu/finance-go/api/rest/expense"
+	"github.com/beka-birhanu/finance-go/api/rest/user"
 	"github.com/beka-birhanu/finance-go/api/router"
-	"github.com/beka-birhanu/finance-go/api/user"
 	registercmd "github.com/beka-birhanu/finance-go/application/authentication/command"
 	loginqry "github.com/beka-birhanu/finance-go/application/authentication/query"
 	expensecmd "github.com/beka-birhanu/finance-go/application/expense/command"
@@ -56,7 +58,8 @@ func main() {
 	ipRateLimiter := ratelimiter.NewIPRateLimiter(rate.Limit(rateLimit), rateBurst, timeService)
 
 	// Initialize middlewares
-	authorizationMiddleware := middleware.Authorization(jwtService)
+	authorizationMiddleware := middleware.Authorization(jwtService, true)
+	populateClaimsMiddleware := middleware.Authorization(jwtService, false)
 	rateLimitingMiddleware := middleware.RateLimitMiddleware(ipRateLimiter)
 
 	// Initialize command and query handlers
@@ -81,12 +84,20 @@ func main() {
 		GetMultipleHandler: getExpensesHandler,
 	})
 
+	resolver := graph.NewResolver(graph.ResolverConfig{
+		GetExpenseHandler: getExpenseHandler,
+	})
+
+	graphHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))
+
 	// Create and run the server
 	server := router.NewRouter(router.Config{
-		Addr:                    fmt.Sprintf(":%s", serverPort),
-		Controllers:             []api.IController{userHandler, expenseHandler},
-		AuthorizationMiddleware: authorizationMiddleware,
-		RateLimitMiddleware:     rateLimitingMiddleware,
+		Addr:                     fmt.Sprintf(":%s", serverPort),
+		RestfullControllers:      []api.IController{userHandler, expenseHandler},
+		GraphQlController:        graphHandler,
+		AuthorizationMiddleware:  authorizationMiddleware,
+		PopulateClaimsMiddleware: populateClaimsMiddleware,
+		RateLimitMiddleware:      rateLimitingMiddleware,
 	})
 
 	if err := server.Run(); err != nil {
