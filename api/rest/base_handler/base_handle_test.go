@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	errapi "github.com/beka-birhanu/finance-go/api/rest/error"
+	errapi "github.com/beka-birhanu/finance-go/api/error"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )

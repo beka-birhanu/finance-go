@@ -9,8 +9,8 @@ import (
 	"strconv"
 
 	"github.com/beka-birhanu/finance-go/api/middleware"
-	errapi "github.com/beka-birhanu/finance-go/api/rest/error"
 	"github.com/dgrijalva/jwt-go"
+	errapi "github.com/beka-birhanu/finance-go/api/error"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"

@@ -6,8 +6,8 @@ import (
 	"errors"
 	"net/http"
 
+	errapi "github.com/beka-birhanu/finance-go/api/error"
 	baseapi "github.com/beka-birhanu/finance-go/api/rest/base_handler"
-	errapi "github.com/beka-birhanu/finance-go/api/rest/error"
 	"github.com/beka-birhanu/finance-go/api/rest/user/dto"
 	registercmd "github.com/beka-birhanu/finance-go/application/authentication/command"
 	auth "github.com/beka-birhanu/finance-go/application/authentication/common"

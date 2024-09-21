@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
+	errapi "github.com/beka-birhanu/finance-go/api/error"
 	baseapi "github.com/beka-birhanu/finance-go/api/rest/base_handler"
-	errapi "github.com/beka-birhanu/finance-go/api/rest/error"
 	"github.com/beka-birhanu/finance-go/api/rest/expense/dto"
 	icmd "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
 	iquery "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
