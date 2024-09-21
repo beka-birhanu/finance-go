@@ -17,3 +17,17 @@ func NewGQLError(err errapi.Error) *gqlerror.Error {
 		Extensions: extensions,
 	}
 }
+
+func NewExpense(e *expensemodel.Expense) *model.Expense {
+	updatedTime := e.UpdatedAt()
+	createdTime := e.CreatedAt()
+	return &model.Expense{
+		ID:          e.ID(),
+		Description: e.Description(),
+		Amount:      e.Amount(),
+		Date:        e.Date(),
+		UserID:      e.UserID(),
+		CreatedAt:   &createdTime,
+		UpdatedAt:   &updatedTime,
+	}
+}
