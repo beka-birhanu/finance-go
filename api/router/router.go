@@ -10,7 +10,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/beka-birhanu/finance-go/api"
+	"github.com/99designs/gqlgen/graphql/playground"
+	api "github.com/beka-birhanu/finance-go/api/rest"
 	"github.com/gorilla/mux"
 )
 
@@ -19,7 +20,8 @@ import (
 type Router struct {
 	addr                    string
 	baseURL                 string
-	controllers             []api.IController
+	restfullControllers     []api.IController
+	graphQlController       http.Handler
 	authorizationMiddleware func(http.Handler) http.Handler
 	rateLimitMiddleware     func(http.Handler) http.Handler
 }
@@ -28,7 +30,8 @@ type Router struct {
 type Config struct {
 	Addr                    string            // Address to listen on
 	BaseURL                 string            // Base URL for API routes
-	Controllers             []api.IController // List of controllers
+	RestfullControllers     []api.IController // List of controllers
+	GraphQlController       http.Handler
 	AuthorizationMiddleware func(http.Handler) http.Handler
 	RateLimitMiddleware     func(http.Handler) http.Handler
 }
@@ -39,7 +42,8 @@ func NewRouter(config Config) *Router {
 	return &Router{
 		addr:                    config.Addr,
 		baseURL:                 config.BaseURL,
-		controllers:             config.Controllers,
+		restfullControllers:     config.RestfullControllers,
+		graphQlController:       config.GraphQlController,
 		authorizationMiddleware: config.AuthorizationMiddleware,
 		rateLimitMiddleware:     config.RateLimitMiddleware,
 	}
@@ -61,7 +65,7 @@ func (r *Router) Run() error {
 		// Public routes (accessible without authentication)
 		publicRoutes := api.PathPrefix("/v1").Subrouter()
 		{
-			for _, c := range r.controllers {
+			for _, c := range r.restfullControllers {
 				c.RegisterPublic(publicRoutes)
 			}
 		}
@@ -70,12 +74,14 @@ func (r *Router) Run() error {
 		protectedRoutes := api.PathPrefix("/v1").Subrouter()
 		protectedRoutes.Use(r.authorizationMiddleware)
 		{
-			for _, c := range r.controllers {
+			for _, c := range r.restfullControllers {
 				c.RegisterProtected(protectedRoutes)
 			}
 		}
 
 	}
+	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	http.Handle("/query", r.graphQlController)
 
 	log.Println("Listening on", r.addr)
 	return http.ListenAndServe(r.addr, router)
