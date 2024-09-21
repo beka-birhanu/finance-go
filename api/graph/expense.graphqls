@@ -1,0 +1,15 @@
+scalar UUID
+scalar Float32
+scalar Time
+type Expense {
+  id: UUID!
+  description: String!
+  amount: Float32!
+  date: Time!
+  userId: UUID!
+  createdAt: Time
+  updatedAt: Time
+}
+type Query {
+  expense(userId: UUID!, id: UUID!): Expense!
+}
