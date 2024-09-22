@@ -13,7 +13,7 @@ type ListByTimeParams struct {
 	UserID       uuid.UUID  // ID of the user
 	Limit        int        // Max number of expenses to return
 	LastSeenID   *uuid.UUID // Pagination: ID of the last seen expense
-	LastSeenTime *time.Time // Pagination: Time of the last seen expense
+	LastSeenDate *time.Time // Pagination: Time of the last seen expense
 	Ascending    bool       // Sort order: true for ascending
 }
 

@@ -75,8 +75,8 @@ func (e *Repository) ById(id uuid.UUID, userId uuid.UUID) (*expensemodel.Expense
 // ListByTime retrieves paginated expenses for a user based on creation time.
 func (e *Repository) ListByTime(params irepository.ListByTimeParams) ([]*expensemodel.Expense, error) {
 	queryParams := []interface{}{params.UserID}
-	additionalWhere := BuildExpenseListWhereClause(params.Ascending, *params.LastSeenID, params.LastSeenTime, "created_at", &queryParams)
-	orderBy := BuildExpenseListOrderByClause(params.Ascending, "created_at")
+	additionalWhere := BuildExpenseListWhereClause(params.Ascending, *params.LastSeenID, params.LastSeenDate, "date", &queryParams)
+	orderBy := BuildExpenseListOrderByClause(params.Ascending, "date")
 	limitClause := BuildLimitClause(params.Limit, &queryParams)
 
 	query := fmt.Sprintf("%s %s %s %s", listBaseQuery, additionalWhere, orderBy, limitClause)

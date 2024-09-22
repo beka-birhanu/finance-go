@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/beka-birhanu/finance-go/api/user/dto"
+	"github.com/beka-birhanu/finance-go/api/rest/user/dto"
 	registercmd "github.com/beka-birhanu/finance-go/application/authentication/command"
 	auth "github.com/beka-birhanu/finance-go/application/authentication/common"
 	loginqry "github.com/beka-birhanu/finance-go/application/authentication/query"

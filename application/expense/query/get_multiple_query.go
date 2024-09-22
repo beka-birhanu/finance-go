@@ -12,8 +12,7 @@ type GetMultipleQuery struct {
 	Limit        int        // Maximum number of expenses to retrieve
 	By           string     // Field to sort by (e.g., "date", "amount")
 	LastSeenID   *uuid.UUID // ID of the last seen expense (for pagination)
-	LastSeenTime *time.Time // Time of the last seen expense (for pagination)
+	LastSeenDate *time.Time // Time of the last seen expense (for pagination)
 	LastSeenAmt  float64    // Amount of the last seen expense (for pagination)
 	Ascending    bool       // Whether to sort in ascending order
 }
-

@@ -16,6 +16,7 @@ Dependencies:
 package expensemodel
 
 import (
+	"math"
 	"strings"
 	"time"
 
@@ -64,20 +65,25 @@ type Config struct {
 //   - Any field in the config is missing or invalid.
 //   - The description does not meet length constraints.
 //   - The amount is not positive.
+//
+// NOTE: it rounds the amount to two decimal places
 func New(config Config) (*Expense, error) {
 	config.Description = strings.TrimSpace(config.Description)
 	if err := validateDescription(config.Description); err != nil {
 		return nil, err
 	}
 
-	if config.Amount <= 0 {
+	// Round the amount to two decimal places
+	roundedAmount := float32(math.Round(float64(config.Amount)*100)) / 100
+
+	if roundedAmount <= 0 {
 		return nil, errexpense.NegativeAmount
 	}
 
 	return &Expense{
-		id:          uuid.New(), // New ID for the expense
+		id:          uuid.New(),
 		description: config.Description,
-		amount:      config.Amount,
+		amount:      roundedAmount,
 		userId:      config.UserId,
 		date:        config.Date,
 		createdAt:   config.CreationTime,
@@ -175,8 +181,12 @@ func (e *Expense) UpdateDescription(newDescription string) error {
 
 // UpdateAmount updates the amount of the expense.
 // Returns an error if the new amount is not positive.
+//
+// NOTE: it rounds the amount to two decimal places
 func (e *Expense) UpdateAmount(newAmount float32) error {
-	if newAmount < 0 {
+	// Round the amount to two decimal places
+	newAmount = float32(math.Round(float64(newAmount)*100)) / 100
+	if newAmount <= 0 {
 		return errexpense.NegativeAmount
 	}
 	e.amount = newAmount

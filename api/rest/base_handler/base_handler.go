@@ -9,8 +9,7 @@ import (
 	"strconv"
 
 	errapi "github.com/beka-birhanu/finance-go/api/error"
-	"github.com/beka-birhanu/finance-go/api/middleware"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/beka-birhanu/finance-go/api/utils"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -131,17 +130,7 @@ func (h *BaseHandler) UUIDParam(r *http.Request, paramName string) (uuid.UUID, e
 // MatchPathUserIdctxUserId checks if the user ID from the request context matches the provided user ID.
 // It returns an error if the IDs do not match or if there is an issue retrieving the user ID from the context.
 func (h *BaseHandler) MatchPathUserIdctxUserId(r *http.Request, pathId uuid.UUID) error {
-	claims, ok := r.Context().Value(middleware.ContextUserClaims).(jwt.MapClaims)
-	if !ok {
-		return errapi.NewServerError("error on retrieving user id from context")
-	}
-
-	userIDStr, ok := claims["user_id"].(string)
-	if !ok || pathId.String() != userIDStr {
-		return errapi.NewForbidden("The response does not belong to the user requesting.")
-	}
-
-	return nil
+	return utils.ConfirmUserID(r.Context(), pathId)
 }
 
 // StringQueryParam retrieves a string query parameter from the request URL.

@@ -10,38 +10,45 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/beka-birhanu/finance-go/api"
+	"github.com/99designs/gqlgen/graphql/playground"
+	api "github.com/beka-birhanu/finance-go/api/rest"
 	"github.com/gorilla/mux"
 )
 
 // Router manages the HTTP server and its dependencies,
 // including controllers and JWT authentication.
 type Router struct {
-	addr                    string
-	baseURL                 string
-	controllers             []api.IController
-	authorizationMiddleware func(http.Handler) http.Handler
-	rateLimitMiddleware     func(http.Handler) http.Handler
+	addr                     string
+	baseURL                  string
+	restfullControllers      []api.IController
+	graphQlController        http.Handler
+	authorizationMiddleware  func(http.Handler) http.Handler
+	populateClaimsMiddleware func(http.Handler) http.Handler
+	rateLimitMiddleware      func(http.Handler) http.Handler
 }
 
 // Config holds configuration settings for creating a new Router instance.
 type Config struct {
-	Addr                    string            // Address to listen on
-	BaseURL                 string            // Base URL for API routes
-	Controllers             []api.IController // List of controllers
-	AuthorizationMiddleware func(http.Handler) http.Handler
-	RateLimitMiddleware     func(http.Handler) http.Handler
+	Addr                     string            // Address to listen on
+	BaseURL                  string            // Base URL for API routes
+	RestfullControllers      []api.IController // List of controllers
+	GraphQlController        http.Handler
+	AuthorizationMiddleware  func(http.Handler) http.Handler
+	PopulateClaimsMiddleware func(http.Handler) http.Handler
+	RateLimitMiddleware      func(http.Handler) http.Handler
 }
 
 // NewRouter creates a new Router instance with the given configuration.
 // It initializes the router with address, base URL, controllers, and JWT service.
 func NewRouter(config Config) *Router {
 	return &Router{
-		addr:                    config.Addr,
-		baseURL:                 config.BaseURL,
-		controllers:             config.Controllers,
-		authorizationMiddleware: config.AuthorizationMiddleware,
-		rateLimitMiddleware:     config.RateLimitMiddleware,
+		addr:                     config.Addr,
+		baseURL:                  config.BaseURL,
+		restfullControllers:      config.RestfullControllers,
+		graphQlController:        config.GraphQlController,
+		authorizationMiddleware:  config.AuthorizationMiddleware,
+		populateClaimsMiddleware: config.PopulateClaimsMiddleware,
+		rateLimitMiddleware:      config.RateLimitMiddleware,
 	}
 }
 
@@ -61,7 +68,7 @@ func (r *Router) Run() error {
 		// Public routes (accessible without authentication)
 		publicRoutes := api.PathPrefix("/v1").Subrouter()
 		{
-			for _, c := range r.controllers {
+			for _, c := range r.restfullControllers {
 				c.RegisterPublic(publicRoutes)
 			}
 		}
@@ -70,11 +77,16 @@ func (r *Router) Run() error {
 		protectedRoutes := api.PathPrefix("/v1").Subrouter()
 		protectedRoutes.Use(r.authorizationMiddleware)
 		{
-			for _, c := range r.controllers {
+			for _, c := range r.restfullControllers {
 				c.RegisterProtected(protectedRoutes)
 			}
 		}
 
+		graphApi := api.PathPrefix(("/graph")).Subrouter()
+		graphApi.Use(r.populateClaimsMiddleware)
+
+		graphApi.Handle("/", playground.Handler("GraphQL playground", "/query"))
+		graphApi.Handle("/query", r.graphQlController)
 	}
 
 	log.Println("Listening on", r.addr)

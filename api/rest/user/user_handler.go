@@ -6,16 +6,16 @@ import (
 	"errors"
 	"net/http"
 
-	baseapi "github.com/beka-birhanu/finance-go/api/base_handler"
 	errapi "github.com/beka-birhanu/finance-go/api/error"
-	"github.com/beka-birhanu/finance-go/api/user/dto"
+	baseapi "github.com/beka-birhanu/finance-go/api/rest/base_handler"
+	"github.com/beka-birhanu/finance-go/api/rest/user/dto"
 	registercmd "github.com/beka-birhanu/finance-go/application/authentication/command"
 	auth "github.com/beka-birhanu/finance-go/application/authentication/common"
 	loginqry "github.com/beka-birhanu/finance-go/application/authentication/query"
 	icmd "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
 	iquery "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
 	irepository "github.com/beka-birhanu/finance-go/application/common/interface/repository"
-	errdmn "github.com/beka-birhanu/finance-go/domain/error/common"
+	ierr "github.com/beka-birhanu/finance-go/domain/common/error"
 	"github.com/gorilla/mux"
 )
 
@@ -73,15 +73,8 @@ func (h *Handler) handleRegistration(w http.ResponseWriter, r *http.Request) {
 
 	authResult, err := h.registerHandler.Handle(registerCommand)
 	if err != nil {
-		unwrappedErr := errors.Unwrap(err).(*errdmn.Error)
-		switch unwrappedErr.Type() {
-		case errdmn.Conflict:
-			h.Problem(w, errapi.NewConflict(unwrappedErr.Error()))
-		case errdmn.Validation:
-			h.Problem(w, errapi.NewBadRequest(unwrappedErr.Error()))
-		default:
-			h.Problem(w, errapi.NewServerError(unwrappedErr.Error()))
-		}
+		unwrappedErr := errors.Unwrap(err).(ierr.IErr)
+		h.Problem(w, errapi.Map(unwrappedErr))
 		return
 	}
 
@@ -113,7 +106,7 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 	loginQuery := loginqry.NewQuery(loginRequest.Username, loginRequest.Password)
 	authResult, err := h.loginHandler.Handle(loginQuery)
 	if err != nil {
-		h.Problem(w, errapi.NewAuthentication(err.Error()))
+		h.Problem(w, errapi.Map(err.(ierr.IErr)))
 		return
 	}
 

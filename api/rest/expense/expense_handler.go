@@ -5,23 +5,20 @@
 package expense
 
 import (
-	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
-	"time"
 
-	baseapi "github.com/beka-birhanu/finance-go/api/base_handler"
 	errapi "github.com/beka-birhanu/finance-go/api/error"
-	"github.com/beka-birhanu/finance-go/api/expense/dto"
+	baseapi "github.com/beka-birhanu/finance-go/api/rest/base_handler"
+	"github.com/beka-birhanu/finance-go/api/rest/expense/dto"
+	"github.com/beka-birhanu/finance-go/api/utils"
 	icmd "github.com/beka-birhanu/finance-go/application/common/cqrs/command"
 	iquery "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
 	expensecmd "github.com/beka-birhanu/finance-go/application/expense/command"
 	expensqry "github.com/beka-birhanu/finance-go/application/expense/query"
-	errdmn "github.com/beka-birhanu/finance-go/domain/error/common"
+	ierr "github.com/beka-birhanu/finance-go/domain/common/error"
 	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -32,7 +29,7 @@ type ExpensesHandler struct {
 	addHandler         icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
 	getHandler         iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense]
 	getMultipleHandler iquery.IHandler[*expensqry.GetMultipleQuery, []*expensemodel.Expense]
-	patchHandler       iquery.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
+	patchHandler       icmd.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
 }
 
 // Config contains the configuration for setting up the ExpensesHandler,
@@ -116,7 +113,7 @@ func (h *ExpensesHandler) handleAdd(w http.ResponseWriter, r *http.Request) {
 
 	expense, err := h.addHandler.Handle(addExpenseCommand)
 	if err != nil {
-		apiErr := errapi.NewBadRequest(err.Error())
+		apiErr := errapi.Map(err.(ierr.IErr))
 		h.Problem(w, apiErr)
 		return
 	}
@@ -153,7 +150,7 @@ func (h *ExpensesHandler) handleById(w http.ResponseWriter, r *http.Request) {
 
 	expense, err := h.getHandler.Handle(&expensqry.GetQuery{UserId: userId, ExpenseId: expenseId})
 	if err != nil {
-		h.Problem(w, errapi.NewBadRequest(err.Error()))
+		h.Problem(w, errapi.Map(err.(ierr.IErr)))
 		return
 	}
 	response := dto.FromExpenseModel(expense)
@@ -198,14 +195,7 @@ func (h *ExpensesHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		switch err.(*errdmn.Error).Type() {
-		case errdmn.NotFound:
-			h.Problem(w, errapi.NewNotFound(err.Error()))
-		case errdmn.Validation:
-			h.Problem(w, errapi.NewBadRequest(err.Error()))
-		default:
-			h.Problem(w, errapi.NewServerError("unknown error occurred while patching expense"))
-		}
+		h.Problem(w, errapi.Map(err.(ierr.IErr)))
 		return
 	}
 	response := dto.FromExpenseModel(expense)
@@ -233,7 +223,7 @@ func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	queryParams, err := h.constructQueryParams(userId, cursor, limit, sortField, sortOrder)
+	queryParams, err := utils.ConstructQueryParams(userId, cursor, limit, sortField, sortOrder)
 	if err != nil {
 		h.Problem(w, errapi.NewBadRequest(err.Error()))
 		return
@@ -241,7 +231,7 @@ func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request)
 
 	expenses, err := h.getMultipleHandler.Handle(queryParams)
 	if err != nil {
-		h.Problem(w, errapi.NewServerError(err.Error()))
+		h.Problem(w, errapi.Map(err.(ierr.IErr)))
 		return
 	}
 
@@ -254,7 +244,7 @@ func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request)
 
 	nextCursor := ""
 	if len(expenses) > 0 {
-		nextCursor = h.buildCursor(expenses[len(expenses)-1], sortField)
+		nextCursor = utils.BuildCursor(expenses[len(expenses)-1], sortField)
 	}
 
 	response := dto.GetMultipleResponse{
@@ -276,7 +266,7 @@ func (h *ExpensesHandler) extractAndValidateParams(r *http.Request) (string, int
 	}
 
 	sortBy := h.StringQueryParam(r, "sortBy")
-	sortField := "createdAt"
+	sortField := "date"
 	sortOrder := "desc"
 	if sortBy != "" {
 		parts := strings.Split(sortBy, ".")
@@ -285,7 +275,7 @@ func (h *ExpensesHandler) extractAndValidateParams(r *http.Request) (string, int
 		}
 		sortField = parts[0]
 		sortOrder = parts[1]
-		if sortField != "createdAt" && sortField != "amount" {
+		if sortField != "date" && sortField != "amount" {
 			return "", 0, "", "", errapi.NewBadRequest(fmt.Sprintf("invalid sortBy field: %s", sortField))
 		}
 		if sortOrder != "asc" && sortOrder != "desc" {
@@ -294,71 +284,4 @@ func (h *ExpensesHandler) extractAndValidateParams(r *http.Request) (string, int
 	}
 
 	return cursor, limit, sortField, sortOrder, nil
-}
-
-// constructQueryParams constructs the query parameters for retrieving multiple expenses,
-// based on the user ID, cursor, limit, sort field, and sort order.
-func (h *ExpensesHandler) constructQueryParams(userId uuid.UUID, cursor string, limit int, sortField string, sortOrder string) (*expensqry.GetMultipleQuery, error) {
-	var lastSeenID uuid.UUID
-	var lastSeenTime time.Time
-	var lastSeenAmt float64
-	var ascending bool
-
-	if cursor != "" {
-		cursorByte, err := base64.StdEncoding.DecodeString(cursor)
-		if err != nil {
-			return &expensqry.GetMultipleQuery{}, errapi.NewBadRequest("invalid cursor format1")
-		}
-
-		cursor = string(cursorByte)
-		cursorParts := strings.Split(cursor, ",")
-		if len(cursorParts) != 2 {
-			return &expensqry.GetMultipleQuery{}, errapi.NewBadRequest("invalid cursor format1")
-		}
-		lastSeenID, err = uuid.Parse(cursorParts[0])
-		if err != nil {
-			return &expensqry.GetMultipleQuery{}, errapi.NewBadRequest("invalid cursor format2")
-		}
-
-		if sortField == "createdAt" {
-			lastSeenTime, err = time.Parse(time.RFC3339, cursorParts[1])
-			if err != nil {
-				return &expensqry.GetMultipleQuery{}, fmt.Errorf("invalid cursor format for createdAt: %v", err)
-			}
-		} else if sortField == "amount" {
-			lastSeenAmt, err = strconv.ParseFloat(cursorParts[1], 64)
-			if err != nil {
-				return &expensqry.GetMultipleQuery{}, fmt.Errorf("invalid cursor format for amount")
-			}
-		}
-	}
-
-	if sortOrder == "asc" {
-		ascending = true
-	}
-
-	return &expensqry.GetMultipleQuery{
-		UserID:       userId,
-		Limit:        limit,
-		By:           sortField,
-		LastSeenID:   &lastSeenID,
-		LastSeenTime: &lastSeenTime,
-		LastSeenAmt:  lastSeenAmt,
-		Ascending:    ascending,
-	}, nil
-}
-
-// buildCursor constructs a cursor string for pagination, based on the last expense and the sort field.
-func (h *ExpensesHandler) buildCursor(lastExpense *expensemodel.Expense, field string) string {
-	nextCursor := ""
-	if lastExpense != nil {
-		if field == "amount" {
-			nextCursor = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s,%f", lastExpense.ID(), lastExpense.Amount())))
-		} else {
-			createdAt := lastExpense.CreatedAt().Format(time.RFC3339)
-			nextCursor = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s,%v", lastExpense.ID(), createdAt)))
-		}
-	}
-
-	return nextCursor
 }

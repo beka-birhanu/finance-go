@@ -2,6 +2,12 @@
 // including common HTTP status codes and corresponding error messages.
 package errapi
 
+import (
+	apperror "github.com/beka-birhanu/finance-go/application/error"
+	ierr "github.com/beka-birhanu/finance-go/domain/common/error"
+	errdmn "github.com/beka-birhanu/finance-go/domain/error/common"
+)
+
 // HTTP status codes used in the Error type.
 const (
 	BadRequest     = 400 // Bad Request
@@ -62,4 +68,21 @@ func (e Error) Error() string {
 // StatusCode returns the HTTP status code associated with the error.
 func (e Error) StatusCode() int {
 	return e.statusCode
+}
+
+func Map(err ierr.IErr) Error {
+	switch err.Type() {
+	case errdmn.NotFound:
+		return NewNotFound(err.Error())
+	case errdmn.Validation:
+		return NewBadRequest(err.Error())
+	case errdmn.Conflict:
+		return NewConflict(err.Error())
+	case errdmn.Unexpected:
+		return NewServerError(err.Error())
+	case apperror.Authentication:
+		return NewAuthentication(err.Error())
+	default:
+		return NewServerError("unknown error occurred while patching expense")
+	}
 }

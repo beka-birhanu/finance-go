@@ -1,0 +1,61 @@
+scalar UUID
+scalar Float32
+scalar Time
+
+type Expense {
+  id: UUID!
+  description: String!
+  amount: Float32!
+  date: Time!
+  userId: UUID!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Query {
+  expense(userId: UUID!, id: UUID!): Expense!
+  expenses(params: GetMultipleInput!): PaginatedExpenseResponse!
+}
+
+type Mutation {
+  createExpense(data: CreateExpenseInput!): Expense!
+  updateExpense(data: UpdateExpenseInput!): Expense!
+}
+
+input GetMultipleInput {
+  cursor: String
+  limit: Int
+  sortField: SortField
+  sortOrder: SortOrder
+  userId: UUID!
+}
+
+input CreateExpenseInput {
+  description: String!
+  amount: Float32!
+  date: Time!
+  userId: UUID!
+}
+
+input UpdateExpenseInput {
+  description: String
+  amount: Float32
+  date: Time
+  userId: UUID!
+  id: UUID!
+}
+
+enum SortField {
+  amount
+  date
+}
+
+enum SortOrder {
+  asc
+  desc
+}
+
+type PaginatedExpenseResponse {
+  expenses: [Expense!]!
+  cursor: String
+}
