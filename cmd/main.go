@@ -85,9 +85,9 @@ func main() {
 	})
 
 	resolver := graph.NewResolver(graph.ResolverConfig{
-		GetExpenseHandler: getExpenseHandler,
 		GetExpenseHandler:         getExpenseHandler,
-		AddHandler:                addExpenseHandler,
+		AddExpenseHandler:         addExpenseHandler,
+		PatchExpenseHandler:       patchExpenseHandler,
 	})
 
 	graphHandler := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: resolver}))

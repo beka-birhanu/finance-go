@@ -18,11 +18,19 @@ type Query {
 
 type Mutation {
   createExpense(data: CreateExpenseInput!): Expense!
+  updateExpense(data: UpdateExpenseInput!, id: UUID!): Expense!
 }
 
 input CreateExpenseInput {
   description: String!
   amount: Float32!
   date: Time!
+  userId: UUID!
+}
+
+input UpdateExpenseInput {
+  description: String
+  amount: Float32
+  date: Time
   userId: UUID!
 }

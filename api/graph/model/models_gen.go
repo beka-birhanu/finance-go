@@ -30,3 +30,10 @@ type Mutation struct {
 
 type Query struct {
 }
+
+type UpdateExpenseInput struct {
+	Description *string    `json:"description,omitempty"`
+	Amount      *float32   `json:"amount,omitempty"`
+	Date        *time.Time `json:"date,omitempty"`
+	UserID      uuid.UUID  `json:"userId"`
+}
