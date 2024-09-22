@@ -36,4 +36,5 @@ type UpdateExpenseInput struct {
 	Amount      *float32   `json:"amount,omitempty"`
 	Date        *time.Time `json:"date,omitempty"`
 	UserID      uuid.UUID  `json:"userId"`
+	ID          uuid.UUID  `json:"id"`
 }

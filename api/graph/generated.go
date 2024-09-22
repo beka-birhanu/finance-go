@@ -61,7 +61,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CreateExpense func(childComplexity int, data model.CreateExpenseInput) int
-		UpdateExpense func(childComplexity int, data model.UpdateExpenseInput, id uuid.UUID) int
+		UpdateExpense func(childComplexity int, data model.UpdateExpenseInput) int
 	}
 
 	Query struct {
@@ -71,7 +71,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateExpense(ctx context.Context, data model.CreateExpenseInput) (*model.Expense, error)
-	UpdateExpense(ctx context.Context, data model.UpdateExpenseInput, id uuid.UUID) (*model.Expense, error)
+	UpdateExpense(ctx context.Context, data model.UpdateExpenseInput) (*model.Expense, error)
 }
 type QueryResolver interface {
 	Expense(ctx context.Context, userID uuid.UUID, id uuid.UUID) (*model.Expense, error)
@@ -167,7 +167,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateExpense(childComplexity, args["data"].(model.UpdateExpenseInput), args["id"].(uuid.UUID)), true
+		return e.complexity.Mutation.UpdateExpense(childComplexity, args["data"].(model.UpdateExpenseInput)), true
 
 	case "Query.expense":
 		if e.complexity.Query.Expense == nil {
@@ -338,11 +338,6 @@ func (ec *executionContext) field_Mutation_updateExpense_args(ctx context.Contex
 		return nil, err
 	}
 	args["data"] = arg0
-	arg1, err := ec.field_Mutation_updateExpense_argsID(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["id"] = arg1
 	return args, nil
 }
 func (ec *executionContext) field_Mutation_updateExpense_argsData(
@@ -355,19 +350,6 @@ func (ec *executionContext) field_Mutation_updateExpense_argsData(
 	}
 
 	var zeroVal model.UpdateExpenseInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updateExpense_argsID(
-	ctx context.Context,
-	rawArgs map[string]interface{},
-) (uuid.UUID, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
-	}
-
-	var zeroVal uuid.UUID
 	return zeroVal, nil
 }
 
@@ -876,7 +858,7 @@ func (ec *executionContext) _Mutation_updateExpense(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateExpense(rctx, fc.Args["data"].(model.UpdateExpenseInput), fc.Args["id"].(uuid.UUID))
+		return ec.resolvers.Mutation().UpdateExpense(rctx, fc.Args["data"].(model.UpdateExpenseInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2961,7 +2943,7 @@ func (ec *executionContext) unmarshalInputUpdateExpenseInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"description", "amount", "date", "userId"}
+	fieldsInOrder := [...]string{"description", "amount", "date", "userId", "id"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2996,6 +2978,13 @@ func (ec *executionContext) unmarshalInputUpdateExpenseInput(ctx context.Context
 				return it, err
 			}
 			it.UserID = data
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
 		}
 	}
 

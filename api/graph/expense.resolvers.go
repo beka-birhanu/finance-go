@@ -37,13 +37,13 @@ func (r *mutationResolver) CreateExpense(ctx context.Context, data model.CreateE
 }
 
 // UpdateExpense is the resolver for the updateExpense field.
-func (r *mutationResolver) UpdateExpense(ctx context.Context, data model.UpdateExpenseInput, id uuid.UUID) (*model.Expense, error) {
+func (r *mutationResolver) UpdateExpense(ctx context.Context, data model.UpdateExpenseInput) (*model.Expense, error) {
 	if err := generalUtil.ConfirmUserID(ctx, data.UserID); err != nil {
 		return nil, utils.NewGQLError(err.(errapi.Error))
 	}
 
 	expense, err := r.patchExpenseHandler.Handle(&expensecmd.PatchCommand{
-		Id:          id,
+		Id:          data.ID,
 		UserId:      data.UserID,
 		Date:        data.Date,
 		Description: data.Description,

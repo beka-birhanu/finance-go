@@ -18,7 +18,7 @@ type Query {
 
 type Mutation {
   createExpense(data: CreateExpenseInput!): Expense!
-  updateExpense(data: UpdateExpenseInput!, id: UUID!): Expense!
+  updateExpense(data: UpdateExpenseInput!): Expense!
 }
 
 input CreateExpenseInput {
@@ -33,4 +33,5 @@ input UpdateExpenseInput {
   amount: Float32
   date: Time
   userId: UUID!
+  id: UUID!
 }
