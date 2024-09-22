@@ -2,11 +2,18 @@ package graph
 
 import (
 	"fmt"
+	"io"
+	"strconv"
+
 	"github.com/99designs/gqlgen/graphql"
 )
 
 func MarshalFloat32(f float32) graphql.Marshaler {
-	return graphql.MarshalFloat(float64(f))
+	return graphql.WriterFunc(func(w io.Writer) {
+		if _, err := w.Write([]byte(strconv.FormatFloat(float64(f), 'f', -1, 32))); err != nil {
+			fmt.Println("Error writing float32:", err)
+		}
+	})
 }
 
 func UnmarshalFloat32(v interface{}) (float32, error) {
