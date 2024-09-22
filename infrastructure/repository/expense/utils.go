@@ -56,11 +56,10 @@ func BuildExpenseListWhereClause(ascending bool, id uuid.UUID, value interface{}
 	}
 
 	clause := fmt.Sprintf(`
-		AND id < $%v 
-		AND %s %s $%v
-		`, len(*params)+1, field, inequalitySign, len(*params)+2)
+		AND (%s %s $%d OR (%s = $%d AND id < $%d)) 
+		`, field, inequalitySign, len(*params)+1, field, len(*params)+1, len(*params)+2)
 
-	*params = append(*params, id, value)
+	*params = append(*params, value, id)
 	return clause
 }
 
