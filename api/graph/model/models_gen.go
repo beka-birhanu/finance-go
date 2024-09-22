@@ -8,6 +8,13 @@ import (
 	"github.com/google/uuid"
 )
 
+type CreateExpenseInput struct {
+	Description string    `json:"description"`
+	Amount      float32   `json:"amount"`
+	Date        time.Time `json:"date"`
+	UserID      uuid.UUID `json:"userId"`
+}
+
 type Expense struct {
 	ID          uuid.UUID  `json:"id"`
 	Description string     `json:"description"`
@@ -16,6 +23,9 @@ type Expense struct {
 	UserID      uuid.UUID  `json:"userId"`
 	CreatedAt   *time.Time `json:"createdAt,omitempty"`
 	UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
+}
+
+type Mutation struct {
 }
 
 type Query struct {

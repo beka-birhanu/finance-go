@@ -1,6 +1,7 @@
 scalar UUID
 scalar Float32
 scalar Time
+
 type Expense {
   id: UUID!
   description: String!
@@ -10,6 +11,18 @@ type Expense {
   createdAt: Time
   updatedAt: Time
 }
+
 type Query {
   expense(userId: UUID!, id: UUID!): Expense!
+}
+
+type Mutation {
+  createExpense(data: CreateExpenseInput!): Expense!
+}
+
+input CreateExpenseInput {
+  description: String!
+  amount: Float32!
+  date: Time!
+  userId: UUID!
 }
