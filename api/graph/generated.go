@@ -3191,14 +3191,14 @@ func (ec *executionContext) unmarshalInputGetMultipleInput(ctx context.Context, 
 			it.Limit = data
 		case "sortField":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortField"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOSortField2ᚖgithubᚗcomᚋbekaᚑbirhanuᚋfinanceᚑgoᚋapiᚋgraphᚋmodelᚐSortField(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.SortField = data
 		case "sortOrder":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortOrder"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOSortOrder2ᚖgithubᚗcomᚋbekaᚑbirhanuᚋfinanceᚑgoᚋapiᚋgraphᚋmodelᚐSortOrder(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4336,6 +4336,38 @@ func (ec *executionContext) marshalOInt2ᚖint64(ctx context.Context, sel ast.Se
 	}
 	res := graphql.MarshalInt64(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOSortField2ᚖgithubᚗcomᚋbekaᚑbirhanuᚋfinanceᚑgoᚋapiᚋgraphᚋmodelᚐSortField(ctx context.Context, v interface{}) (*model.SortField, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.SortField)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSortField2ᚖgithubᚗcomᚋbekaᚑbirhanuᚋfinanceᚑgoᚋapiᚋgraphᚋmodelᚐSortField(ctx context.Context, sel ast.SelectionSet, v *model.SortField) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOSortOrder2ᚖgithubᚗcomᚋbekaᚑbirhanuᚋfinanceᚑgoᚋapiᚋgraphᚋmodelᚐSortOrder(ctx context.Context, v interface{}) (*model.SortOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.SortOrder)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSortOrder2ᚖgithubᚗcomᚋbekaᚑbirhanuᚋfinanceᚑgoᚋapiᚋgraphᚋmodelᚐSortOrder(ctx context.Context, sel ast.SelectionSet, v *model.SortOrder) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

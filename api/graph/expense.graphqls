@@ -25,8 +25,8 @@ type Mutation {
 input GetMultipleInput {
   cursor: String
   limit: Int
-  sortField: String
-  sortOrder: String
+  sortField: SortField
+  sortOrder: SortOrder
   userId: UUID!
 }
 
@@ -43,6 +43,16 @@ input UpdateExpenseInput {
   date: Time
   userId: UUID!
   id: UUID!
+}
+
+enum SortField {
+  amount
+  date
+}
+
+enum SortOrder {
+  asc
+  desc
 }
 
 type PaginatedExpenseResponse {

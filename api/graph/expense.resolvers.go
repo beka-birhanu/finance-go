@@ -70,13 +70,19 @@ func (r *queryResolver) Expense(ctx context.Context, userID uuid.UUID, id uuid.U
 
 // Expenses is the resolver for the expenses field.
 func (r *queryResolver) Expenses(ctx context.Context, params model.GetMultipleInput) (*model.PaginatedExpenseResponse, error) {
+	if err := generalUtil.ConfirmUserID(ctx, params.UserID); err != nil {
+		return nil, utils.NewGQLError(err.(errapi.Error))
+	}
+
 	cursor := ""
 	limit := 0
 	sortField := "date"
 	sortOrder := "desc"
-	if params.SortField != nil && params.SortOrder != nil {
-		sortOrder = string(*params.SortOrder)
+	if params.SortField != nil {
 		sortField = string(*params.SortField)
+	}
+	if params.SortOrder != nil {
+		sortOrder = string(*params.SortOrder)
 	}
 	if params.Cursor != nil {
 		cursor = *params.Cursor

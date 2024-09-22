@@ -3,6 +3,9 @@
 package model
 
 import (
+	"fmt"
+	"io"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,11 +29,11 @@ type Expense struct {
 }
 
 type GetMultipleInput struct {
-	Cursor    *string   `json:"cursor,omitempty"`
-	Limit     *int64    `json:"limit,omitempty"`
-	SortField *string   `json:"sortField,omitempty"`
-	SortOrder *string   `json:"sortOrder,omitempty"`
-	UserID    uuid.UUID `json:"userId"`
+	Cursor    *string    `json:"cursor,omitempty"`
+	Limit     *int64     `json:"limit,omitempty"`
+	SortField *SortField `json:"sortField,omitempty"`
+	SortOrder *SortOrder `json:"sortOrder,omitempty"`
+	UserID    uuid.UUID  `json:"userId"`
 }
 
 type Mutation struct {
@@ -50,4 +53,86 @@ type UpdateExpenseInput struct {
 	Date        *time.Time `json:"date,omitempty"`
 	UserID      uuid.UUID  `json:"userId"`
 	ID          uuid.UUID  `json:"id"`
+}
+
+type SortField string
+
+const (
+	SortFieldAmount SortField = "amount"
+	SortFieldDate   SortField = "date"
+)
+
+var AllSortField = []SortField{
+	SortFieldAmount,
+	SortFieldDate,
+}
+
+func (e SortField) IsValid() bool {
+	switch e {
+	case SortFieldAmount, SortFieldDate:
+		return true
+	}
+	return false
+}
+
+func (e SortField) String() string {
+	return string(e)
+}
+
+func (e *SortField) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SortField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SortField", str)
+	}
+	return nil
+}
+
+func (e SortField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type SortOrder string
+
+const (
+	SortOrderAsc  SortOrder = "asc"
+	SortOrderDesc SortOrder = "desc"
+)
+
+var AllSortOrder = []SortOrder{
+	SortOrderAsc,
+	SortOrderDesc,
+}
+
+func (e SortOrder) IsValid() bool {
+	switch e {
+	case SortOrderAsc, SortOrderDesc:
+		return true
+	}
+	return false
+}
+
+func (e SortOrder) String() string {
+	return string(e)
+}
+
+func (e *SortOrder) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SortOrder(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SortOrder", str)
+	}
+	return nil
+}
+
+func (e SortOrder) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
