@@ -12,7 +12,7 @@ import "github.com/beka-birhanu/finance-go/domain/error/common"
 // Validation errors
 var (
 	// Amount is negative.
-	NegativeAmount = errdmn.NewValidation("Expense.Amount cannot be negative.")
+	NegativeAmount = errdmn.NewValidation("Expense.Amount cannot be negative or zero.")
 
 	// Description is longer than allowed.
 	DescriptionTooLong = errdmn.NewValidation("Expense.Description is too long.")
