@@ -4,4 +4,7 @@ package ierr
 type IErr interface {
 	// Type returns the type of the error
 	Type() string
+
+	// Type returns the message of the error
+	Error() string
 }

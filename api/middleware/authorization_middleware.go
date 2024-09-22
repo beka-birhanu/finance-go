@@ -27,7 +27,7 @@ func Authorization(jwtService ijwt.IService, blockIfInvalid bool) func(http.Hand
 				if errors.Is(err, http.ErrNoCookie) {
 					http.Error(w, "Authorization token required", http.StatusUnauthorized)
 				} else {
-					http.Error(w, "Server error", http.StatusInternalServerError)
+					http.Error(w, "Invalid token", http.StatusUnauthorized)
 				}
 				return
 			}

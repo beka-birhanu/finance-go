@@ -19,7 +19,7 @@ import (
 	iquery "github.com/beka-birhanu/finance-go/application/common/cqrs/query"
 	expensecmd "github.com/beka-birhanu/finance-go/application/expense/command"
 	expensqry "github.com/beka-birhanu/finance-go/application/expense/query"
-	errdmn "github.com/beka-birhanu/finance-go/domain/error/common"
+	ierr "github.com/beka-birhanu/finance-go/domain/common/error"
 	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -32,7 +32,7 @@ type ExpensesHandler struct {
 	addHandler         icmd.IHandler[*expensecmd.AddCommand, *expensemodel.Expense]
 	getHandler         iquery.IHandler[*expensqry.GetQuery, *expensemodel.Expense]
 	getMultipleHandler iquery.IHandler[*expensqry.GetMultipleQuery, []*expensemodel.Expense]
-	patchHandler       iquery.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
+	patchHandler       icmd.IHandler[*expensecmd.PatchCommand, *expensemodel.Expense]
 }
 
 // Config contains the configuration for setting up the ExpensesHandler,
@@ -116,7 +116,7 @@ func (h *ExpensesHandler) handleAdd(w http.ResponseWriter, r *http.Request) {
 
 	expense, err := h.addHandler.Handle(addExpenseCommand)
 	if err != nil {
-		apiErr := errapi.NewBadRequest(err.Error())
+		apiErr := errapi.Map(err.(ierr.IErr))
 		h.Problem(w, apiErr)
 		return
 	}
@@ -153,7 +153,7 @@ func (h *ExpensesHandler) handleById(w http.ResponseWriter, r *http.Request) {
 
 	expense, err := h.getHandler.Handle(&expensqry.GetQuery{UserId: userId, ExpenseId: expenseId})
 	if err != nil {
-		h.Problem(w, errapi.NewBadRequest(err.Error()))
+		h.Problem(w, errapi.Map(err.(ierr.IErr)))
 		return
 	}
 	response := dto.FromExpenseModel(expense)
@@ -198,14 +198,7 @@ func (h *ExpensesHandler) handlePatch(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		switch err.(*errdmn.Error).Type() {
-		case errdmn.NotFound:
-			h.Problem(w, errapi.NewNotFound(err.Error()))
-		case errdmn.Validation:
-			h.Problem(w, errapi.NewBadRequest(err.Error()))
-		default:
-			h.Problem(w, errapi.NewServerError("unknown error occurred while patching expense"))
-		}
+		h.Problem(w, errapi.Map(err.(ierr.IErr)))
 		return
 	}
 	response := dto.FromExpenseModel(expense)
@@ -241,7 +234,7 @@ func (h *ExpensesHandler) handleByUserId(w http.ResponseWriter, r *http.Request)
 
 	expenses, err := h.getMultipleHandler.Handle(queryParams)
 	if err != nil {
-		h.Problem(w, errapi.NewServerError(err.Error()))
+		h.Problem(w, errapi.Map(err.(ierr.IErr)))
 		return
 	}
 
