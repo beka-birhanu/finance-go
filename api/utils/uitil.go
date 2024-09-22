@@ -12,11 +12,14 @@ import (
 func ConfirmUserID(ctx context.Context, userId uuid.UUID) error {
 	claims, ok := ctx.Value(middleware.ContextUserClaims).(jwt.MapClaims)
 	if !ok {
-		return errapi.NewServerError("error on retrieving user id from context")
+		return errapi.NewServerError("Error on retrieving user id from context")
 	}
 
 	userIDStr, ok := claims["user_id"].(string)
-	if !ok || userId.String() != userIDStr {
+	if userIDStr == "" {
+		return errapi.NewAuthentication("User claims not found!")
+
+	} else if !ok || userId.String() != userIDStr {
 		return errapi.NewForbidden("The response does not belong to the user requesting.")
 	}
 
