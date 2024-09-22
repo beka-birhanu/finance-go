@@ -9,11 +9,21 @@ import (
 
 // NewGQLError creates a new gqlerror with a custom message and extensions
 func NewGQLError(err errapi.Error) *gqlerror.Error {
+	var errMessage string
 	extensions := make(map[string]interface{})
 	extensions["StatusCode"] = err.StatusCode()
 
+	switch err.StatusCode() {
+	case errapi.BadRequest, errapi.Conflict, errapi.NotFound, errapi.Forbidden:
+		errMessage = err.Error()
+	case errapi.Authentication:
+		errMessage = "invalid credentials"
+	default:
+		errMessage = "something went wrong"
+	}
+
 	return &gqlerror.Error{
-		Message:    err.Error(),
+		Message:    errMessage,
 		Extensions: extensions,
 	}
 }
