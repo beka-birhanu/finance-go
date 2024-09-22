@@ -86,6 +86,7 @@ func main() {
 
 	resolver := graph.NewResolver(graph.ResolverConfig{
 		GetExpenseHandler:         getExpenseHandler,
+		GetMultipleExpenseHandler: getExpensesHandler,
 		AddExpenseHandler:         addExpenseHandler,
 		PatchExpenseHandler:       patchExpenseHandler,
 	})

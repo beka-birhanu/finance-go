@@ -8,17 +8,26 @@ type Expense {
   amount: Float32!
   date: Time!
   userId: UUID!
-  createdAt: Time
-  updatedAt: Time
+  createdAt: Time!
+  updatedAt: Time!
 }
 
 type Query {
   expense(userId: UUID!, id: UUID!): Expense!
+  expenses(params: GetMultipleInput!): PaginatedExpenseResponse!
 }
 
 type Mutation {
   createExpense(data: CreateExpenseInput!): Expense!
   updateExpense(data: UpdateExpenseInput!): Expense!
+}
+
+input GetMultipleInput {
+  cursor: String
+  limit: Int
+  sortField: String
+  sortOrder: String
+  userId: UUID!
 }
 
 input CreateExpenseInput {
@@ -34,4 +43,9 @@ input UpdateExpenseInput {
   date: Time
   userId: UUID!
   id: UUID!
+}
+
+type PaginatedExpenseResponse {
+  expenses: [Expense!]!
+  cursor: String
 }

@@ -68,6 +68,38 @@ func (r *queryResolver) Expense(ctx context.Context, userID uuid.UUID, id uuid.U
 	return utils.NewExpense(expense), nil
 }
 
+// Expenses is the resolver for the expenses field.
+func (r *queryResolver) Expenses(ctx context.Context, params model.GetMultipleInput) (*model.PaginatedExpenseResponse, error) {
+	cursor := ""
+	limit := 0
+	sortField := "date"
+	sortOrder := "desc"
+	if params.SortField != nil && params.SortOrder != nil {
+		sortOrder = string(*params.SortOrder)
+		sortField = string(*params.SortField)
+	}
+	if params.Cursor != nil {
+		cursor = *params.Cursor
+	}
+
+	if params.Limit != nil {
+
+		limit = int(*params.Limit)
+	}
+
+	query, err := generalUtil.ConstructQueryParams(params.UserID, cursor, limit, sortField, sortOrder)
+	if err != nil {
+		return nil, utils.NewGQLError(errapi.NewBadRequest(err.Error()))
+	}
+
+	expenses, err := r.getMultipleExpenseHandler.Handle(query)
+	if err != nil {
+		return nil, utils.NewGQLError(err.(errapi.Error))
+	}
+
+	return utils.NewPaginatedExpenseResponse(expenses, sortField), nil
+}
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 

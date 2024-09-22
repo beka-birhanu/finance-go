@@ -16,16 +16,29 @@ type CreateExpenseInput struct {
 }
 
 type Expense struct {
-	ID          uuid.UUID  `json:"id"`
-	Description string     `json:"description"`
-	Amount      float32    `json:"amount"`
-	Date        time.Time  `json:"date"`
-	UserID      uuid.UUID  `json:"userId"`
-	CreatedAt   *time.Time `json:"createdAt,omitempty"`
-	UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
+	ID          uuid.UUID `json:"id"`
+	Description string    `json:"description"`
+	Amount      float32   `json:"amount"`
+	Date        time.Time `json:"date"`
+	UserID      uuid.UUID `json:"userId"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+type GetMultipleInput struct {
+	Cursor    *string   `json:"cursor,omitempty"`
+	Limit     *int64    `json:"limit,omitempty"`
+	SortField *string   `json:"sortField,omitempty"`
+	SortOrder *string   `json:"sortOrder,omitempty"`
+	UserID    uuid.UUID `json:"userId"`
 }
 
 type Mutation struct {
+}
+
+type PaginatedExpenseResponse struct {
+	Expenses []*Expense `json:"expenses"`
+	Cursor   *string    `json:"cursor,omitempty"`
 }
 
 type Query struct {

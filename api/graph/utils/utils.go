@@ -3,6 +3,7 @@ package utils
 import (
 	errapi "github.com/beka-birhanu/finance-go/api/error"
 	"github.com/beka-birhanu/finance-go/api/graph/model"
+	"github.com/beka-birhanu/finance-go/api/utils"
 	expensemodel "github.com/beka-birhanu/finance-go/domain/model/expense"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
@@ -29,15 +30,31 @@ func NewGQLError(err errapi.Error) *gqlerror.Error {
 }
 
 func NewExpense(e *expensemodel.Expense) *model.Expense {
-	updatedTime := e.UpdatedAt()
-	createdTime := e.CreatedAt()
 	return &model.Expense{
 		ID:          e.ID(),
 		Description: e.Description(),
 		Amount:      e.Amount(),
 		Date:        e.Date(),
 		UserID:      e.UserID(),
-		CreatedAt:   &createdTime,
-		UpdatedAt:   &updatedTime,
+		CreatedAt:   e.CreatedAt(),
+		UpdatedAt:   e.UpdatedAt(),
+	}
+}
+
+func NewPaginatedExpenseResponse(es []*expensemodel.Expense, field string) *model.PaginatedExpenseResponse {
+
+	expenses := make([]*model.Expense, 0)
+	for _, e := range es {
+		expenses = append(expenses, NewExpense(e))
+	}
+
+	cursor := ""
+	if len(es) > 0 {
+		cursor = utils.BuildCursor(es[len(es)-1], field)
+	}
+
+	return &model.PaginatedExpenseResponse{
+		Expenses: expenses,
+		Cursor:   &cursor,
 	}
 }
