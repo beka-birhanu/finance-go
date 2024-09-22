@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -37,7 +38,7 @@ func ConfirmUserID(ctx context.Context, userId uuid.UUID) error {
 // based on the user ID, cursor, limit, sort field, and sort order.
 func ConstructQueryParams(userId uuid.UUID, cursor string, limit int, sortField string, sortOrder string) (*expensqry.GetMultipleQuery, error) {
 	var lastSeenID uuid.UUID
-	var lastSeenTime time.Time
+	var lastSeenDate time.Time
 	var lastSeenAmt float64
 	var ascending bool
 
@@ -57,8 +58,8 @@ func ConstructQueryParams(userId uuid.UUID, cursor string, limit int, sortField 
 			return &expensqry.GetMultipleQuery{}, errapi.NewBadRequest("invalid cursor format2")
 		}
 
-		if sortField == "createdAt" {
-			lastSeenTime, err = time.Parse(time.RFC3339Nano, cursorParts[1])
+		if sortField == "date" {
+			lastSeenDate, err = time.Parse(time.RFC3339Nano, cursorParts[1])
 			if err != nil {
 				return &expensqry.GetMultipleQuery{}, fmt.Errorf("invalid cursor format for createdAt: %v", err)
 			}
@@ -74,12 +75,13 @@ func ConstructQueryParams(userId uuid.UUID, cursor string, limit int, sortField 
 		ascending = true
 	}
 
+	log.Println(userId, limit, sortField, &lastSeenID, &lastSeenDate, lastSeenAmt, ascending)
 	return &expensqry.GetMultipleQuery{
 		UserID:       userId,
 		Limit:        limit,
 		By:           sortField,
 		LastSeenID:   &lastSeenID,
-		LastSeenTime: &lastSeenTime,
+		LastSeenDate: &lastSeenDate,
 		LastSeenAmt:  lastSeenAmt,
 		Ascending:    ascending,
 	}, nil
@@ -92,8 +94,8 @@ func BuildCursor(lastExpense *expensemodel.Expense, field string) string {
 		if field == "amount" {
 			nextCursor = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s,%f", lastExpense.ID(), lastExpense.Amount())))
 		} else {
-			createdAt := lastExpense.CreatedAt().Format(time.RFC3339Nano)
-			nextCursor = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s,%v", lastExpense.ID(), createdAt)))
+			date := lastExpense.Date().Format(time.RFC3339Nano)
+			nextCursor = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s,%v", lastExpense.ID(), date)))
 		}
 	}
 

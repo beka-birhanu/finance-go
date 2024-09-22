@@ -266,7 +266,7 @@ func (h *ExpensesHandler) extractAndValidateParams(r *http.Request) (string, int
 	}
 
 	sortBy := h.StringQueryParam(r, "sortBy")
-	sortField := "createdAt"
+	sortField := "date"
 	sortOrder := "desc"
 	if sortBy != "" {
 		parts := strings.Split(sortBy, ".")
@@ -275,7 +275,7 @@ func (h *ExpensesHandler) extractAndValidateParams(r *http.Request) (string, int
 		}
 		sortField = parts[0]
 		sortOrder = parts[1]
-		if sortField != "createdAt" && sortField != "amount" {
+		if sortField != "date" && sortField != "amount" {
 			return "", 0, "", "", errapi.NewBadRequest(fmt.Sprintf("invalid sortBy field: %s", sortField))
 		}
 		if sortOrder != "asc" && sortOrder != "desc" {

@@ -57,7 +57,7 @@ func (h *GetMultipleHandler) Handle(query *GetMultipleQuery) ([]*expensemodel.Ex
 		UserID:       query.UserID,
 		Limit:        limit,
 		LastSeenID:   query.LastSeenID,
-		LastSeenTime: query.LastSeenTime,
+		LastSeenDate: query.LastSeenDate,
 		Ascending:    query.Ascending,
 	})
 }
